@@ -73,7 +73,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
       <div className="relative z-10">
         {/* Section Header */}
         {showHeader && (
-          <div className="text-left mb-5">
+          <div className="text-center mb-5">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4 font-display text-brand-gradient">
               Choose Your Plan
             </h2>
@@ -81,7 +81,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
         )}
 
         {/* Billing Toggle */}
-        <div className="relative flex flex-wrap items-center justify-left gap-1 rounded-md bg-muted/50 backdrop-blur-sm w-fit mx-left mb-8">
+        <div className="relative flex flex-wrap items-center justify-center gap-1 rounded-md bg-muted/50 backdrop-blur-sm w-fit mx-auto mb-8">
           {(["monthly", "yearly", "permanent"] as const).map((period) => (
             <button
               key={period}
@@ -112,7 +112,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
           <motion.div
             key={billingPeriod}
             className={cn(
-              "grid gap-6 max-w-4xl",
+              "grid gap-6 max-w-4xl mx-auto",
               billingPeriod === "permanent" ? "grid-cols-1 max-w-[420px]" : "grid-cols-1 sm:grid-cols-2"
             )}
             initial={{ opacity: 0, y: 12 }}
