@@ -15,7 +15,7 @@ export default function Home() {
       <div className="relative">
         {/* Seamless background gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#1A191E] via-[#1A191E] to-[#1A191E]" />
-        <div className="grid grid-cols-2 gap-24 max-w-8xl mx-auto py-24 px-4 sm:px-6 lg:px-24 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 max-w-8xl mx-auto py-16 px-4 sm:px-6 lg:px-24 relative z-10">
           <Pricing />
           <FAQ />
         </div>

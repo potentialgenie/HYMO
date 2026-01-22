@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useRef } from "react"
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { Search, Filter, Download, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -53,7 +53,7 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
   const [showMoreFilters, setShowMoreFilters] = useState(false)
   const moreFiltersRef = useRef<HTMLDivElement>(null)
 
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     setFilter1("")
     setFilter2("")
     setFilter3("")
@@ -62,10 +62,10 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
       setFilter5("")
     }
     setSearchQuery("")
-  }
+  }, [game])
 
   // Helper function to format season display (combines season and week for iRacing)
-  const formatSeasonDisplay = (setup: { season: string; week?: string; game: string }) => {
+  const formatSeasonDisplay = useCallback((setup: { season: string; week?: string; game: string }) => {
     if (game === "iracing" && setup.week) {
       // Format: "iRacing Season 1 Week 1 2026"
       const seasonMatch = setup.season.match(/(\d{4})\s*S(\d+)/i)
@@ -80,17 +80,18 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
       return `${setup.season} ${setup.week}`
     }
     return setup.season
-  }
+  }, [game])
 
-  const filteredSetups = setups.filter((setup) => {
-    const matchesSearch = searchQuery === "" || 
-      setup.car.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      setup.track.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      setup.series.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    const matchesFilter1 = filter1 === "" || setup.car.toLowerCase().includes(filter1.toLowerCase())
-    const matchesFilter2 = filter2 === "" || setup.car.toLowerCase().includes(filter2.toLowerCase())
-    const matchesFilter3 = filter3 === "" || setup.track.toLowerCase().includes(filter3.toLowerCase())
+  const filteredSetups = useMemo(() => {
+    return setups.filter((setup) => {
+      const matchesSearch = searchQuery === "" || 
+        setup.car.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        setup.track.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        setup.series.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      const matchesFilter1 = filter1 === "" || setup.car.toLowerCase().includes(filter1.toLowerCase())
+      const matchesFilter2 = filter2 === "" || setup.car.toLowerCase().includes(filter2.toLowerCase())
+      const matchesFilter3 = filter3 === "" || setup.track.toLowerCase().includes(filter3.toLowerCase())
     
     // For iRacing: filter4 combines season and week, so check both
     let matchesFilter4 = true
@@ -112,10 +113,11 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
       matchesFilter4 = setup.season.toLowerCase().includes(filter4.toLowerCase())
     }
     
-    const matchesFilter5 = filter5 === "" || setup.series.toLowerCase().includes(filter5.toLowerCase())
-    
-    return matchesSearch && matchesFilter1 && matchesFilter2 && matchesFilter3 && matchesFilter4 && matchesFilter5
-  })
+      const matchesFilter5 = filter5 === "" || setup.series.toLowerCase().includes(filter5.toLowerCase())
+      
+      return matchesSearch && matchesFilter1 && matchesFilter2 && matchesFilter3 && matchesFilter4 && matchesFilter5
+    })
+  }, [setups, searchQuery, filter1, filter2, filter3, filter4, filter5, game])
 
   const [currentPage, setCurrentPage] = useState(0)
   const rowLimit = 10 // Fixed to 10 items per page
@@ -388,10 +390,13 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
 
         {/* Hero Image */}
         <div className="relative w-full h-[300px] md:h-[450px] mb-8 rounded-lg overflow-hidden">
-          <img
+          <Image
             src={heroImage || "/placeholder.svg"}
             alt={`${title} Setup`}
-            className="w-full h-full object-contain"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
+            className="object-contain"
+            priority={false}
           />
         </div>
 

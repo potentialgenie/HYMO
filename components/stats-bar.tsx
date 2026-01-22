@@ -32,7 +32,7 @@ export function StatsBar() {
               viewport={{ once: true }}
               transition={{ duration: 0.35, delay: i * 0.08 }}
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-sm border border-primary/30 bg-primary/5 text-primary">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md border border-primary/30 bg-primary/5 text-primary">
                 <Icon className="h-5 w-5" />
               </div>
               <div>

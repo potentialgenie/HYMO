@@ -41,7 +41,7 @@ export function FAQ() {
       <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-[#1A191E] via-[#1A191E]/80 to-transparent -z-10" />
       <div className="max-w-8xl mx-auto relative z-10">
         {/* Section Header */}
-        <div className="text-left mb-16">
+        <div className="text-left mb-12">
           <h2 className="text-4xl sm:text-5xl font-bold mb-4 font-display">
             Frequently Asked Questions
           </h2>
@@ -56,16 +56,19 @@ export function FAQ() {
             <div
               key={index}
               className={cn(
-                "bg-[#25262A] border rounded-sm overflow-hidden transition-all duration-200 cursor-pointer",
+                "bg-[#25262A] border rounded-md overflow-hidden transition-all duration-200 cursor-pointer",
                 "hover:shadow-[0_0_16px_oklch(0.65_0.28_328_/_0.06)]",
                 openIndex === index ? "shadow-[0_0_12px_oklch(0.65_0.28_328_/_0.08)]" : "border-border"
               )}
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full flex items-center justify-between gap-4 px-6 py-4 text-left group/btn cursor-pointer"
+                className="w-full flex items-center justify-between gap-4 px-6 py-4 text-left group/btn cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                aria-expanded={openIndex === index}
+                aria-controls={`faq-answer-${index}`}
+                aria-label={`${faq.question}. Click to ${openIndex === index ? 'collapse' : 'expand'} answer`}
               >
-                <span className="font-medium text-foreground group-hover/btn:text-primary/90 transition-colors">{faq.question}</span>
+                <span id={`faq-question-${index}`} className="font-medium text-foreground group-hover/btn:text-primary/90 transition-colors">{faq.question}</span>
                 <ChevronDown
                   className={cn(
                     "h-5 w-5 text-white flex-shrink-0 transition-transform",
@@ -74,10 +77,13 @@ export function FAQ() {
                 />
               </button>
               <div
+                id={`faq-answer-${index}`}
                 className={cn(
                   "grid transition-all duration-200 ease-in-out",
                   openIndex === index ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
                 )}
+                role="region"
+                aria-labelledby={`faq-question-${index}`}
               >
                 <div className="overflow-hidden">
                   <div className="px-6 pb-4 pt-0">

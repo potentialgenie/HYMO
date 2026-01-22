@@ -131,7 +131,7 @@ export function Setups() {
           viewport={defaultViewport}
           transition={defaultTransition}
         >
-          <h2 className="text-5xl sm:text-6xl font-bold mb-4 font-display">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 font-display">
             Browse Pro Setups
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-2">
@@ -150,13 +150,14 @@ export function Setups() {
         </motion.div>
 
        {/* Game Filter - Segmented pill with indicator - Centered */}
-        <div className="relative flex flex-wrap items-center justify-center gap-2 rounded-sm bg-muted/50 backdrop-blur-sm w-fit mx-auto mb-14">
+        <div className="relative flex flex-wrap items-center justify-center gap-2 rounded-md bg-muted/50 backdrop-blur-sm w-fit mx-auto mb-12">
           {games.map((game) => (
             <button
               key={game.id}
               onClick={() => setActiveGame(game.id)}
               className={cn(
-                "relative z-10 px-5 py-2.5 rounded-sm text-sm font-medium transition-all duration-200",
+                "relative z-10 px-5 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 activeGame === game.id
                   ? "text-primary-foreground bg-primary"
                   : "text-white hover:text-foreground bg-[#242529]"
@@ -178,7 +179,7 @@ export function Setups() {
                 >
                   <article
                     className={cn(
-                      "group/card flex flex-col h-full overflow-hidden rounded-sm bg-[#242625]",
+                      "group/card flex flex-col h-full overflow-hidden rounded-md bg-[#242625]",
                       "shadow-lg shadow-black/30",
                       "transition-all duration-300 cursor-pointer",
                     )}
@@ -195,10 +196,10 @@ export function Setups() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
                       {/* Text overlays top-left – stacked */}
                       <div className="absolute top-3 left-3 right-3 text-white space-y-0.5">
-                        <p className="text-[11px] font-medium uppercase tracking-wider text-white/80">Racing</p>
-                        <p className="text-xs text-white/95">{setup.gameName}</p>
+                        <p className="text-[11px] font-medium uppercase tracking-wider text-white/90">Racing</p>
+                        <p className="text-xs text-white">{setup.gameName}</p>
                         <p className="text-sm font-semibold text-white">{setup.car}</p>
-                        <p className="text-xs text-white/85">{setup.track}</p>
+                        <p className="text-xs text-white/90">{setup.track}</p>
                       </div>
                       {setup.featured && (
                         <span className="absolute bottom-3 left-3 text-[10px] font-bold uppercase tracking-wider text-primary-foreground bg-primary px-2.5 py-1 rounded">
@@ -213,14 +214,14 @@ export function Setups() {
                       <div className="flex justify-end gap-4 mt-1">
                         <div className="text-right space-y-2">
                           <div>
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground/90">Downloads</p>
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Downloads</p>
                             <p className="flex items-center justify-end gap-1 font-semibold text-foreground mt-0.5">
                               <Download className="h-3.5 w-3.5 text-white" />
                               {setup.downloads}
                             </p>
                           </div>
                           <div>
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground/90">Rating</p>
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Rating</p>
                             <p className="flex items-center justify-end gap-1 font-semibold text-foreground mt-0.5">
                               <Star className="h-3.5 w-3.5 fill-white text-white" />
                               {setup.rating}
@@ -237,15 +238,15 @@ export function Setups() {
                         <div className="flex items-center gap-1.5">
                           <button
                             type="button"
-                            className="h-9 w-9 rounded-full bg-transparent border border-white cursor-pointer hover:bg-white/10 flex items-center justify-center hover:opacity-90 transition-opacity"
-                            aria-label="Download"
+                            className="h-9 w-9 rounded-full bg-transparent border border-white cursor-pointer hover:bg-white/10 flex items-center justify-center hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            aria-label="Download setup"
                           >
                             <Download className="h-4 w-4 text-white" />
                           </button>
                           <button
                             type="button"
-                            className="h-9 w-9 rounded-full bg-transparent border border-white cursor-pointer hover:bg-white/10 flex items-center justify-center hover:opacity-90 transition-opacity"
-                            aria-label="Share"
+                            className="h-9 w-9 rounded-full bg-transparent border border-white cursor-pointer hover:bg-white/10 flex items-center justify-center hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            aria-label="Share setup"
                           >
                             <Share2 className="h-4 w-4 text-white" />
                           </button>
@@ -262,11 +263,18 @@ export function Setups() {
           <button
             type="button"
             onClick={scrollPrev}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                scrollPrev()
+              }
+            }}
             disabled={!canScrollPrev}
             className={cn(
               "absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full",
               "bg-background/90 border border-border shadow-md flex items-center justify-center",
-              "text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-opacity"
+              "text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-opacity",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             )}
             aria-label="Previous setups"
           >
@@ -275,11 +283,18 @@ export function Setups() {
           <button
             type="button"
             onClick={scrollNext}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                scrollNext()
+              }
+            }}
             disabled={!canScrollNext}
             className={cn(
               "absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full",
               "bg-background/90 border border-border shadow-md flex items-center justify-center",
-              "text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-opacity"
+              "text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-opacity",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             )}
             aria-label="Next setups"
           >
@@ -288,7 +303,7 @@ export function Setups() {
         </div>
 
         {/* View All Button - Centered */}
-        <div className="text-center mt-12">
+        <div className="text-center mt-8">
           <Button variant="outline" size="lg" className="group bg-transparent bg-[#242529]">
             View All Setups
             <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />

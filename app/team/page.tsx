@@ -111,10 +111,10 @@ export default function TeamPage() {
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 px-6 sm:px-12 lg:px-24 overflow-hidden">
         <div className="relative z-10">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-[family-name:var(--font-display)] tracking-tight mb-4">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-display tracking-tight mb-4">
             Meet the <span className="text-primary">Team</span>
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl">
+          <p className="text-lg text-muted-foreground max-w-2xl font-sans">
             The passionate sim racers and engineers behind HYMO. Our team of champions and professionals
             work tirelessly to bring you the best racing setups in the world.
           </p>
@@ -125,7 +125,7 @@ export default function TeamPage() {
       <section className="py-16 px-6 sm:px-12 lg:px-24">
         <div>
           <div className="flex items-center gap-4 mb-2">
-            <h2 className="text-2xl md:text-3xl font-bold font-[family-name:var(--font-display)]">
+            <h2 className="text-2xl md:text-3xl font-bold font-display">
               Management & Founders
             </h2>
             <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
@@ -146,11 +146,11 @@ export default function TeamPage() {
                       </div>
                     </div>
                     <div className="flex flex-col">
-                      <h3 className="font-[family-name:var(--font-display)] text-2xl font-semibold tracking-tight mb-2">{member.name}</h3>
-                      <p className="text-lg font-medium text-primary/90 mb-4">{member.role}</p>
+                      <h3 className="font-sans text-2xl font-semibold tracking-tight mb-2">{member.name}</h3>
+                      <p className="text-lg font-medium text-primary/90 mb-4 font-sans">{member.role}</p>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground/90 italic leading-relaxed">&quot;{member.description}&quot;</p>
+                  <p className="text-sm text-muted-foreground/90 italic leading-relaxed font-sans">&quot;{member.description}&quot;</p>
                 </CardContent>
               </Card>
             ))}
@@ -162,17 +162,17 @@ export default function TeamPage() {
       <section id="drivers-section" className="py-16 px-6 sm:px-12 lg:px-24">
         <div>
           <div className="flex items-center gap-4 mb-2">
-            <h2 className="text-2xl md:text-3xl font-bold font-[family-name:var(--font-display)]">
+            <h2 className="text-2xl md:text-3xl font-bold font-display">
               Drivers & Engineers
             </h2>
             <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
           </div>
           <div className="section-slash w-24 mb-6" />
           <div className="mb-6">
-            <p className="text-muted-foreground max-w-xl mb-4">
+            <p className="text-muted-foreground max-w-xl mb-4 font-sans">
               Our team of professional sim racers and setup engineers across multiple platforms.
             </p>
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-2 text-sm font-sans">
               <span className="text-muted-foreground/70">
                 Showing
               </span>
@@ -192,7 +192,7 @@ export default function TeamPage() {
 
           {/* Platform legend - clickable filters */}
           <div className="flex flex-wrap items-center gap-3 mb-10">
-            <span className="text-xs uppercase tracking-wider text-muted-foreground/70 font-semibold">Filter by Platform:</span>
+            <span className="text-xs uppercase tracking-wider text-muted-foreground/70 font-semibold font-sans">Filter by Platform:</span>
             <button
               onClick={() => handlePlatformClick("all")}
               className={cn(
@@ -316,8 +316,8 @@ export default function TeamPage() {
                           <Image src={driver.avatar} alt={driver.name} width={72} height={72} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" />
                         </div>
                         <div className="flex flex-col min-w-0 flex-1">
-                          <h3 className="font-[family-name:var(--font-display)] font-semibold text-[15px] tracking-tight mb-1.5 leading-tight truncate">{driver.name}</h3>
-                          <p className="text-[13px] text-muted-foreground line-clamp-2 leading-snug mb-4">
+                          <h3 className="font-sans font-semibold text-[15px] tracking-tight mb-1.5 leading-tight truncate">{driver.name}</h3>
+                          <p className="text-[13px] text-muted-foreground line-clamp-2 leading-snug mb-4 font-sans">
                             {driver.role}
                           </p>
                           <Badge variant="outline" className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 w-fit ${getGameColor(driver.game)}`}>
@@ -337,10 +337,10 @@ export default function TeamPage() {
       {/* Join CTA */}
       <section className="py-20 px-6 sm:px-12 lg:px-24">
         <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold font-[family-name:var(--font-display)] mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold font-display mb-4">
             Want to Join the Team?
           </h2>
-          <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
+          <p className="text-muted-foreground mb-8 max-w-xl mx-auto font-sans">
             We&apos;re always looking for talented sim racers and engineers to join our growing team.
             Get in touch if you think you have what it takes.
           </p>
@@ -361,7 +361,7 @@ export default function TeamPage() {
               height={33}
               className="h-6 w-auto"
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground font-sans">
               Copyright © 2025 HymoSetups | All rights reserved.
             </p>
           </div>

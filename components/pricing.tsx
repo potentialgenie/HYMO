@@ -78,13 +78,14 @@ export function Pricing() {
         </div>
 
         {/* Billing Toggle */}
-        <div className="relative flex flex-wrap items-center justify-left gap-1 rounded-sm bg-muted/50 backdrop-blur-sm w-fit mx-left mb-12">
+        <div className="relative flex flex-wrap items-center justify-left gap-1 rounded-md bg-muted/50 backdrop-blur-sm w-fit mx-left mb-8">
           {(["monthly", "yearly", "permanent"] as const).map((period) => (
             <button
               key={period}
               onClick={() => setBillingPeriod(period)}
               className={cn(
-                "relative z-10 px-5 py-2.5 rounded-sm text-sm font-medium transition-all duration-200",
+                "relative z-10 px-5 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 billingPeriod === period
                   ? "text-primary-foreground bg-primary"
                   : "text-white hover:text-foreground bg-[#242529]"
@@ -92,7 +93,7 @@ export function Pricing() {
             >
               {billingPeriod === period && (
                 <span 
-                  className="absolute inset-0 rounded-sm bg-primary shadow-lg shadow-primary/25"
+                  className="absolute inset-0 rounded-md bg-primary shadow-lg shadow-primary/25"
                   aria-hidden
                 />
               )}
@@ -104,7 +105,7 @@ export function Pricing() {
         {/* Pricing Cards */}
         <div className={cn(
           "grid gap-6 max-w-4xl",
-          billingPeriod === "permanent" ? "grid-cols-1 max-w-[420px]" : "md:grid-cols-2"
+          billingPeriod === "permanent" ? "grid-cols-1 max-w-[420px]" : "grid-cols-1 sm:grid-cols-2"
         )}>
           {billingPeriod === "permanent" ? (
             <Card className="group relative flex flex-col overflow-hidden rounded-2xl border border-0 bg-[#242625] transition-all duration-300 hover:border-primary/60 hover:shadow-[0_18px_45px_rgba(0,0,0,0.55)]">
@@ -136,13 +137,13 @@ export function Pricing() {
                     ) : feature.included ? (
                       <Check className="h-4 w-4 shrink-0 text-primary" />
                     ) : (
-                      <X className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+                      <X className="h-4 w-4 shrink-0 text-muted-foreground/60" />
                     )}
                   </div>
                 ))}
               </CardContent>
               <CardFooter className="pt-2 pb-8 flex items-center justify-center">
-                <Button className="flex rounded-sm cursor-pointer bg-primary h-12 px-16" variant="outline" size="lg">
+                <Button className="flex rounded-md cursor-pointer bg-primary h-12 px-16" variant="outline" size="lg">
                   Get Started
                 </Button>
               </CardFooter>
@@ -174,7 +175,7 @@ export function Pricing() {
                       </CardTitle>
                       <CardDescription className={cn(
                         "mt-1.5 text-sm",
-                        plan.popular ? "text-white/80" : ""
+                        plan.popular ? "text-white/90" : ""
                       )}>
                         {plan.description}
                       </CardDescription>
@@ -184,14 +185,14 @@ export function Pricing() {
                     {billingPeriod === "monthly" ? (
                       <div className="flex flex-wrap items-baseline justify-left gap-1.5">
                         <span className={cn(
-                          "text-5xl sm:text-6xl font-bold tracking-tight",
+                          "text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight",
                           plan.popular ? "text-white" : "text-foreground"
                         )}>
                           {plan.monthly.price}
                         </span>
                         <span className={cn(
                           "text-sm font-medium",
-                          plan.popular ? "text-white/80" : "text-muted-foreground"
+                          plan.popular ? "text-white/90" : "text-muted-foreground"
                         )}>
                           Monthly
                         </span>
@@ -206,21 +207,21 @@ export function Pricing() {
                         </span>
                         <div className="flex flex-wrap items-baseline justify-start gap-1.5">
                           <span className={cn(
-                            "text-5xl sm:text-6xl font-bold tracking-tight",
+                            "text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight",
                             plan.popular ? "text-white" : "text-foreground"
                           )}>
                             {plan.yearly.effectiveMonthly}
                           </span>
                           <span className={cn(
                             "text-sm",
-                            plan.popular ? "text-white/80" : "text-muted-foreground"
+                            plan.popular ? "text-white/90" : "text-muted-foreground"
                           )}>
                             /mo
                           </span>
                         </div>
                         <p className={cn(
                           "text-sm",
-                          plan.popular ? "text-white/80" : "text-muted-foreground"
+                          plan.popular ? "text-white/90" : "text-muted-foreground"
                         )}>
                           {plan.yearly.total} /Yearly
                         </p>
@@ -236,7 +237,7 @@ export function Pricing() {
                     >
                       <span className={cn(
                         "text-muted-foreground",
-                        plan.popular ? "text-white/80" : ""
+                        plan.popular ? "text-white/90" : ""
                       )}>
                         {feature.name}
                       </span>

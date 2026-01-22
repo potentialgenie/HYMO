@@ -27,8 +27,8 @@ export default function RegisterPage() {
 
   return (
     <main className="min-h-screen bg-[#1A191E]">
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-16 px-6 lg:px-36 pt-12 backdrop-blur-md">
-        <Link href="/">
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-20 px-4 sm:px-6 md:px-12 lg:px-24 pt-0 backdrop-blur-md bg-transparent">
+        <Link href="/" className="flex-shrink-0">
           <img src="/images/hymo-logo.png" alt="HYMO" className="h-8 w-auto" />
         </Link>
         <LanguageSelect />
@@ -39,11 +39,12 @@ export default function RegisterPage() {
           alt="Racing Car"
           fill
           priority
+          sizes="100vw"
           className="object-cover object-center rotate-y-180"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-background/30 to-background/20" />
       </div>
-      <section className="relative pt-32 pb-24 px-6 sm:px-12 lg:px-36 min-h-[calc(100vh-5rem)] flex items-center justify-end overflow-hidden">
+      <section className="relative pt-24 pb-24 px-4 sm:px-6 md:px-12 lg:px-24 min-h-screen flex items-center justify-end overflow-hidden">
         <div className="absolute inset-0 bg-circuit opacity-[0.4]" aria-hidden />
         <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] via-transparent to-transparent" aria-hidden />
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[420px] rounded-full bg-primary/10 blur-[100px] pointer-events-none" aria-hidden />

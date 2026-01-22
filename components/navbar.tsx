@@ -16,6 +16,7 @@ export function Navbar() {
   const [mobileSetupsOpen, setMobileSetupsOpen] = useState(false)
   const [mobileLanguageOpen, setMobileLanguageOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [activeAnchor, setActiveAnchor] = useState("")
   const dropdownRef = useRef<HTMLDivElement>(null)
   const languageDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -24,11 +25,15 @@ export function Navbar() {
 
   const isActive = (href: string, prefix?: boolean) => {
     if (prefix) return pathname.startsWith(href)
-    if (href === "/#contact") return pathname === "/"
+    if (href === "/#contact") return pathname === "/" && activeAnchor === "contact"
     return pathname === href
   }
   const linkCls = (href: string, prefix?: boolean) =>
-    `transition-colors text-sm ${isActive(href, prefix) ? "text-primary font-bold" : "text-white hover:text-primary font-medium"}`
+    `relative text-[0.95rem] font-display tracking-wide transition-all duration-200 ${
+      isActive(href, prefix)
+        ? "text-primary font-semibold underline underline-offset-8 decoration-primary/80"
+        : "text-white hover:text-primary font-medium hover:-translate-y-0.5 hover:underline hover:underline-offset-8 hover:decoration-primary/50"
+    }`
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -53,6 +58,23 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  useEffect(() => {
+    const updateHash = () => {
+      if (typeof window === "undefined") return
+      const hash = window.location.hash.replace("#", "")
+      setActiveAnchor(hash)
+    }
+    updateHash()
+    window.addEventListener("hashchange", updateHash)
+    return () => window.removeEventListener("hashchange", updateHash)
+  }, [pathname])
+
+  useEffect(() => {
+    if (pathname !== "/") {
+      setActiveAnchor("")
+    }
+  }, [pathname])
+
   const setupsLinks = [
     { href: "/setups/iracing", label: "iRacing" },
     { href: "/setups/acc", label: "Assetto Corsa Competizione" },
@@ -68,14 +90,17 @@ export function Navbar() {
 
   return (
     <motion.nav
-      className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md"
-      style={{ backgroundColor: isScrolled ? "#1A191E" : "transparent" }}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
+        isScrolled
+          ? "bg-[#1A191E]/50 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.25)] border-white/10"
+          : "bg-transparent backdrop-blur-0"
+      }`}
       initial={{ opacity: 0, y: -16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="px-4 sm:px-6 lg:px-24">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             <img
@@ -87,14 +112,17 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href="/pricing" className={linkCls("/pricing")}>
+            <Link href="/pricing" className={linkCls("/pricing")} onClick={() => setActiveAnchor("")}>
               {t.nav.pricing}
             </Link>
             
             {/* Setups Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
-                onClick={() => setSetupsDropdownOpen(!setupsDropdownOpen)}
+                onClick={() => {
+                  setSetupsDropdownOpen(!setupsDropdownOpen)
+                  setActiveAnchor("")
+                }}
                 className={`flex items-center gap-1 ${linkCls("/setups", true)}`}
               >
                 {t.nav.setups}
@@ -102,14 +130,16 @@ export function Navbar() {
               </button>
               
               {setupsDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-card border border-border rounded-lg shadow-xl overflow-hidden">
+                <div className="absolute top-full left-0 mt-2 w-72 bg-[#1A191E]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.4)] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
                   {setupsLinks.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
                       onClick={() => setSetupsDropdownOpen(false)}
-                      className={`block px-4 py-3 text-sm transition-colors hover:bg-muted ${
-                        pathname === link.href ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                      className={`block px-5 py-3.5 text-sm font-display tracking-wide transition-all duration-200 hover:bg-primary/10 hover:pl-6 ${
+                        pathname === link.href
+                          ? "text-primary font-semibold bg-primary/5 border-l-2 border-primary"
+                          : "text-white hover:text-primary"
                       }`}
                     >
                       {link.label}
@@ -119,10 +149,14 @@ export function Navbar() {
               )}
             </div>
 
-            <Link href="/team" className={linkCls("/team")}>
+            <Link href="/team" className={linkCls("/team")} onClick={() => setActiveAnchor("")}>
               {t.nav.team}
             </Link>
-            <Link href="/#contact" className={linkCls("/#contact")}>
+            <Link
+              href="/#contact"
+              className={linkCls("/#contact")}
+              onClick={() => setActiveAnchor("contact")}
+            >
               {t.nav.contact}
             </Link>
 
@@ -130,7 +164,7 @@ export function Navbar() {
             <div className="relative" ref={languageDropdownRef}>
               <button
                 onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
+                className="flex items-center gap-2 text-white hover:text-primary transition-all duration-200 text-sm font-display tracking-wide"
               >
                 {currentLanguage && (
                   <img src={currentLanguage.flag} alt="" className="w-5 h-3.5 object-cover rounded-sm shrink-0" aria-hidden />
@@ -139,7 +173,7 @@ export function Navbar() {
               </button>
               
               {languageDropdownOpen && (
-                <div className="absolute top-full right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-xl overflow-hidden">
+                <div className="absolute top-full right-0 mt-2 w-44 bg-[#1A191E]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.4)] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
                   {languages.map((lang) => (
                     <button
                       key={lang.code}
@@ -147,10 +181,10 @@ export function Navbar() {
                         setLanguage(lang.code)
                         setLanguageDropdownOpen(false)
                       }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                      className={`w-full flex items-center gap-3 px-5 py-3.5 text-sm font-display tracking-wide transition-all duration-200 hover:bg-primary/10 hover:pl-6 ${
                         language === lang.code
-                          ? "text-primary bg-primary/10"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          ? "text-primary font-semibold bg-primary/5 border-l-2 border-primary"
+                          : "text-white hover:text-primary"
                       }`}
                     >
                       <img src={lang.flag} alt="" className="w-5 h-3.5 object-cover rounded-sm shrink-0" aria-hidden />
@@ -161,7 +195,16 @@ export function Navbar() {
               )}
             </div>
 
-            <Button variant="outline" size="sm" asChild className={"px-4 py-2 bg-transparent rounded-sm" + (pathname === "/login" ? "border-primary text-primary" : " border-primary text-white hover:text-primary hover:bg-primary/10")}>
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className={`px-4 py-2 bg-transparent rounded-sm transition-all duration-200 hover:bg-primary/15 hover:shadow-[0_0_20px_rgba(168,85,247,0.35)] active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/50 ${
+                pathname === "/login"
+                  ? "border-primary text-primary"
+                  : "border-primary text-white hover:text-primary"
+              }`}
+            >
               <Link href="/login">{t.nav.login}</Link>
             </Button>
           </div>
@@ -198,7 +241,7 @@ export function Navbar() {
                   <ChevronDown className={`h-4 w-4 transition-transform ${mobileSetupsOpen ? "rotate-180" : ""}`} />
                 </button>
                 {mobileSetupsOpen && (
-                  <div className="mt-2 ml-4 flex flex-col gap-2">
+                  <div className="mt-2 ml-4 flex flex-col gap-1">
                     {setupsLinks.map((link) => (
                       <Link
                         key={link.href}
@@ -207,8 +250,10 @@ export function Navbar() {
                           setMobileSetupsOpen(false)
                           setIsOpen(false)
                         }}
-                        className={`text-sm transition-colors ${
-                          pathname === link.href ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                        className={`text-sm font-display tracking-wide transition-all duration-200 py-2 px-3 rounded-md ${
+                          pathname === link.href
+                            ? "text-primary font-semibold bg-primary/10"
+                            : "text-white hover:text-primary hover:bg-primary/5"
                         }`}
                       >
                         {link.label}
@@ -220,14 +265,20 @@ export function Navbar() {
 
               <Link 
                 href="/team" 
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  setIsOpen(false)
+                  setActiveAnchor("")
+                }}
                 className={linkCls("/team")}
               >
                 {t.nav.team}
               </Link>
               <Link 
                 href="/#contact" 
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  setIsOpen(false)
+                  setActiveAnchor("contact")
+                }}
                 className={linkCls("/#contact")}
               >
                 {t.nav.contact}
@@ -246,7 +297,7 @@ export function Navbar() {
                   <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${mobileLanguageOpen ? "rotate-180" : ""}`} />
                 </button>
                 {mobileLanguageOpen && (
-                  <div className="mt-2 ml-4 flex flex-col gap-2">
+                  <div className="mt-2 ml-4 flex flex-col gap-1">
                     {languages.map((lang) => (
                       <button
                         key={lang.code}
@@ -254,10 +305,10 @@ export function Navbar() {
                           setLanguage(lang.code)
                           setMobileLanguageOpen(false)
                         }}
-                        className={`flex items-center gap-2 text-sm transition-colors ${
+                        className={`flex items-center gap-3 text-sm font-display tracking-wide transition-all duration-200 py-2 px-3 rounded-md ${
                           language === lang.code
-                            ? "text-primary"
-                            : "text-muted-foreground hover:text-foreground"
+                            ? "text-primary font-semibold bg-primary/10"
+                            : "text-white hover:text-primary hover:bg-primary/5"
                         }`}
                       >
                         <img src={lang.flag} alt="" className="w-5 h-3.5 object-cover rounded-sm shrink-0" aria-hidden />
@@ -267,7 +318,14 @@ export function Navbar() {
                   </div>
                 )}
               </div>
-              <Button variant="outline" size="sm" className={`w-full justify-center ${pathname === "/login" ? "border-primary text-primary" : ""}`} asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`w-full justify-center transition-all duration-200 hover:bg-primary/15 hover:shadow-[0_0_20px_rgba(168,85,247,0.35)] active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/50 ${
+                  pathname === "/login" ? "border-primary text-primary" : "border-primary text-white hover:text-primary"
+                }`}
+                asChild
+              >
                 <Link href="/login" onClick={() => setIsOpen(false)}>
                   {t.nav.login}
                 </Link>

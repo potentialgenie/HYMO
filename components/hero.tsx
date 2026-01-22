@@ -28,6 +28,7 @@ export function Hero() {
           alt="Racing Car"
           fill
           priority
+          sizes="100vw"
           className="object-cover object-center"
         />
         {/* Dark overlay for better text readability */}
@@ -37,7 +38,7 @@ export function Hero() {
       </div>
 
       {/* Right-aligned content block */}
-      <div className="relative z-10 w-full max-w-8xl mx-auto px-4 sm:px-6 lg:px-24 flex justify-end">
+      <div className="relative z-10 w-full max-w-8xl mx-auto px-4 sm:px-6 md:px-12 lg:px-24 flex justify-end">
         <motion.div
           className="max-w-5xl text-right"
           variants={container}
@@ -45,10 +46,10 @@ export function Hero() {
           animate="visible"
         >
           <motion.div variants={item}>
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight uppercase mb-4">
+            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-bold tracking-tight uppercase mb-4">
               <span className="text-foreground">Race Like a{" "}
               <span className="text-primary">Pro</span></span>
-              <span className="block text-foreground text-3xl sm:text-4xl lg:text-5xl mt-2 font-bold normal-case">Esport setups tuned by champions</span>
+              <span className="block text-foreground text-3xl sm:text-4xl md:text-4xl lg:text-5xl mt-2 font-bold normal-case">Esport setups tuned by champions</span>
             </h1>
           </motion.div>
 
@@ -74,7 +75,7 @@ export function Hero() {
           >
             <Button
               size="lg"
-              className="uppercase text-sm font-semibold px-8 py-6 rounded-sm border border-primary transition-transform duration-200 hover:scale-105"
+              className="uppercase text-sm font-semibold px-8 py-6 rounded-md border border-primary transition-transform duration-200 hover:scale-105"
               asChild
             >
               <Link href="/pricing">Buy Now</Link>
@@ -82,7 +83,7 @@ export function Hero() {
             <Button
               variant="outline"
               size="lg"
-              className="uppercase text-sm font-semibold px-8 py-6 rounded-sm bg-transparent border border-white text-white hover:bg-white/10 hover:text-white transition-transform duration-200 hover:scale-105"
+              className="uppercase text-sm font-semibold px-8 py-6 rounded-md bg-transparent border border-white text-white hover:bg-white/10 hover:text-white transition-transform duration-200 hover:scale-105"
               asChild
             >
               <Link href="/#contact">Book Now</Link>
