@@ -33,10 +33,10 @@ export default function RegisterPage() {
         </Link>
         <LanguageSelect />
       </header>
-      <div className="absolute inset-0">
+      <div className="absolute inset-0" aria-hidden="true">
         <Image
           src="/images/hero-bg-2.png"
-          alt="Racing Car"
+          alt=""
           fill
           priority
           sizes="100vw"
@@ -55,7 +55,7 @@ export default function RegisterPage() {
               <div className="flex flex-row items-center justify-center mt-12">
                 <Image src="/images/hymo-logo1.png" alt="HYMO" width={100} height={100} className="h-16 w-auto" />
               </div>
-              <CardTitle className="font-[family-name:var(--font-display)] text-3xl text-foreground/95 uppercase mt-2">
+              <CardTitle className="font-display text-3xl uppercase mt-2 text-brand-gradient">
                 {t.auth.register.title}
               </CardTitle>
               <CardDescription className="text-muted-foreground/90">{t.auth.register.subtitle}</CardDescription>

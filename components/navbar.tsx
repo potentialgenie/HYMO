@@ -29,9 +29,9 @@ export function Navbar() {
     return pathname === href
   }
   const linkCls = (href: string, prefix?: boolean) =>
-    `relative text-[0.95rem] font-display tracking-wide transition-all duration-200 ${
+    `relative inline-flex items-center h-8 text-[0.95rem] font-display tracking-wide transition-all duration-200 ${
       isActive(href, prefix)
-        ? "text-primary font-semibold underline underline-offset-8 decoration-primary/80"
+        ? "text-brand-gradient font-semibold underline underline-offset-8 decoration-primary/80"
         : "text-white hover:text-primary font-medium hover:-translate-y-0.5 hover:underline hover:underline-offset-8 hover:decoration-primary/50"
     }`
 
@@ -123,10 +123,10 @@ export function Navbar() {
                   setSetupsDropdownOpen(!setupsDropdownOpen)
                   setActiveAnchor("")
                 }}
-                className={`flex items-center gap-1 ${linkCls("/setups", true)}`}
+                className={`inline-flex items-center h-8 gap-1 ${linkCls("/setups", true)}`}
               >
                 {t.nav.setups}
-                <ChevronDown className={`h-4 w-4 transition-transform ${setupsDropdownOpen ? "rotate-180" : ""}`} />
+                <ChevronDown className={`h-4 w-4 mt-px transition-transform ${setupsDropdownOpen ? "rotate-180" : ""}`} />
               </button>
               
               {setupsDropdownOpen && (
@@ -196,14 +196,9 @@ export function Navbar() {
             </div>
 
             <Button
-              variant="outline"
-              size="sm"
               asChild
-              className={`px-4 py-2 bg-transparent rounded-sm transition-all duration-200 hover:bg-primary/15 hover:shadow-[0_0_20px_rgba(168,85,247,0.35)] active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/50 ${
-                pathname === "/login"
-                  ? "border-primary text-primary"
-                  : "border-primary text-white hover:text-primary"
-              }`}
+              size="sm"
+              className="px-5 py-2.5 rounded-full font-medium text-sm font-display tracking-wide transition-all duration-200 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A191E]"
             >
               <Link href="/login">{t.nav.login}</Link>
             </Button>
@@ -319,12 +314,9 @@ export function Navbar() {
                 )}
               </div>
               <Button
-                variant="outline"
-                size="sm"
-                className={`w-full justify-center transition-all duration-200 hover:bg-primary/15 hover:shadow-[0_0_20px_rgba(168,85,247,0.35)] active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/50 ${
-                  pathname === "/login" ? "border-primary text-primary" : "border-primary text-white hover:text-primary"
-                }`}
                 asChild
+                size="sm"
+                className="w-full px-5 py-3 rounded-full font-medium text-sm font-display tracking-wide transition-all duration-200 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A191E]"
               >
                 <Link href="/login" onClick={() => setIsOpen(false)}>
                   {t.nav.login}

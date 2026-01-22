@@ -114,12 +114,12 @@ export function Contact() {
       {/* Enhanced seamless gradient transition from pricing/FAQ - matches the transition above */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#1A191E] via-[#1A191E]/95 via-[#1A191E]/85 via-[#1A191E]/70 via-[#1A191E]/50 to-transparent z-10" />
       {/* Background image */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0" aria-hidden="true">
         <Image
           src="/images/contact-bg.jpg"
-          alt="Contact section background"
+          alt=""
           fill
-          className="object-cover object-center"
+          className="object-cover object-left"
           sizes="100vw"
           loading="lazy"
         />
@@ -130,38 +130,43 @@ export function Contact() {
       <div className="relative z-10">
         <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
           {/* Left side - Text content */}
-          <div>
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 font-display">
-              Got a question?{" "}
-              <span className="text-primary italic">{"We're here to help."}</span>
-            </h2>
-            <p className="text-muted-foreground text-lg mb-8">
-              Whether you need support with your setups, have questions about our plans, 
-              or want to partner with us, our team is ready to assist you.
-            </p>
-            
-            {/* Contact info */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Email us at</p>
-                  <p className="text-foreground font-medium">support@hymosetups.com</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Response time</p>
-                  <p className="text-foreground font-medium">Within 24 hours</p>
+          <div className="relative">
+            <div className="relative rounded-2xl border border-white/10 bg-black/35 p-8 backdrop-blur-md shadow-lg shadow-black/30">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-70" />
+              <div className="relative">
+                <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 font-display">
+                  Got a question?{" "}
+                  <span className="text-brand-gradient italic">{"We're here to help."}</span>
+                </h2>
+                <p className="text-foreground/80 text-lg mb-8">
+                  Whether you need support with your setups, have questions about our plans, 
+                  or want to partner with us, our team is ready to assist you.
+                </p>
+                
+                {/* Contact info */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Email us at</p>
+                      <p className="text-foreground font-medium">support@hymosetups.com</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Response time</p>
+                      <p className="text-foreground font-medium">Within 24 hours</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

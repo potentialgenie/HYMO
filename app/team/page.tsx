@@ -111,8 +111,8 @@ export default function TeamPage() {
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 px-6 sm:px-12 lg:px-24 overflow-hidden">
         <div className="relative z-10">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-display tracking-tight mb-4">
-            Meet the <span className="text-primary">Team</span>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-display tracking-tight mb-4 text-brand-gradient">
+            Meet the <span className="text-brand-gradient">Team</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl font-sans">
             The passionate sim racers and engineers behind HYMO. Our team of champions and professionals
@@ -125,7 +125,7 @@ export default function TeamPage() {
       <section className="py-16 px-6 sm:px-12 lg:px-24">
         <div>
           <div className="flex items-center gap-4 mb-2">
-            <h2 className="text-2xl md:text-3xl font-bold font-display">
+            <h2 className="text-2xl md:text-3xl font-bold font-display text-brand-gradient">
               Management & Founders
             </h2>
             <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
@@ -162,7 +162,7 @@ export default function TeamPage() {
       <section id="drivers-section" className="py-16 px-6 sm:px-12 lg:px-24">
         <div>
           <div className="flex items-center gap-4 mb-2">
-            <h2 className="text-2xl md:text-3xl font-bold font-display">
+            <h2 className="text-2xl md:text-3xl font-bold font-display text-brand-gradient">
               Drivers & Engineers
             </h2>
             <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
@@ -304,7 +304,7 @@ export default function TeamPage() {
                     key={driver.name}
                     className={cn(
                       "group relative overflow-hidden rounded-xl border border-white/[0.06] border-l-4 bg-[#16151a] py-0 shadow-md shadow-black/10 transition-all duration-500 hover:border-white/10 hover:shadow-xl hover:shadow-black/20",
-                      "opacity-0"
+                      "opacity-100 motion-safe:opacity-0"
                     )}
                     style={{
                       animation: `fadeInUp 0.5s ease-out ${filteredDrivers.indexOf(driver) * 30}ms forwards`
@@ -337,14 +337,18 @@ export default function TeamPage() {
       {/* Join CTA */}
       <section className="py-20 px-6 sm:px-12 lg:px-24">
         <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold font-display mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold font-display mb-4 text-brand-gradient">
             Want to Join the Team?
           </h2>
           <p className="text-muted-foreground mb-8 max-w-xl mx-auto font-sans">
             We&apos;re always looking for talented sim racers and engineers to join our growing team.
             Get in touch if you think you have what it takes.
           </p>
-          <Button asChild size="lg">
+          <Button 
+            asChild 
+            size="lg" 
+            className="shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-200 hover:scale-105"
+          >
             <Link href="/#contact">Contact Us</Link>
           </Button>
         </div>

@@ -3,6 +3,25 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Local font declarations */
+@font-face {
+  font-family: 'Monday';
+  src: url('/fonts/monday-webfont.woff2') format('woff2'),
+       url('/fonts/monday-webfont.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Akira Expanded';
+  src: url('/fonts/akira_expanded_demo-webfont.woff2') format('woff2'),
+       url('/fonts/akira_expanded_demo-webfont.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: oklch(0.08 0 0);
   --foreground: oklch(0.98 0 0);
@@ -39,9 +58,75 @@
   --sidebar-ring: oklch(0.65 0.28 328);
 }
 
+@layer utilities {
+  .text-brand-gradient {
+    @apply bg-gradient-to-r from-purple-600  to-pink-600 bg-clip-text text-transparent;
+    display: inline-block;
+    padding-right: 0.2em;
+  }
+
+  .bg-brand-gradient {
+    @apply bg-gradient-to-r from-purple-600  to-pink-600;
+  }
+
+  .border-brand-gradient {
+    border-image: linear-gradient(90deg, rgb(168 85 247), rgb(236 72 153), rgb(168 85 247)) 1;
+  }
+
+  .btn-gradient {
+    @apply bg-gradient-to-r from-purple-600  to-pink-600 text-white border-0;
+  }
+
+  .btn-gradient-outline {
+    @apply bg-transparent text-white border-2 border-transparent;
+    background-image: linear-gradient(transparent, transparent), linear-gradient(90deg, rgb(168 85 247), rgb(236 72 153), rgb(168 85 247));
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+
+  .btn-gradient-outline:hover {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)), linear-gradient(90deg, rgb(168 85 247), rgb(236 72 153), rgb(168 85 247));
+  }
+  
+  .gradient-underline {
+    position: relative;
+  }
+  
+  .gradient-underline::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgb(168 85 247), rgb(236 72 153), rgb(168 85 247), transparent);
+  }
+}
+
+.skip-link {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #1A191E;
+  color: #fff;
+  font-size: 0.875rem;
+  z-index: 1000;
+  transform: translateY(-200%);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.5);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.7);
+}
+
 @theme inline {
   --font-sans: var(--font-archivo), 'Archivo', 'Arial', sans-serif;
-  --font-display: var(--font-monday-pro), 'Monday Pro', 'Orbitron', 'Rajdhani', sans-serif;
+  --font-display: 'Monday', 'Monday Pro', 'Orbitron', 'Rajdhani', sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -188,6 +273,24 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
   }
 }
 .input-neon:focus-visible {

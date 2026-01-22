@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { AnimateSection } from "@/components/animate-section"
@@ -62,7 +63,7 @@ const permanentPlan = {
   price: "€29.99",
 }
 
-export function Pricing() {
+export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly")
 
   return (
@@ -71,11 +72,13 @@ export function Pricing() {
       <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-[#1A191E] via-[#1A191E]/80 to-transparent -z-10" />
       <div className="relative z-10">
         {/* Section Header */}
-        <div className="text-left mb-5">
-          <h2 className="text-4xl sm:text-5xl font-bold mb-4 font-display">
-            Choose Your Plan
-          </h2>
-        </div>
+        {showHeader && (
+          <div className="text-left mb-5">
+            <h2 className="text-4xl sm:text-5xl font-bold mb-4 font-display text-brand-gradient">
+              Choose Your Plan
+            </h2>
+          </div>
+        )}
 
         {/* Billing Toggle */}
         <div className="relative flex flex-wrap items-center justify-left gap-1 rounded-md bg-muted/50 backdrop-blur-sm w-fit mx-left mb-8">
@@ -92,8 +95,10 @@ export function Pricing() {
               )}
             >
               {billingPeriod === period && (
-                <span 
+                <motion.span 
+                  layoutId="pricing-pill"
                   className="absolute inset-0 rounded-md bg-primary shadow-lg shadow-primary/25"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
                   aria-hidden
                 />
               )}
@@ -103,10 +108,18 @@ export function Pricing() {
         </div>
 
         {/* Pricing Cards */}
-        <div className={cn(
-          "grid gap-6 max-w-4xl",
-          billingPeriod === "permanent" ? "grid-cols-1 max-w-[420px]" : "grid-cols-1 sm:grid-cols-2"
-        )}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={billingPeriod}
+            className={cn(
+              "grid gap-6 max-w-4xl",
+              billingPeriod === "permanent" ? "grid-cols-1 max-w-[420px]" : "grid-cols-1 sm:grid-cols-2"
+            )}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.25 }}
+          >
           {billingPeriod === "permanent" ? (
             <Card className="group relative flex flex-col overflow-hidden rounded-2xl border border-0 bg-[#242625] transition-all duration-300 hover:border-primary/60 hover:shadow-[0_18px_45px_rgba(0,0,0,0.55)]">
               <CardHeader>
@@ -143,7 +156,7 @@ export function Pricing() {
                 ))}
               </CardContent>
               <CardFooter className="pt-2 pb-8 flex items-center justify-center">
-                <Button className="flex rounded-md cursor-pointer bg-primary h-12 px-16" variant="outline" size="lg">
+                <Button className="flex rounded-md cursor-pointer h-12 px-16 shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-200 hover:scale-105" size="lg">
                   Get Started
                 </Button>
               </CardFooter>
@@ -181,7 +194,39 @@ export function Pricing() {
                       </CardDescription>
                     </div>
                   </div>
-                  <div className="mt-6 rounded-sm">
+                  
+                  {/* Enhanced Discount Tag - Only show for yearly billing */}
+                  {billingPeriod === "yearly" && (
+                    <div className="mt-6 mb-4">
+                      <div 
+                        className="relative inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm overflow-hidden group/badge"
+                        style={{
+                          background: 'linear-gradient(135deg, rgb(168 85 247), rgb(236 72 153))',
+                          boxShadow: '0 4px 20px rgba(168, 85, 247, 0.4), 0 0 40px rgba(236, 72, 153, 0.2)'
+                        }}
+                      >
+                        {/* Animated shine effect */}
+                        <span 
+                          className="absolute inset-0 opacity-0 group-hover/badge:opacity-100 transition-opacity duration-500"
+                          style={{
+                            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+                            animation: 'shine 2s ease-in-out infinite'
+                          }}
+                        />
+                        
+                        {/* Sparkle icon */}
+                        <svg className="w-4 h-4 text-white relative z-10" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        
+                        <span className="text-white font-bold text-base tracking-wide relative z-10">
+                          Save {plan.yearly.discount}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className={cn("rounded-sm", billingPeriod === "yearly" ? "mt-0" : "mt-6")}>
                     {billingPeriod === "monthly" ? (
                       <div className="flex flex-wrap items-baseline justify-left gap-1.5">
                         <span className={cn(
@@ -199,12 +244,6 @@ export function Pricing() {
                       </div>
                     ) : (
                       <div className="space-y-1">
-                        <span className={cn(
-                          "inline-block rounded-md px-2 py-0.5 text-xs font-semibold",
-                          plan.popular ? "bg-white/15 text-white" : "bg-primary/20 text-primary"
-                        )}>
-                          {plan.yearly.discount}
-                        </span>
                         <div className="flex flex-wrap items-baseline justify-start gap-1.5">
                           <span className={cn(
                             "text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight",
@@ -265,12 +304,11 @@ export function Pricing() {
                 <CardFooter className="pt-2 pb-6 flex items-center justify-center">
                   <Button
                     className={cn(
-                      "flex cursor-pointer h-12 px-16 rounded-full text-sm font-semibold tracking-wide",
+                      "flex cursor-pointer h-12 px-16 rounded-full text-sm font-semibold tracking-wide transition-all duration-200 hover:scale-105",
                       plan.popular
-                        ? "bg-fuchsia-700 text-primary-foreground hover:bg-primary/90"
-                        : "bg-fuchsia-700 text-primary-foreground hover:bg-primary/90"
+                        ? "shadow-[0_0_25px_rgba(168,85,247,0.4)] hover:shadow-[0_0_35px_rgba(168,85,247,0.6)]"
+                        : "shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)]"
                     )}
-                    variant={plan.popular ? "default" : "default"}
                     size="lg"
                   >
                     Get Started
@@ -279,7 +317,8 @@ export function Pricing() {
               </Card>
             ))
           )}
-        </div>
+          </motion.div>
+        </AnimatePresence>
 
       </div>
     </AnimateSection>

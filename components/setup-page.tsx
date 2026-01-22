@@ -186,7 +186,7 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
         {/* Header with Logo and Title - Centered */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 text-center sm:text-left">
           <Image src={logo as string} alt={title} width={100} height={100} className="shrink-0" />
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground italic font-display">{title}</h1>
+          <h1 className="text-4xl md:text-5xl font-bold italic font-display text-brand-gradient">{title}</h1>
         </div>
 
         {/* Filters Row - Centered */}
@@ -300,14 +300,14 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
               </>
             )}
 
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200 hover:scale-105">
+            <Button className="transition-all duration-200 hover:scale-105 shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)]">
               Find Setup
             </Button>
 
             <Button 
-              variant="secondary" 
+              variant="outline" 
               onClick={clearAllFilters}
-              className="bg-secondary hover:bg-secondary/80 text-foreground transition-all duration-200 hover:scale-105"
+              className="btn-gradient-outline transition-all duration-200 hover:scale-105"
             >
               Clear All
             </Button>
@@ -478,8 +478,7 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
                     <td className="px-4 py-3 text-center">
                       <Button 
                         size="sm" 
-                        variant="default" 
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1.5 h-auto cursor-pointer transition-all duration-200 hover:scale-105" 
+                        className="px-3 py-1.5 h-auto cursor-pointer transition-all duration-200 hover:scale-105 shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:shadow-[0_0_25px_rgba(168,85,247,0.5)]" 
                         aria-label="Download setup"
                       >
                         <Download className="h-4 w-4" />
@@ -491,101 +490,183 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
             </tbody>
           </table>
           </div>
+        </div>
 
-          {filteredSetups.length > 0 && (
-            <>
-              <div className="flex flex-col items-center gap-4 py-6">
-                {/* Simplified pagination info */}
-                <div className="text-sm text-muted-foreground">
-                  Showing <span className="text-primary font-semibold">{displayFrom}-{displayTo}</span> of <span className="text-primary font-semibold">{filteredSetups.length}</span> setups
+        {filteredSetups.length > 0 && (
+          <div className="flex flex-col items-center gap-4 py-6">
+            {/* Simplified pagination info */}
+            <div className="text-sm text-muted-foreground">
+              Showing <span className="text-primary font-semibold">{displayFrom}-{displayTo}</span> of <span className="text-primary font-semibold">{filteredSetups.length}</span> setups
+            </div>
+            
+            {/* Simplified pagination controls */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => switchPage(0)}
+                disabled={currentPage === 0}
+                className="p-2 rounded-md border border-border bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                aria-label="First page"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => switchPage(currentPage - 1)}
+                disabled={currentPage === 0}
+                className="p-2 rounded-md border border-border bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {(() => {
+                  const maxVisible = 7
+                  const pages: number[] = []
+                  
+                  if (totalPages <= maxVisible) {
+                    // Show all pages if total is less than max
+                    for (let i = 0; i < totalPages; i++) {
+                      pages.push(i)
+                    }
+                  } else {
+                    // Show pages around current page
+                    let start = Math.max(0, currentPage - Math.floor(maxVisible / 2))
+                    let end = Math.min(totalPages, start + maxVisible)
+                    
+                    if (end - start < maxVisible) {
+                      start = Math.max(0, end - maxVisible)
+                    }
+                    
+                    for (let i = start; i < end; i++) {
+                      pages.push(i)
+                    }
+                  }
+                  
+                  return pages.map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      onClick={() => switchPage(pageNum)}
+                      className={`min-w-[2.5rem] h-10 px-3 rounded-md border transition-all ${
+                        currentPage === pageNum
+                          ? "bg-primary border-primary text-primary-foreground font-semibold"
+                          : "border-border bg-secondary hover:bg-secondary/80 text-foreground"
+                      }`}
+                      aria-label={`Page ${pageNum + 1}`}
+                    >
+                      {pageNum + 1}
+                    </button>
+                  ))
+                })()}
+              </div>
+              
+              <button
+                type="button"
+                onClick={() => switchPage(currentPage + 1)}
+                disabled={currentPage >= totalPages - 1}
+                className="p-2 rounded-md border border-border bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                aria-label="Next page"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => switchPage(totalPages - 1)}
+                disabled={currentPage >= totalPages - 1}
+                className="p-2 rounded-md border border-border bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                aria-label="Last page"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Description Section */}
+        {(() => {
+          // Get game name
+          const gameName = game === "iracing" ? "iRacing" : game === "acc" ? "Assetto Corsa Competizione" : "Le Mans Ultimate"
+          
+          // Get values from first filtered setup or use defaults
+          let seasonText = ""
+          let year = ""
+          let weekText = ""
+          let carText = "your car"
+          let trackText = "the track"
+          
+          if (filteredSetups.length > 0) {
+            const firstSetup = filteredSetups[0]
+            
+            // Extract season, year, week from first setup
+            if (game === "iracing" && firstSetup.week) {
+              const seasonMatch = firstSetup.season.match(/(\d{4})\s*S(\d+)/i)
+              const weekMatch = firstSetup.week.match(/week\s*(\d+)/i)
+              if (seasonMatch && weekMatch) {
+                year = seasonMatch[1]
+                const seasonNum = seasonMatch[2]
+                weekText = weekMatch[1]
+                seasonText = `Season ${seasonNum}`
+              }
+            } else if (firstSetup.season) {
+              // For non-iRacing games, try to extract year from season
+              const yearMatch = firstSetup.season.match(/(\d{4})/i)
+              if (yearMatch) {
+                year = yearMatch[1]
+              }
+              seasonText = firstSetup.season
+            }
+            
+            carText = firstSetup.car || carText
+            trackText = firstSetup.track || trackText
+          }
+          
+          // Build description with dynamic values
+          const seasonPart = seasonText && year ? ` – ${seasonText} ${year}` : seasonText ? ` – ${seasonText}` : ""
+          const weekPart = weekText ? `, Week ${weekText}` : ""
+          
+          // Split description into paragraphs for better readability
+          const descriptionParts = [
+            `Experience the ultimate in-game performance with professional car setups developed by elite E-Sports drivers.`,
+            `This setup pack is specifically engineered for ${gameName}${seasonPart}${weekPart}, optimised for the ${carText} at ${trackText} combination to deliver maximum performance in competitive conditions.`,
+            `The package includes Consistent, E-Sports, and Wet setup variants, fully optimised for both Qualifying and Race sessions. Consistent setups focus on stability, control, and long-run confidence, E-Sports setups are designed to extract ultimate lap time, while Wet setups are tuned to provide maximum grip, predictability, and confidence in low-traction conditions.`,
+            `Whether you are racing in official events or pushing for personal bests, these professionally developed setups help you achieve faster lap times, improved tyre management, and greater overall race consistency across all conditions.`
+          ]
+          
+          return (
+            <div className="mt-12 mb-8 max-w-5xl mx-auto">
+              {/* Section Header */}
+              <div className="mb-6 text-center">
+                <h2 className="text-2xl md:text-3xl font-bold font-display text-brand-gradient mb-2">
+                  About This Setup Pack
+                </h2>
+                <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-primary/60 to-transparent mx-auto"></div>
+              </div>
+              
+              {/* Description Card */}
+              <div className="relative group bg-[#16151a] border border-white/[0.08] rounded-xl p-8 md:p-10 shadow-xl shadow-black/20 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] hover:shadow-primary/10">
+                {/* Top gradient accent */}
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-60"></div>
+                
+                {/* Content */}
+                <div className="space-y-5">
+                  {descriptionParts.map((paragraph, index) => (
+                    <p 
+                      key={index}
+                      className="text-muted-foreground/90 leading-relaxed font-sans text-base md:text-lg"
+                    >
+                      {paragraph}
+                    </p>
+                  ))}
                 </div>
                 
-                {/* Simplified pagination controls */}
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => switchPage(0)}
-                    disabled={currentPage === 0}
-                    className="p-2 rounded-md border border-border bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                    aria-label="First page"
-                  >
-                    <ChevronsLeft className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => switchPage(currentPage - 1)}
-                    disabled={currentPage === 0}
-                    className="p-2 rounded-md border border-border bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                    aria-label="Previous page"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  
-                  <div className="flex items-center gap-1">
-                    {(() => {
-                      const maxVisible = 7
-                      const pages: number[] = []
-                      
-                      if (totalPages <= maxVisible) {
-                        // Show all pages if total is less than max
-                        for (let i = 0; i < totalPages; i++) {
-                          pages.push(i)
-                        }
-                      } else {
-                        // Show pages around current page
-                        let start = Math.max(0, currentPage - Math.floor(maxVisible / 2))
-                        let end = Math.min(totalPages, start + maxVisible)
-                        
-                        if (end - start < maxVisible) {
-                          start = Math.max(0, end - maxVisible)
-                        }
-                        
-                        for (let i = start; i < end; i++) {
-                          pages.push(i)
-                        }
-                      }
-                      
-                      return pages.map((pageNum) => (
-                        <button
-                          key={pageNum}
-                          type="button"
-                          onClick={() => switchPage(pageNum)}
-                          className={`min-w-[2.5rem] h-10 px-3 rounded-md border transition-all ${
-                            currentPage === pageNum
-                              ? "bg-primary border-primary text-primary-foreground font-semibold"
-                              : "border-border bg-secondary hover:bg-secondary/80 text-foreground"
-                          }`}
-                          aria-label={`Page ${pageNum + 1}`}
-                        >
-                          {pageNum + 1}
-                        </button>
-                      ))
-                    })()}
-                  </div>
-                  
-                  <button
-                    type="button"
-                    onClick={() => switchPage(currentPage + 1)}
-                    disabled={currentPage >= totalPages - 1}
-                    className="p-2 rounded-md border border-border bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                    aria-label="Next page"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => switchPage(totalPages - 1)}
-                    disabled={currentPage >= totalPages - 1}
-                    className="p-2 rounded-md border border-border bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                    aria-label="Last page"
-                  >
-                    <ChevronsRight className="h-4 w-4" />
-                  </button>
-                </div>
+                {/* Bottom accent line */}
+                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent mt-6"></div>
               </div>
-            </>
-          )}
-        </div>
+            </div>
+          )
+        })()}
 
         {/* YouTube Video Players Section */}
         <div className="mt-8 space-y-8">

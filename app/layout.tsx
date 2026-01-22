@@ -1,6 +1,6 @@
 import React from "react"
 import type { Metadata } from 'next'
-import { Archivo, Orbitron } from 'next/font/google'
+import { Archivo } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { LanguageProvider } from '@/lib/language-context'
 import './globals.css'
@@ -10,12 +10,6 @@ const archivo = Archivo({
   variable: '--font-archivo',
   weight: ['300', '400', '500', '600', '700'],
   style: ['normal', 'italic'],
-});
-const orbitronFallback = Orbitron({ 
-  subsets: ["latin"],
-  variable: '--font-monday-pro',
-  weight: ['400', '500', '600', '700'],
-  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -48,9 +42,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${archivo.variable} ${orbitronFallback.variable} font-sans antialiased`}>
+      <body className={`${archivo.variable} font-sans antialiased`}>
+        <a href="#main-content" className="skip-link">
+          Skip to content
+        </a>
         <LanguageProvider>
-          {children}
+          <div id="main-content">
+            {children}
+          </div>
         </LanguageProvider>
         <Analytics />
       </body>

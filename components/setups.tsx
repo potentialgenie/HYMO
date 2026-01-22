@@ -5,7 +5,7 @@ import useEmblaCarousel from "embla-carousel-react"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { defaultViewport, defaultTransition } from "@/components/animate-section"
-import { Download, Star, Share2, ChevronRight, ChevronLeft } from "lucide-react"
+import { Download, Share2, ChevronRight, ChevronLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 
@@ -13,51 +13,97 @@ const games = [
   { id: "all", name: "All Games" },
   { id: "acc", name: "ACC" },
   { id: "iracing", name: "iRacing" },
+  { id: "lmu", name: "LMU" },
   { id: "f1", name: "F1 24" },
-  { id: "gt7", name: "Gran Turismo 7" },
 ]
 
-// Helper function to check if it's the start of a week (Monday) or month (1st of month)
-const isNewPeriod = () => {
-  const now = new Date()
-  const dayOfWeek = now.getDay() // 0 = Sunday, 1 = Monday
-  const dayOfMonth = now.getDate()
-  
-  // Check if it's Monday (start of week) or 1st of month
-  return dayOfWeek === 1 || dayOfMonth === 1
-}
-
-// Helper function to parse download count (handles "12.4K" format)
-const parseDownloads = (downloads: string): number => {
-  const num = parseFloat(downloads.replace('K', ''))
-  return downloads.includes('K') ? num * 1000 : num
-}
 
 const allSetups = [
-  { id: 1, game: "acc", gameName: "Assetto Corsa Competizione", car: "Ferrari 296 GT3", track: "Spa-Francorchamps", lapTime: "2:16.847", downloads: "12.4K", rating: 4.9, champion: "Max Benecke", image: "/images/acc-hero.jpg" },
-  { id: 2, game: "iracing", gameName: "iRacing", car: "Porsche 911 GT3 R", track: "Nürburgring GP", lapTime: "1:54.231", downloads: "8.7K", rating: 4.8, champion: "Joshua Rogers", image: "/images/contact-bg.jpg" },
-  { id: 3, game: "f1", gameName: "F1 24", car: "Red Bull RB20", track: "Monaco", lapTime: "1:10.456", downloads: "15.2K", rating: 4.9, champion: "Jarno Opmeer", image: "/images/hero-bg.jpg" },
-  { id: 4, game: "acc", gameName: "Assetto Corsa Competizione", car: "BMW M4 GT3", track: "Monza", lapTime: "1:46.123", downloads: "10.1K", rating: 4.7, champion: "Nils Naujoks", image: "/images/lmu-hero.jpg" },
-  { id: 5, game: "gt7", gameName: "Gran Turismo 7", car: "Toyota GR010 Hybrid", track: "Le Mans", lapTime: "3:24.567", downloads: "6.3K", rating: 4.8, champion: "Takuma Miyazono", image: "/images/hero-bg-1.jpg" },
-  { id: 6, game: "iracing", gameName: "iRacing", car: "McLaren MP4-30", track: "Suzuka", lapTime: "1:29.847", downloads: "9.5K", rating: 4.9, champion: "Bono Huis", image: "/images/cta.jpg" },
+  { 
+    id: 1, 
+    game: "acc", 
+    gameName: "Assetto Corsa Competizione", 
+    car: "Ferrari 296 GT3", 
+    track: "Spa-Francorchamps", 
+    lapTime: "2:16.847", 
+    version: "1.9.5", 
+    season: "2024", 
+    week: "Week 5", 
+    champion: "Max Benecke", 
+    image: "/images/acc-hero.jpg" 
+  },
+  { 
+    id: 2, 
+    game: "iracing", 
+    gameName: "iRacing", 
+    car: "Porsche 911 GT3 R", 
+    track: "Nürburgring GP", 
+    lapTime: "1:54.231", 
+    version: "2025.01", 
+    season: "2025 S1", 
+    week: "Week 3", 
+    champion: "Joshua Rogers", 
+    image: "/images/contact-bg.jpg" 
+  },
+  { 
+    id: 3, 
+    game: "f1", 
+    gameName: "F1 24", 
+    car: "Red Bull RB20", 
+    track: "Monaco", 
+    lapTime: "1:10.456", 
+    version: "2024", 
+    season: "2024", 
+    week: "Monaco GP", 
+    champion: "Jarno Opmeer", 
+    image: "/images/hero-bg.jpg" 
+  },
+  { 
+    id: 4, 
+    game: "acc", 
+    gameName: "Assetto Corsa Competizione", 
+    car: "BMW M4 GT3", 
+    track: "Monza", 
+    lapTime: "1:46.123", 
+    version: "1.9.5", 
+    season: "2024", 
+    week: "Week 2", 
+    champion: "Nils Naujoks", 
+    image: "/images/lmu-hero.jpg" 
+  },
+  { 
+    id: 5, 
+    game: "lmu", 
+    gameName: "Le Mans Ultimate", 
+    car: "Toyota GR010 Hybrid", 
+    track: "Le Mans", 
+    lapTime: "3:24.567", 
+    version: "1.1.0.2", 
+    season: "2024", 
+    week: "Le Mans 24H", 
+    champion: "Takuma Miyazono", 
+    image: "/images/hero-bg-1.jpg" 
+  },
+  { 
+    id: 6, 
+    game: "iracing", 
+    gameName: "iRacing", 
+    car: "McLaren MP4-30", 
+    track: "Suzuka", 
+    lapTime: "1:29.847", 
+    version: "2025.01", 
+    season: "2025 S1", 
+    week: "Week 1", 
+    champion: "Bono Huis", 
+    image: "/images/cta.jpg" 
+  },
 ]
 
-// Automatically determine popular/featured setups at start of week/month
+// Automatically determine featured setups - feature the first 3
 const getFeaturedSetups = () => {
-  // Calculate popularity score: (downloads * 0.4) + (rating * 0.6 * 1000)
-  const setupsWithScore = allSetups.map(setup => ({
+  return allSetups.map((setup, index) => ({
     ...setup,
-    popularityScore: parseDownloads(setup.downloads) * 0.4 + setup.rating * 0.6 * 1000
-  }))
-  
-  // Sort by popularity score and get top 3-5 as featured
-  const sorted = [...setupsWithScore].sort((a, b) => b.popularityScore - a.popularityScore)
-  const topPopular = sorted.slice(0, 3).map(s => s.id)
-  
-  // Mark as featured
-  return allSetups.map(setup => ({
-    ...setup,
-    featured: topPopular.includes(setup.id)
+    featured: index < 3 // Mark first 3 as featured
   }))
 }
 
@@ -104,13 +150,11 @@ export function Setups() {
     ? setups 
     : setups.filter(s => s.game === activeGame)
 
-  // Sort setups: featured first, then by popularity
+  // Sort setups: featured first, then maintain original order
   const sortedSetups = [...filteredSetups].sort((a, b) => {
     if (a.featured && !b.featured) return -1
     if (!a.featured && b.featured) return 1
-    const aScore = parseDownloads(a.downloads) * 0.4 + a.rating * 0.6 * 1000
-    const bScore = parseDownloads(b.downloads) * 0.4 + b.rating * 0.6 * 1000
-    return bScore - aScore
+    return 0 // Maintain original order for same featured status
   })
 
   return (
@@ -131,22 +175,12 @@ export function Setups() {
           viewport={defaultViewport}
           transition={defaultTransition}
         >
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 font-display">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 font-display text-brand-gradient">
             Browse Pro Setups
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-2">
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Explore setups from the {"world's"} top esports racing champions
           </p>
-          {isNewPeriod() && (
-            <p className="text-primary text-sm font-medium mt-2 inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full border border-primary/30">
-              <span>✨</span>
-              <span>
-                {new Date().getDate() === 1 
-                  ? "This month's" 
-                  : "This week's"} most popular setups - automatically updated
-              </span>
-            </p>
-          )}
         </motion.div>
 
        {/* Game Filter - Segmented pill with indicator - Centered */}
@@ -208,49 +242,68 @@ export function Setups() {
                       )}
                     </div>
 
-                    {/* Content – dark, stats + tuned by + pink action buttons */}
+                    {/* Content – Setup Info + Action Buttons */}
                     <div className="flex flex-col flex-1 p-4 bg-transparent">
-
-                      <div className="flex justify-end gap-4 mt-1">
-                        <div className="text-right space-y-2">
-                          <div>
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Downloads</p>
-                            <p className="flex items-center justify-end gap-1 font-semibold text-foreground mt-0.5">
-                              <Download className="h-3.5 w-3.5 text-white" />
-                              {setup.downloads}
-                            </p>
+                      
+                      {/* Setup Information */}
+                      <div className="space-y-3 mb-4">
+                        {/* Game-specific info: Season & Week for iRacing, Version for ACC/LMU */}
+                        {setup.game === "iracing" && setup.season && setup.week && (
+                          <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                            <div>
+                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Season & Week</p>
+                              <p className="text-sm font-semibold text-foreground">
+                                <span className="text-primary">{setup.season}</span>
+                                <span className="text-muted-foreground mx-1">•</span>
+                                <span className="text-foreground">{setup.week}</span>
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Rating</p>
-                            <p className="flex items-center justify-end gap-1 font-semibold text-foreground mt-0.5">
-                              <Star className="h-3.5 w-3.5 fill-white text-white" />
-                              {setup.rating}
-                            </p>
+                        )}
+                        
+                        {(setup.game === "acc" || setup.game === "lmu") && setup.version && (
+                          <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                            <div>
+                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Game Version</p>
+                              <p className="text-sm font-semibold text-primary">{setup.version}</p>
+                            </div>
                           </div>
+                        )}
+                        
+                        {/* Setup Made By */}
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Setup Made By</p>
+                          <p className="text-sm font-semibold text-foreground">{setup.champion}</p>
                         </div>
                       </div>
 
-                      {/* Tuned by (left) + Download / Share buttons (right) */}
-                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50">
-                        <p className="text-[11px] text-muted-foreground">
-                          Tuned by <span className="text-foreground font-medium">{setup.champion}</span>
-                        </p>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            className="h-9 w-9 rounded-full bg-transparent border border-white cursor-pointer hover:bg-white/10 flex items-center justify-center hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                            aria-label="Download setup"
-                          >
-                            <Download className="h-4 w-4 text-white" />
-                          </button>
-                          <button
-                            type="button"
-                            className="h-9 w-9 rounded-full bg-transparent border border-white cursor-pointer hover:bg-white/10 flex items-center justify-center hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                            aria-label="Share setup"
-                          >
-                            <Share2 className="h-4 w-4 text-white" />
-                          </button>
-                        </div>
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-2 mt-auto pt-3 border-t border-border/50">
+                        <button
+                          type="button"
+                          className="flex-1 h-9 rounded-lg bg-transparent border-2 border-transparent cursor-pointer flex items-center justify-center gap-2 hover:opacity-90 transition-all font-medium text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                          style={{
+                            backgroundImage: 'linear-gradient(#242625, #242625), linear-gradient(90deg, rgb(168 85 247), rgb(236 72 153), rgb(168 85 247))',
+                            backgroundOrigin: 'border-box',
+                            backgroundClip: 'padding-box, border-box'
+                          }}
+                          aria-label="Download setup"
+                        >
+                          <Download className="h-4 w-4 text-white" />
+                          <span className="text-white text-xs font-semibold">Download</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="h-9 w-9 rounded-lg bg-transparent border-2 border-transparent cursor-pointer flex items-center justify-center hover:opacity-90 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background shrink-0"
+                          style={{
+                            backgroundImage: 'linear-gradient(#242625, #242625), linear-gradient(90deg, rgb(168 85 247), rgb(236 72 153), rgb(168 85 247))',
+                            backgroundOrigin: 'border-box',
+                            backgroundClip: 'padding-box, border-box'
+                          }}
+                          aria-label="Share setup"
+                        >
+                          <Share2 className="h-4 w-4 text-white" />
+                        </button>
                       </div>
                     </div>
                   </article>
@@ -304,7 +357,10 @@ export function Setups() {
 
         {/* View All Button - Centered */}
         <div className="text-center mt-8">
-          <Button variant="outline" size="lg" className="group bg-transparent bg-[#242529]">
+          <Button 
+            size="lg" 
+            className="group shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-200 hover:scale-105"
+          >
             View All Setups
             <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Button>

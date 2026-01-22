@@ -46,16 +46,16 @@ export function Hero() {
           animate="visible"
         >
           <motion.div variants={item}>
-            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-bold tracking-tight uppercase mb-4">
+            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-semibold tracking-tight uppercase mb-4">
               <span className="text-foreground">Race Like a{" "}
-              <span className="text-primary">Pro</span></span>
+              <span className="text-brand-gradient">Pro</span></span>
               <span className="block text-foreground text-3xl sm:text-4xl md:text-4xl lg:text-5xl mt-2 font-bold normal-case">Esport setups tuned by champions</span>
             </h1>
           </motion.div>
 
           {/* Red separator line */}
           <motion.div
-            className="h-0.5 w-80 bg-pink-500 ml-auto mb-6"
+            className="h-0.5 w-80 bg-brand-gradient ml-auto mb-6"
             aria-hidden
             variants={item}
           />
@@ -68,7 +68,7 @@ export function Hero() {
             Get access to the exact car setups used by professional esports racers. Dominate every track with precision-tuned configurations.
           </motion.p>
 
-          {/* CTA Buttons - BUY NOW filled, BOOK NOW outlined */}
+          {/* CTA Buttons - BUY NOW filled with gradient, BOOK NOW with gradient outline */}
           <motion.div
             className="flex flex-col sm:flex-row items-end justify-end gap-4"
             variants={item}

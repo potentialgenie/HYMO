@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { motion } from "framer-motion"
 import { defaultViewport, defaultTransition } from "@/components/animate-section"
 
@@ -20,14 +21,15 @@ export function Footer() {
           {/* Logo & Description */}
           <div className="col-span-1">
             <div className="mb-4">
-              <div className="font-display font-bold">
-                <div className="text-3xl md:text-4xl bg-gradient-to-r from-purple-500 via-pink-500 to-purple-600 bg-clip-text text-transparent">
-                  HYMO
-                </div>
-                <div className="text-xl md:text-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-purple-600 bg-clip-text text-transparent">
-                  SETUPS
-                </div>
-              </div>
+              <Link href="/">
+                <Image
+                  src="/images/hymo-logo.png"
+                  alt="HYMO"
+                  width={120}
+                  height={40}
+                  className="h-8 w-auto"
+                />
+              </Link>
             </div>
             <p className="text-muted-foreground text-sm font-sans">
               Professional esports racing setups tuned by champions.
@@ -36,7 +38,7 @@ export function Footer() {
 
           {/* Legal Links */}
           <div>
-            <h4 className="font-display font-bold text-foreground mb-4 text-lg">Legal</h4>
+            <h4 className="font-display font-bold mb-4 text-lg text-brand-gradient">Legal</h4>
             <ul className="space-y-3">
               <li>
                 <Link href="#" className="text-muted-foreground hover:text-foreground text-sm font-sans transition-colors">
@@ -63,7 +65,7 @@ export function Footer() {
 
           {/* Company Links */}
           <div>
-            <h4 className="font-display font-bold text-foreground mb-4 text-lg">Company</h4>
+            <h4 className="font-display font-bold mb-4 text-lg text-brand-gradient">Company</h4>
             <ul className="space-y-3">
               <li>
                 <Link href="#" className="text-muted-foreground hover:text-foreground text-sm font-sans transition-colors">
@@ -85,7 +87,7 @@ export function Footer() {
 
           {/* Social Links */}
           <div>
-            <h4 className="font-display font-bold text-foreground mb-4 text-lg">Follow Us</h4>
+            <h4 className="font-display font-bold mb-4 text-lg text-brand-gradient">Follow Us</h4>
             <div className="flex items-center gap-4">
               {/* Discord */}
               <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Discord">
