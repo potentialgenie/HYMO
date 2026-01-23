@@ -49,7 +49,7 @@ export function Hero() {
             <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-semibold tracking-tight uppercase mb-4">
               <span className="text-foreground">Race Like a{" "}
               <span className="text-brand-gradient">Pro</span></span>
-              <span className="block text-foreground text-3xl sm:text-4xl md:text-4xl lg:text-5xl mt-2 font-bold normal-case">Esport setups tuned by champions</span>
+              <span className="block text-foreground text-3xl sm:text-4xl md:text-4xl lg:text-5xl mt-2 font-semibold normal-case">Esport setups tuned by champions</span>
             </h1>
           </motion.div>
 
@@ -75,7 +75,7 @@ export function Hero() {
           >
             <Button
               size="lg"
-              className="uppercase text-sm font-semibold px-8 py-6 rounded-md border border-primary transition-transform duration-200 hover:scale-105"
+              className="uppercase text-sm font-semibold px-8 py-6 rounded-md bg-brand-gradient text-white transition-all duration-200 hover:brightness-110"
               asChild
             >
               <Link href="/pricing">Buy Now</Link>
@@ -83,7 +83,7 @@ export function Hero() {
             <Button
               variant="outline"
               size="lg"
-              className="uppercase text-sm font-semibold px-8 py-6 rounded-md bg-transparent border border-white text-white hover:bg-white/10 hover:text-white transition-transform duration-200 hover:scale-105"
+              className="uppercase text-sm font-semibold px-8 py-6 rounded-md bg-transparent border border-white text-white hover:bg-white/10 hover:text-white transition-all duration-200"
               asChild
             >
               <Link href="/#contact">Book Now</Link>

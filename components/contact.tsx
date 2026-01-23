@@ -130,43 +130,40 @@ export function Contact() {
       <div className="relative z-10">
         <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
           {/* Left side - Text content */}
-          <div className="relative">
-            <div className="relative rounded-2xl border border-white/10 bg-black/35 p-8 backdrop-blur-md shadow-lg shadow-black/30">
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-70" />
-              <div className="relative">
-                <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 font-display">
-                  Got a question?{" "}
-                  <span className="text-brand-gradient italic">{"We're here to help."}</span>
-                </h2>
-                <p className="text-foreground/80 text-lg mb-8">
-                  Whether you need support with your setups, have questions about our plans, 
-                  or want to partner with us, our team is ready to assist you.
-                </p>
-                
-                {/* Contact info */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Email us at</p>
-                      <p className="text-foreground font-medium">support@hymosetups.com</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Response time</p>
-                      <p className="text-foreground font-medium">Within 24 hours</p>
-                    </div>
-                  </div>
+          <div>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 font-display">
+              Got a question?{" "}
+              <span>{"We're here to help."}</span>
+            </h2>
+            <p className="text-white/80 text-lg mb-8">
+              Whether you need support with your setups, have questions about our plans, 
+              or want to partner with us, our team is ready to assist you.
+            </p>
+            
+            {/* Contact info */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                <div className="w-11 h-11 rounded-full border border-white/20 bg-white/10 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-xs uppercase tracking-wider text-white/60">Email us</p>
+                  <a href="mailto:support@hymosetups.com" className="text-white font-medium hover:underline">
+                    support@hymosetups.com
+                  </a>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                <div className="w-11 h-11 rounded-full border border-white/20 bg-white/10 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-xs uppercase tracking-wider text-white/60">Response time</p>
+                  <p className="text-white font-medium">Within 24 hours</p>
                 </div>
               </div>
             </div>
@@ -269,7 +266,7 @@ export function Contact() {
                 type="submit"
                 size="lg"
                 disabled={isSubmitting}
-                className="h-12 w-full cursor-pointer rounded-md font-semibold shadow-lg shadow-primary/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/30 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="h-12 w-full cursor-pointer rounded-md font-semibold transition-colors duration-200 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>

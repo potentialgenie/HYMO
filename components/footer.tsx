@@ -25,9 +25,9 @@ export function Footer() {
                 <Image
                   src="/images/hymo-logo.png"
                   alt="HYMO"
-                  width={120}
-                  height={40}
-                  className="h-8 w-auto"
+                  width={160}
+                  height={52}
+                  className="h-12 w-auto"
                 />
               </Link>
             </div>
@@ -38,7 +38,7 @@ export function Footer() {
 
           {/* Legal Links */}
           <div>
-            <h4 className="font-display font-bold mb-4 text-lg text-brand-gradient">Legal</h4>
+            <h4 className="font-display font-bold mb-4 text-lg text-white">Legal</h4>
             <ul className="space-y-3">
               <li>
                 <Link href="#" className="text-muted-foreground hover:text-foreground text-sm font-sans transition-colors">
@@ -65,7 +65,7 @@ export function Footer() {
 
           {/* Company Links */}
           <div>
-            <h4 className="font-display font-bold mb-4 text-lg text-brand-gradient">Company</h4>
+            <h4 className="font-display font-bold mb-4 text-lg text-white">Company</h4>
             <ul className="space-y-3">
               <li>
                 <Link href="#" className="text-muted-foreground hover:text-foreground text-sm font-sans transition-colors">
@@ -87,7 +87,7 @@ export function Footer() {
 
           {/* Social Links */}
           <div>
-            <h4 className="font-display font-bold mb-4 text-lg text-brand-gradient">Follow Us</h4>
+            <h4 className="font-display font-bold mb-4 text-lg text-white">Follow Us</h4>
             <div className="flex items-center gap-4">
               {/* Discord */}
               <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Discord">

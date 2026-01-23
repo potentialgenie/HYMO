@@ -78,14 +78,11 @@
   }
 
   .btn-gradient-outline {
-    @apply bg-transparent text-white border-2 border-transparent;
-    background-image: linear-gradient(transparent, transparent), linear-gradient(90deg, rgb(168 85 247), rgb(236 72 153), rgb(168 85 247));
-    background-origin: border-box;
-    background-clip: padding-box, border-box;
+    @apply bg-transparent text-white border-2 border-primary;
   }
 
   .btn-gradient-outline:hover {
-    background-image: linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)), linear-gradient(90deg, rgb(168 85 247), rgb(236 72 153), rgb(168 85 247));
+    @apply bg-white/10;
   }
   
   .gradient-underline {
@@ -327,11 +324,11 @@
     overflow-x: hidden;
   }
   
-  /* MONDAY PRO for titles and highlights - minimum 12pt for legibility */
+  /* Use normal font for headers */
   h1, h2, h3, h4, h5, h6,
   .font-display {
-    font-family: var(--font-display);
-    font-weight: 400; /* Regular style as per style guide */
+    font-family: var(--font-sans);
+    font-weight: 400;
     letter-spacing: 0.02em;
   }
   

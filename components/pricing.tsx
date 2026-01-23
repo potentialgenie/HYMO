@@ -74,7 +74,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
         {/* Section Header */}
         {showHeader && (
           <div className="text-center mb-5">
-            <h2 className="text-4xl sm:text-5xl font-bold mb-4 font-display text-brand-gradient">
+            <h2 className="text-4xl sm:text-5xl font-bold mb-4 font-display text-white">
               Choose Your Plan
             </h2>
           </div>
@@ -121,12 +121,12 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
             transition={{ duration: 0.25 }}
           >
           {billingPeriod === "permanent" ? (
-            <Card className="group relative flex flex-col overflow-hidden rounded-2xl border border-0 bg-[#242625] transition-all duration-300 hover:border-primary/60 hover:shadow-[0_18px_45px_rgba(0,0,0,0.55)]">
+            <Card className="group relative flex flex-col overflow-hidden rounded-md border border-white/10 bg-[#242625] transition-colors duration-200">
               <CardHeader>
                 <div className="flex items-start justify-start gap-2">
                   <div className="flex flex-col items-start justify-center">
                     <CardTitle className="text-4xl font-bold tracking-tight uppercase">{permanentPlan.name}</CardTitle>
-                    <CardDescription className="mt-1.5 text-sm">
+                    <CardDescription className="mt-1.5 text-sm text-white/80">
                       {permanentPlan.description}
                     </CardDescription>
                   </div>
@@ -135,7 +135,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                   <span className="text-6xl font-bold tracking-tight text-foreground">
                     {permanentPlan.price}
                   </span>
-                  <span className="ml-2 text-sm font-medium text-muted-foreground">Permanent</span>
+                    <span className="ml-2 text-sm font-medium text-white/70">Permanent</span>
                 </div>
               </CardHeader>
               <CardContent className="flex-1 space-y-0 pb-2">
@@ -144,7 +144,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                     key={index}
                     className="flex items-center justify-between py-3 text-sm first:pt-0 last:pb-0"
                   >
-                    <span className="text-muted-foreground">{feature.name}</span>
+                    <span className="text-white/70">{feature.name}</span>
                     {feature.value ? (
                       <span className="font-medium text-foreground">{feature.value}</span>
                     ) : feature.included ? (
@@ -156,7 +156,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                 ))}
               </CardContent>
               <CardFooter className="pt-2 pb-8 flex items-center justify-center">
-                <Button className="flex rounded-md cursor-pointer h-12 px-16 shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-200 hover:scale-105" size="lg">
+                <Button className="flex rounded-md cursor-pointer h-12 px-16 transition-all duration-200 hover:brightness-110" size="lg">
                   Get Started
                 </Button>
               </CardFooter>
@@ -166,15 +166,15 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
               <Card
                 key={key}
                 className={cn(
-                  "group relative flex flex-col overflow-hidden transition-all duration-300 rounded-2xl",
+                  "group relative flex flex-col overflow-hidden transition-colors duration-200 rounded-md border border-white/10",
                   plan.popular
-                    ? "border-0 bg-gradient-to-b from-[#7000BF] via-[#560193] to-[#35005b]"
-                    : "border-0 border-white/10 bg-[#242625]"
+                    ? "bg-[#2a1b3d]"
+                    : "bg-[#242625]"
                 )}
               >
                 <CardHeader>
                   {plan.popular && (
-                    <div className="absolute right-4 top-4 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">
+                    <div className="absolute right-4 top-4 rounded-md border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/90">
                       Popular
                     </div>
                   )}
@@ -187,8 +187,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                         {plan.name}
                       </CardTitle>
                       <CardDescription className={cn(
-                        "mt-1.5 text-sm",
-                        plan.popular ? "text-white/90" : ""
+                        "mt-1.5 text-sm text-white/80"
                       )}>
                         {plan.description}
                       </CardDescription>
@@ -197,31 +196,15 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                   
                   {/* Enhanced Discount Tag - Only show for yearly billing */}
                   {billingPeriod === "yearly" && (
-                    <div className="mt-6 mb-4">
+                    <div className="mt-5 mb-3">
                       <div 
-                        className="relative inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm overflow-hidden group/badge"
-                        style={{
-                          background: 'linear-gradient(135deg, rgb(168 85 247), rgb(236 72 153))',
-                          boxShadow: '0 4px 20px rgba(168, 85, 247, 0.4), 0 0 40px rgba(236, 72, 153, 0.2)'
-                        }}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] uppercase tracking-wider font-semibold text-white/90 bg-white/10 border border-white/15"
                       >
-                        {/* Animated shine effect */}
-                        <span 
-                          className="absolute inset-0 opacity-0 group-hover/badge:opacity-100 transition-opacity duration-500"
-                          style={{
-                            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
-                            animation: 'shine 2s ease-in-out infinite'
-                          }}
-                        />
-                        
-                        {/* Sparkle icon */}
-                        <svg className="w-4 h-4 text-white relative z-10" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-3 h-3 text-white/90" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                         </svg>
-                        
-                        <span className="text-white font-bold text-base tracking-wide relative z-10">
-                          Save {plan.yearly.discount}
-                        </span>
+                        <span className="text-[12px] text-white/70">Save</span>
+                        <span className="text-[16px] font-bold text-white">{plan.yearly.discount}</span>
                       </div>
                     </div>
                   )}
@@ -237,7 +220,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                         </span>
                         <span className={cn(
                           "text-sm font-medium",
-                          plan.popular ? "text-white/90" : "text-muted-foreground"
+                          "text-white/70"
                         )}>
                           Monthly
                         </span>
@@ -253,14 +236,13 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                           </span>
                           <span className={cn(
                             "text-sm",
-                            plan.popular ? "text-white/90" : "text-muted-foreground"
+                            "text-white/70"
                           )}>
                             /mo
                           </span>
                         </div>
                         <p className={cn(
-                          "text-sm",
-                          plan.popular ? "text-white/90" : "text-muted-foreground"
+                          "text-sm text-white/70"
                         )}>
                           {plan.yearly.total} /Yearly
                         </p>
@@ -274,10 +256,9 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                       key={index}
                       className="flex items-center justify-between py-3 text-sm first:pt-0 last:pb-0"
                     >
-                      <span className={cn(
-                        "text-muted-foreground",
-                        plan.popular ? "text-white/90" : ""
-                      )}>
+                        <span className={cn(
+                          "text-white/70"
+                        )}>
                         {feature.name}
                       </span>
                       {feature.value ? (
@@ -293,22 +274,16 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                           plan.popular ? "text-white" : "text-primary"
                         )} />
                       ) : (
-                        <X className={cn(
-                          "h-4 w-4 shrink-0",
-                          plan.popular ? "text-white/40" : "text-muted-foreground/40"
-                        )} />
+                          <X className={cn(
+                            "h-4 w-4 shrink-0 text-white/30"
+                          )} />
                       )}
                     </div>
                   ))}
                 </CardContent>
                 <CardFooter className="pt-2 pb-6 flex items-center justify-center">
                   <Button
-                    className={cn(
-                      "flex cursor-pointer h-12 px-16 rounded-full text-sm font-semibold tracking-wide transition-all duration-200 hover:scale-105",
-                      plan.popular
-                        ? "shadow-[0_0_25px_rgba(168,85,247,0.4)] hover:shadow-[0_0_35px_rgba(168,85,247,0.6)]"
-                        : "shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)]"
-                    )}
+                    className="flex cursor-pointer h-12 px-16 rounded-md text-sm font-semibold tracking-wide transition-all duration-200 hover:brightness-110"
                     size="lg"
                   >
                     Get Started

@@ -29,10 +29,10 @@ export function Navbar() {
     return pathname === href
   }
   const linkCls = (href: string, prefix?: boolean) =>
-    `relative inline-flex items-center h-8 text-[0.95rem] font-display tracking-wide transition-all duration-200 ${
+    `relative inline-flex items-center h-8 text-[0.95rem] tracking-wide transition-all duration-200 ${
       isActive(href, prefix)
-        ? "text-brand-gradient font-semibold underline underline-offset-8 decoration-primary/80"
-        : "text-white hover:text-primary font-medium hover:-translate-y-0.5 hover:underline hover:underline-offset-8 hover:decoration-primary/50"
+        ? "text-primary font-semibold"
+        : "text-white hover:text-primary font-medium"
     }`
 
   useEffect(() => {
@@ -100,13 +100,13 @@ export function Navbar() {
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="px-4 sm:px-6 lg:px-24">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-22">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             <img
               src="/images/hymo-logo.png"
               alt="HYMO"
-              className="h-8 w-auto"
+              className="h-10 w-auto"
             />
           </Link>
 
@@ -136,7 +136,7 @@ export function Navbar() {
                       key={link.href}
                       href={link.href}
                       onClick={() => setSetupsDropdownOpen(false)}
-                      className={`block px-5 py-3.5 text-sm font-display tracking-wide transition-all duration-200 hover:bg-primary/10 hover:pl-6 ${
+                      className={`block px-5 py-3.5 text-sm tracking-wide transition-all duration-200 hover:bg-primary/10 hover:pl-6 ${
                         pathname === link.href
                           ? "text-primary font-semibold bg-primary/5 border-l-2 border-primary"
                           : "text-white hover:text-primary"
@@ -164,7 +164,7 @@ export function Navbar() {
             <div className="relative" ref={languageDropdownRef}>
               <button
                 onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}
-                className="flex items-center gap-2 text-white hover:text-primary transition-all duration-200 text-sm font-display tracking-wide"
+                className="flex items-center gap-2 text-white hover:text-primary transition-all duration-200 text-xs tracking-wide"
               >
                 {currentLanguage && (
                   <img src={currentLanguage.flag} alt="" className="w-5 h-3.5 object-cover rounded-sm shrink-0" aria-hidden />
@@ -181,7 +181,7 @@ export function Navbar() {
                         setLanguage(lang.code)
                         setLanguageDropdownOpen(false)
                       }}
-                      className={`w-full flex items-center gap-3 px-5 py-3.5 text-sm font-display tracking-wide transition-all duration-200 hover:bg-primary/10 hover:pl-6 ${
+                      className={`w-full flex items-center gap-3 px-5 py-3.5 text-sm tracking-wide transition-all duration-200 hover:bg-primary/10 hover:pl-6 ${
                         language === lang.code
                           ? "text-primary font-semibold bg-primary/5 border-l-2 border-primary"
                           : "text-white hover:text-primary"
@@ -198,7 +198,7 @@ export function Navbar() {
             <Button
               asChild
               size="sm"
-              className="px-5 py-2.5 rounded-full font-medium text-sm font-display tracking-wide transition-all duration-200 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A191E]"
+              className="px-5 py-2.5 rounded-md font-medium text-sm tracking-wide transition-all duration-200 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A191E]"
             >
               <Link href="/login">{t.nav.login}</Link>
             </Button>
@@ -316,7 +316,7 @@ export function Navbar() {
               <Button
                 asChild
                 size="sm"
-                className="w-full px-5 py-3 rounded-full font-medium text-sm font-display tracking-wide transition-all duration-200 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A191E]"
+                className="w-full px-5 py-3 rounded-md font-medium text-sm tracking-wide transition-all duration-200 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A191E]"
               >
                 <Link href="/login" onClick={() => setIsOpen(false)}>
                   {t.nav.login}

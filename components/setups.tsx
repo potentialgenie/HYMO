@@ -140,6 +140,19 @@ export function Setups() {
     }
   }, [emblaApi, onSelect])
 
+  // Auto-scroll carousel for smooth flow
+  useEffect(() => {
+    if (!emblaApi) return
+    const interval = setInterval(() => {
+      if (emblaApi.canScrollNext()) {
+        emblaApi.scrollNext()
+      } else {
+        emblaApi.scrollTo(0)
+      }
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [emblaApi])
+
   // Reinit when game filter changes
   useEffect(() => {
     emblaApi?.reInit()
@@ -175,10 +188,10 @@ export function Setups() {
           viewport={defaultViewport}
           transition={defaultTransition}
         >
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 font-display text-brand-gradient">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 font-display text-white">
             Browse Pro Setups
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-white/80 text-lg max-w-2xl mx-auto">
             Explore setups from the {"world's"} top esports racing champions
           </p>
         </motion.div>
@@ -213,9 +226,8 @@ export function Setups() {
                 >
                   <article
                     className={cn(
-                      "group/card flex flex-col h-full overflow-hidden rounded-md bg-[#242625]",
-                      "shadow-lg shadow-black/30",
-                      "transition-all duration-300 cursor-pointer",
+                      "group/card flex flex-col h-full overflow-hidden rounded-md bg-[#242625] border border-white/10",
+                      "transition-colors duration-200 cursor-pointer",
                     )}
                   >
                     {/* Image – text top-left, Featured bottom-left */}
@@ -243,67 +255,55 @@ export function Setups() {
                     </div>
 
                     {/* Content – Setup Info + Action Buttons */}
-                    <div className="flex flex-col flex-1 p-4 bg-transparent">
-                      
-                      {/* Setup Information */}
-                      <div className="space-y-3 mb-4">
-                        {/* Game-specific info: Season & Week for iRacing, Version for ACC/LMU */}
-                        {setup.game === "iracing" && setup.season && setup.week && (
-                          <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                    <div className="flex flex-col flex-1 p-4 bg-transparent text-white">
+                      {/* Top row: Season/Version (left) + Lap Time (right) */}
+                      <div className="flex items-start justify-between gap-4 pb-3 border-b border-white/10">
+                        <div className="space-y-2">
+                          {setup.game === "iracing" && setup.season && setup.week && (
                             <div>
-                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Season & Week</p>
-                              <p className="text-sm font-semibold text-foreground">
-                                <span className="text-primary">{setup.season}</span>
-                                <span className="text-muted-foreground mx-1">•</span>
-                                <span className="text-foreground">{setup.week}</span>
+                              <p className="text-[11px] uppercase tracking-wider text-white/70 mb-1">Season & Week</p>
+                              <p className="text-sm font-semibold text-white">
+                                {setup.season} <span className="text-white/60 mx-1">•</span> {setup.week}
                               </p>
                             </div>
-                          </div>
-                        )}
-                        
-                        {(setup.game === "acc" || setup.game === "lmu") && setup.version && (
-                          <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                          )}
+                          {(setup.game === "acc" || setup.game === "lmu") && setup.version && (
                             <div>
-                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Game Version</p>
-                              <p className="text-sm font-semibold text-primary">{setup.version}</p>
+                              <p className="text-[11px] uppercase tracking-wider text-white/70 mb-1">Version</p>
+                              <p className="text-sm font-semibold text-white">{setup.version}</p>
                             </div>
+                          )}
+                        </div>
+                        {setup.lapTime && (
+                          <div className="text-right">
+                            <p className="text-[11px] uppercase tracking-wider text-white/70 mb-1">Lap Time</p>
+                            <p className="text-lg font-semibold text-white">{setup.lapTime}</p>
                           </div>
                         )}
-                        
-                        {/* Setup Made By */}
-                        <div>
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Setup Made By</p>
-                          <p className="text-sm font-semibold text-foreground">{setup.champion}</p>
-                        </div>
                       </div>
 
-                      {/* Action Buttons */}
-                      <div className="flex items-center gap-2 mt-auto pt-3 border-t border-border/50">
-                        <button
-                          type="button"
-                          className="flex-1 h-9 rounded-lg bg-transparent border-2 border-transparent cursor-pointer flex items-center justify-center gap-2 hover:opacity-90 transition-all font-medium text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                          style={{
-                            backgroundImage: 'linear-gradient(#242625, #242625), linear-gradient(90deg, rgb(168 85 247), rgb(236 72 153), rgb(168 85 247))',
-                            backgroundOrigin: 'border-box',
-                            backgroundClip: 'padding-box, border-box'
-                          }}
-                          aria-label="Download setup"
-                        >
-                          <Download className="h-4 w-4 text-white" />
-                          <span className="text-white text-xs font-semibold">Download</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="h-9 w-9 rounded-lg bg-transparent border-2 border-transparent cursor-pointer flex items-center justify-center hover:opacity-90 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background shrink-0"
-                          style={{
-                            backgroundImage: 'linear-gradient(#242625, #242625), linear-gradient(90deg, rgb(168 85 247), rgb(236 72 153), rgb(168 85 247))',
-                            backgroundOrigin: 'border-box',
-                            backgroundClip: 'padding-box, border-box'
-                          }}
-                          aria-label="Share setup"
-                        >
-                          <Share2 className="h-4 w-4 text-white" />
-                        </button>
+                      {/* Bottom row: Setup made by (left) + actions (right) */}
+                      <div className="flex items-center justify-between pt-3 mt-auto">
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wider text-white/70 mb-1">Setup Made By</p>
+                          <p className="text-sm font-semibold text-white">{setup.champion}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="h-9 w-9 rounded-full bg-transparent border border-white/70 text-white cursor-pointer flex items-center justify-center hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#242625]"
+                            aria-label="Download setup"
+                          >
+                            <Download className="h-4 w-4 text-white" />
+                          </button>
+                          <button
+                            type="button"
+                            className="h-9 w-9 rounded-full bg-transparent border border-white/70 text-white cursor-pointer flex items-center justify-center hover:bg-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#242625]"
+                            aria-label="Share setup"
+                          >
+                            <Share2 className="h-4 w-4 text-white" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </article>
@@ -359,7 +359,7 @@ export function Setups() {
         <div className="text-center mt-8">
           <Button 
             size="lg" 
-            className="group shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-200 hover:scale-105"
+            className="group bg-[#2a2b2f] text-white hover:bg-[#34353a] transition-colors duration-200"
           >
             View All Setups
             <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />

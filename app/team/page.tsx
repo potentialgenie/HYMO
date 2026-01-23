@@ -111,8 +111,8 @@ export default function TeamPage() {
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 px-6 sm:px-12 lg:px-24 overflow-hidden">
         <div className="relative z-10">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-display tracking-tight mb-4 text-brand-gradient">
-            Meet the <span className="text-brand-gradient">Team</span>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-display tracking-tight mb-4 text-white">
+            Meet the <span className="text-white">Team</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl font-sans">
             The passionate sim racers and engineers behind HYMO. Our team of champions and professionals
@@ -125,7 +125,7 @@ export default function TeamPage() {
       <section className="py-16 px-6 sm:px-12 lg:px-24">
         <div>
           <div className="flex items-center gap-4 mb-2">
-            <h2 className="text-2xl md:text-3xl font-bold font-display text-brand-gradient">
+            <h2 className="text-2xl md:text-3xl font-bold font-display text-white">
               Management & Founders
             </h2>
             <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
@@ -162,7 +162,7 @@ export default function TeamPage() {
       <section id="drivers-section" className="py-16 px-6 sm:px-12 lg:px-24">
         <div>
           <div className="flex items-center gap-4 mb-2">
-            <h2 className="text-2xl md:text-3xl font-bold font-display text-brand-gradient">
+            <h2 className="text-2xl md:text-3xl font-bold font-display text-white">
               Drivers & Engineers
             </h2>
             <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
@@ -337,7 +337,7 @@ export default function TeamPage() {
       {/* Join CTA */}
       <section className="py-20 px-6 sm:px-12 lg:px-24">
         <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold font-display mb-4 text-brand-gradient">
+          <h2 className="text-3xl md:text-4xl font-bold font-display mb-4 text-white">
             Want to Join the Team?
           </h2>
           <p className="text-muted-foreground mb-8 max-w-xl mx-auto font-sans">
@@ -361,9 +361,9 @@ export default function TeamPage() {
             <Image
               src="/images/hymo-logo.png"
               alt="HYMO"
-              width={100}
-              height={33}
-              className="h-6 w-auto"
+              width={140}
+              height={46}
+              className="h-9 w-auto"
             />
             <p className="text-sm text-muted-foreground font-sans">
               Copyright © 2025 HymoSetups | All rights reserved.

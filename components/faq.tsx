@@ -42,10 +42,10 @@ export function FAQ() {
       <div className="max-w-8xl mx-auto relative z-10">
         {/* Section Header */}
         <div className="text-left mb-12">
-          <h2 className="text-4xl sm:text-5xl font-bold mb-4 font-display text-brand-gradient">
+          <h2 className="text-4xl sm:text-5xl font-bold mb-4 font-display text-white">
             Frequently Asked Questions
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-left">
+          <p className="text-white/80 text-lg max-w-2xl mx-left">
             Everything you need to know about our setups and plans
           </p>
         </div>

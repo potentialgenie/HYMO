@@ -186,7 +186,7 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
         {/* Header with Logo and Title - Centered */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 text-center sm:text-left">
           <Image src={logo as string} alt={title} width={100} height={100} className="shrink-0" />
-          <h1 className="text-4xl md:text-5xl font-bold italic font-display text-brand-gradient">{title}</h1>
+          <h1 className="text-4xl md:text-5xl font-bold italic font-display text-white">{title}</h1>
         </div>
 
         {/* Filters Row - Centered */}
@@ -307,7 +307,7 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
             <Button 
               variant="outline" 
               onClick={clearAllFilters}
-              className="btn-gradient-outline transition-all duration-200 hover:scale-105"
+              className="border border-white/30 text-white hover:bg-white/10 transition-colors duration-200"
             >
               Clear All
             </Button>
@@ -638,7 +638,7 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
             <div className="mt-12 mb-8 max-w-5xl mx-auto">
               {/* Section Header */}
               <div className="mb-6 text-center">
-                <h2 className="text-2xl md:text-3xl font-bold font-display text-brand-gradient mb-2">
+                <h2 className="text-2xl md:text-3xl font-bold font-display text-white mb-2">
                   About This Setup Pack
                 </h2>
                 <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-primary/60 to-transparent mx-auto"></div>

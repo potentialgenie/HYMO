@@ -35,13 +35,13 @@ export default function PricingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <p className="text-brand-gradient font-medium text-sm uppercase tracking-wider mb-3">
+            <p className="text-primary font-medium text-sm uppercase tracking-wider mb-3">
               Pricing
             </p>
             <h1 className={cn("font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-4")}>
-              Choose Your <span className="text-brand-gradient italic">Plan</span>
+              Choose Your Plan
             </h1>
-            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+            <p className="text-white/80 text-lg max-w-xl mx-auto">
               Select the perfect plan to accelerate your racing performance
             </p>
           </motion.div>
@@ -60,27 +60,27 @@ export default function PricingPage() {
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.4 }}
           >
-            <h2 className={cn("font-display text-2xl sm:text-3xl font-bold text-center mb-8 text-brand-gradient")}>
+            <h2 className={cn("font-display text-2xl sm:text-3xl font-bold text-center mb-8 text-white")}>
               Feature Comparison
             </h2>
 
-            <div className="overflow-hidden rounded-2xl border border-border/80 bg-card/50 shadow-sm">
+            <div className="overflow-hidden rounded-md border border-white/10 bg-card/50">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border/80">
-                      <th className="text-left py-5 px-6 text-foreground font-semibold">Feature</th>
-                      <th className="text-center py-5 px-4 text-foreground font-semibold">
+                      <th className="text-left py-5 px-6 text-white font-semibold">Feature</th>
+                      <th className="text-center py-5 px-4 text-white font-semibold">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary/80 rounded-lg text-sm">
                           Car Access
                         </span>
                       </th>
-                      <th className="text-center py-5 px-4 text-foreground font-semibold">
+                      <th className="text-center py-5 px-4 text-white font-semibold">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary/80 rounded-lg text-sm">
                           Pro
                         </span>
                       </th>
-                      <th className="text-center py-5 px-4 text-foreground font-semibold">
+                      <th className="text-center py-5 px-4 text-white font-semibold">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/20 text-primary rounded-lg text-sm font-medium">
                           Elite
                         </span>
@@ -92,42 +92,41 @@ export default function PricingPage() {
                       <tr
                         key={feature.name}
                         className={cn(
-                          "border-t border-border/50 transition-colors hover:bg-muted/20",
-                          index % 2 === 1 && "bg-muted/5"
+                          "border-t border-white/10 transition-colors hover:bg-white/5"
                         )}
                       >
-                        <td className="py-4 px-6 text-foreground font-medium">{feature.name}</td>
+                        <td className="py-4 px-6 text-white/90 font-medium">{feature.name}</td>
                         <td className="py-4 px-4 text-center">
                           {typeof feature.car === "boolean" ? (
                             feature.car ? (
-                              <Check className="h-5 w-5 text-primary mx-auto" />
+                              <Check className="h-5 w-5 text-white mx-auto" />
                             ) : (
-                              <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
+                              <X className="h-5 w-5 text-white/30 mx-auto" />
                             )
                           ) : (
-                            <span className="text-muted-foreground">{feature.car}</span>
+                            <span className="text-white/70">{feature.car}</span>
                           )}
                         </td>
                         <td className="py-4 px-4 text-center">
                           {typeof feature.pro === "boolean" ? (
                             feature.pro ? (
-                              <Check className="h-5 w-5 text-primary mx-auto" />
+                              <Check className="h-5 w-5 text-white mx-auto" />
                             ) : (
-                              <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
+                              <X className="h-5 w-5 text-white/30 mx-auto" />
                             )
                           ) : (
-                            <span className="text-muted-foreground">{feature.pro}</span>
+                            <span className="text-white/70">{feature.pro}</span>
                           )}
                         </td>
                         <td className="py-4 px-4 text-center">
                           {typeof feature.elite === "boolean" ? (
                             feature.elite ? (
-                              <Check className="h-5 w-5 text-primary mx-auto" />
+                              <Check className="h-5 w-5 text-white mx-auto" />
                             ) : (
-                              <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
+                              <X className="h-5 w-5 text-white/30 mx-auto" />
                             )
                           ) : (
-                            <span className="text-foreground font-medium">{feature.elite}</span>
+                            <span className="text-white/90 font-medium">{feature.elite}</span>
                           )}
                         </td>
                       </tr>
@@ -160,14 +159,14 @@ export default function PricingPage() {
               <h3 className={cn("font-display text-2xl sm:text-3xl font-bold mb-2")}>
                 Not sure which plan fits you?
               </h3>
-              <p className="text-muted-foreground mb-6 ">
+              <p className="text-white/80 mb-6 ">
                 Get in touch and we&apos;ll help you choose the right setup for your racing goals.
               </p>
               <Link href="/#contact">
                 <Button 
                   variant="outline" 
                   size="lg" 
-                  className="btn-gradient-outline rounded-sm font-medium backdrop-blur-sm hover:scale-105 cursor-pointer transition-all duration-200"
+                  className="rounded-md font-medium border-white/40 text-white hover:bg-white/10 transition-colors duration-200"
                 >
                   Contact Us
                 </Button>

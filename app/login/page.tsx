@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { LanguageSelect } from "@/components/language-select"
 import { useLanguage } from "@/lib/language-context"
+import { Navbar } from "@/components/navbar"
 
 export default function LoginPage() {
   const { t } = useLanguage()
@@ -22,28 +22,20 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen bg-[#1A191E]">
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-20 px-4 sm:px-6 md:px-12 lg:px-24 pt-0 backdrop-blur-md bg-transparent">
-        <Link href="/" className="flex-shrink-0">
-          <img src="/images/hymo-logo.png" alt="HYMO" className="h-8 w-auto" />
-        </Link>
-        <LanguageSelect />
-      </header>
+      <Navbar />
       <div className="absolute inset-0" aria-hidden="true">
         <Image
-          src="/images/login.jpg"
+          src="/images/hero-bg.jpg"
           alt=""
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center rotate-y-180"
+          className="object-cover object-center"
         />
-        {/* Dark overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-background/30 to-background/20" />
       </div>
-      <section className="relative pt-24 pb-24 px-4 sm:px-6 md:px-12 lg:px-24 min-h-screen flex items-center justify-end overflow-hidden">
+      <section className="relative pt-24 pb-24 px-4 sm:px-6 md:px-12 lg:px-24 min-h-screen flex items-center justify-center lg:justify-end overflow-hidden">
         <div className="absolute inset-0 bg-circuit opacity-[0.4]" aria-hidden />
         <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] via-transparent to-transparent" aria-hidden />
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[420px] rounded-full bg-primary/10 blur-[100px] pointer-events-none" aria-hidden />
         <div className="relative z-10 w-full max-w-md">
           <Card className="login-glass-card relative border-0 bg-transparent shadow-none overflow-hidden rounded-2xl backdrop-blur-sm">
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/80 to-transparent shadow-[0_0_12px_oklch(0.65_0.28_328_/_0.6)]" />
@@ -83,6 +75,12 @@ export default function LoginPage() {
                     className="input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0"
                     autoComplete="current-password"
                   />
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Use your account email</span>
+                    <Link href="/#contact" className="text-primary hover:underline">
+                      Forgot password?
+                    </Link>
+                  </div>
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col gap-4 pt-2">
