@@ -2,28 +2,34 @@ import { Navbar } from "@/components/navbar"
 import { Hero } from "@/components/hero"
 import { Setups } from "@/components/setups"
 import { Pricing } from "@/components/pricing"
-import { FAQ } from "@/components/faq"
 import { Contact } from "@/components/contact"
 import { Footer } from "@/components/footer"
+import { BrandingMarquee } from "@/components/branding-marquee"
+import { TrustedPerformance } from "@/components/trusted-performance"
+import { SetupDifference } from "@/components/setup-difference"
+import { Testimonials } from "@/components/testimonials"
+import { BackToTop } from "@/components/back-to-top"
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background relative">
-      <Navbar />
-      <Hero />
-      <Setups />
-      <div className="relative">
-        {/* Seamless background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1A191E] via-[#1A191E] to-[#1A191E]" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 max-w-8xl mx-auto py-16 px-4 sm:px-6 lg:px-24 relative z-10">
-          <Pricing />
-          <FAQ />
+    <main className="min-h-screen relative bg-[#1a191e]">
+      <div className="relative z-10">
+        <Navbar />
+        <Hero />
+        <div className="px-14 sm:px-16 lg:px-28">
+          <Setups />
         </div>
-        {/* Enhanced seamless gradient transition to contact - longer and smoother */}
-        <div className="absolute bottom-0 left-0 right-0 h-96 bg-gradient-to-b from-transparent via-[#1A191E]/50 via-[#1A191E]/70 via-[#1A191E]/85 to-[#1A191E]" />
+        <BrandingMarquee />
+        <div className="px-14 sm:px-16 lg:px-28">
+          <TrustedPerformance />
+          <SetupDifference />
+          <Testimonials />
+          <Pricing />
+        </div>
+        <Contact />
+        <Footer />
+        <BackToTop />
       </div>
-      <Contact />
-      <Footer />
     </main>
   )
 }

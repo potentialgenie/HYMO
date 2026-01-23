@@ -34,7 +34,7 @@ export function Hero() {
         {/* Dark overlay for better text readability */}
         {/* <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-background/30 to-background/20" /> */}
         {/* Seamless gradient transition to next section */}
-        <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-b from-transparent via-[#1A191E]/30 to-[#1A191E]" />
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-b from-transparent via-[#1A191E]/80 to-[#1A191E]" />
       </div>
 
       {/* Right-aligned content block */}

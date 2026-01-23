@@ -111,8 +111,8 @@ export function Contact() {
 
   return (
     <AnimateSection id="contact" className="relative py-24 px-4 sm:px-6 lg:px-24 overflow-hidden">
-      {/* Enhanced seamless gradient transition from pricing/FAQ - matches the transition above */}
-      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-[#1A191E] via-[#1A191E]/95 via-[#1A191E]/85 via-[#1A191E]/70 via-[#1A191E]/50 to-transparent z-10" />
+      {/* Seamless gradient transition from pricing/FAQ */}
+      <div className="absolute top-0 left-0 right-0 h-80 bg-[linear-gradient(180deg,#1a191e_0%,rgba(31,19,41,0.8)_35%,rgba(31,19,41,0.35)_70%,rgba(31,19,41,0)_100%)] z-10" />
       {/* Background image */}
       <div className="absolute inset-0" aria-hidden="true">
         <Image
@@ -123,15 +123,15 @@ export function Contact() {
           sizes="100vw"
           loading="lazy"
         />
-        {/* Enhanced seamless gradient overlay - blends with transition above */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1A191E]/95 via-[#1A191E]/80 via-[#1A191E]/60 via-background/40 to-background/60" />
+        {/* Enhanced seamless gradient overlay - blends with page background */}
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,#1a191e_0%,rgba(31,19,41,0.55)_45%,rgba(26,25,30,0.65)_100%)]" />
       </div>
 
       <div className="relative z-10">
         <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
           {/* Left side - Text content */}
           <div>
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 font-display">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl mb-6 font-display">
               Got a question?{" "}
               <span>{"We're here to help."}</span>
             </h2>

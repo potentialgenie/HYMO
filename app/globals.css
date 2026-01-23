@@ -290,6 +290,20 @@
     transform: translateX(200%);
   }
 }
+
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 28s linear infinite;
+}
 .input-neon:focus-visible {
   box-shadow: 0 0 0 2px oklch(0.65 0.28 328 / 0.25), 0 0 18px oklch(0.65 0.28 328 / 0.4), 0 0 36px oklch(0.65 0.28 328 / 0.2);
   border-color: oklch(0.65 0.28 328 / 0.5);

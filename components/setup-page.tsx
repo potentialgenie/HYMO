@@ -318,8 +318,8 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
             <Button
               variant="outline"
               onClick={() => setShowMoreFilters(!showMoreFilters)}
-              className={`border-border bg-transparent text-foreground hover:bg-secondary transition-all duration-200 ${
-                showMoreFilters ? "bg-secondary border-primary/50" : ""
+              className={`border border-white/15 bg-[#1d1b23] text-white hover:bg-[#24222b] transition-all duration-200 shadow-[0_12px_30px_rgba(0,0,0,0.35)] ${
+                showMoreFilters ? "border-primary/40" : ""
               }`}
             >
               <Filter className="h-4 w-4 mr-2" />
@@ -328,59 +328,39 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
 
             {/* More Filters Dropdown */}
             {showMoreFilters && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[90vw] max-w-[600px] bg-card border border-border rounded-lg shadow-xl overflow-hidden z-[100] animate-in fade-in-0 zoom-in-95 duration-200">
-                <div className="p-6">
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Additional Filters</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm text-muted-foreground mb-2 block">Weather</label>
-                      <Select>
-                        <SelectTrigger className="bg-secondary border-border w-full">
-                          <SelectValue placeholder="Any" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="dry">Dry</SelectItem>
-                          <SelectItem value="wet">Wet</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-sm text-muted-foreground mb-2 block">Setup Type</label>
-                      <Select>
-                        <SelectTrigger className="bg-secondary border-border w-full">
-                          <SelectValue placeholder="Any" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="race">Race</SelectItem>
-                          <SelectItem value="quali">Qualifying</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-sm text-muted-foreground mb-2 block">Driver</label>
-                      <Select>
-                        <SelectTrigger className="bg-secondary border-border w-full">
-                          <SelectValue placeholder="Any" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pro">Pro Drivers</SelectItem>
-                          <SelectItem value="all">All Drivers</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-sm text-muted-foreground mb-2 block">Rating</label>
-                      <Select>
-                        <SelectTrigger className="bg-secondary border-border w-full">
-                          <SelectValue placeholder="Any" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="5">5 Stars</SelectItem>
-                          <SelectItem value="4">4+ Stars</SelectItem>
-                          <SelectItem value="3">3+ Stars</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[260px] rounded-2xl border border-white/10 bg-[#1b1922] shadow-[0_16px_40px_rgba(0,0,0,0.45)] overflow-hidden z-[100] animate-in fade-in-0 zoom-in-95 duration-200">
+                <div className="px-5 py-4">
+                  <div className="space-y-3">
+                    <Select>
+                      <SelectTrigger className="h-11 rounded-xl bg-[#111015] border border-white/15 text-white w-full">
+                        <SelectValue placeholder="Track Variation" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default</SelectItem>
+                        <SelectItem value="short">Short</SelectItem>
+                        <SelectItem value="long">Long</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select>
+                      <SelectTrigger className="h-11 rounded-xl bg-[#111015] border border-white/15 text-white w-full">
+                        <SelectValue placeholder="Series" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="imsa">IMSA</SelectItem>
+                        <SelectItem value="gt3">GT3</SelectItem>
+                        <SelectItem value="gt4">GT4</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select>
+                      <SelectTrigger className="h-11 rounded-xl bg-[#111015] border border-white/15 text-white w-full">
+                        <SelectValue placeholder="Year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2026">2026</SelectItem>
+                        <SelectItem value="2025">2025</SelectItem>
+                        <SelectItem value="2024">2024</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -427,8 +407,9 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
               <col style={{ width: "22%" }} />
               <col style={{ width: "20%" }} />
               <col style={{ width: "12%" }} />
-              <col style={{ width: "18%" }} />
-              <col style={{ width: "12%" }} />
+              <col style={{ width: "16%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "8%" }} />
             </colgroup>
             <thead>
               <tr className="border-b border-border/50">
@@ -438,13 +419,14 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
                 <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Track</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Season</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Series</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Lap Time</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold text-primary uppercase tracking-wider">Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredSetups.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center">
+                  <td colSpan={8} className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <p className="text-muted-foreground text-lg font-medium">No setups found</p>
                       <p className="text-muted-foreground/70 text-sm">Try adjusting your filters</p>
@@ -474,6 +456,9 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground" title={setup.series}>
                       {setup.series}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                      {setup.lapTime || "—"}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <Button 

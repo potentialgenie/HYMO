@@ -8,6 +8,8 @@ import { defaultViewport, defaultTransition } from "@/components/animate-section
 import { Download, Share2, ChevronRight, ChevronLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import { TrustedPerformance } from "@/components/trusted-performance"
+import { SetupDifference } from "@/components/setup-difference"
 
 const games = [
   { id: "all", name: "All Games" },
@@ -171,15 +173,8 @@ export function Setups() {
   })
 
   return (
-    <section id="setups" className="relative py-24 overflow-hidden">
-      {/* Seamless gradient background */}
-      <div className="absolute inset-0 bg-[#1A191E]" />
-      {/* Gradient transition from hero - seamless blend */}
-      <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-[#1A191E] via-[#1A191E] to-transparent" />
-      {/* Gradient transition to pricing/FAQ - seamless blend */}
-      <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-b from-transparent via-[#1A191E] to-[#1A191E]" />
-      
-      <div className="relative z-10 max-w-8xl mx-auto px-4 sm:px-6 lg:px-24">
+    <section id="setups" className="relative py-24">
+      <div className="relative z-10 max-w-8xl mx-auto">
         {/* Section Header - Centered */}
         <motion.div
           className="text-center mb-12"
@@ -188,7 +183,7 @@ export function Setups() {
           viewport={defaultViewport}
           transition={defaultTransition}
         >
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 font-display text-white">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl mb-4 font-display text-white">
             Browse Pro Setups
           </h2>
           <p className="text-white/80 text-lg max-w-2xl mx-auto">

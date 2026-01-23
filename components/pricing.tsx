@@ -69,12 +69,11 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
   return (
     <AnimateSection id="pricing" className="relative overflow-hidden">
       {/* Seamless gradient transition from setups */}
-      <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-[#1A191E] via-[#1A191E]/80 to-transparent -z-10" />
       <div className="relative z-10">
         {/* Section Header */}
         {showHeader && (
           <div className="text-center mb-5">
-            <h2 className="text-4xl sm:text-5xl font-bold mb-4 font-display text-white">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl mb-4 font-display text-white">
               Choose Your Plan
             </h2>
           </div>
