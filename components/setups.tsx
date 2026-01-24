@@ -174,7 +174,7 @@ export function Setups() {
 
   return (
     <section id="setups" className="relative py-24">
-      <div className="relative z-10 max-w-8xl mx-auto">
+      <div className="relative z-10 w-full">
         {/* Section Header - Centered */}
         <motion.div
           className="text-center mb-12"
@@ -183,10 +183,10 @@ export function Setups() {
           viewport={defaultViewport}
           transition={defaultTransition}
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl mb-4 font-display text-white">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl mb-4 font-display text-white w-full">
             Browse Pro Setups
           </h2>
-          <p className="text-white/80 text-lg max-w-2xl mx-auto">
+          <p className="text-white/80 text-lg max-w-2xl mx-auto w-full">
             Explore setups from the {"world's"} top esports racing champions
           </p>
         </motion.div>
@@ -211,7 +211,7 @@ export function Setups() {
         </div>
 
         {/* Setups Carousel - Centered */}
-        <div className="relative max-w-[1400px] mx-auto">
+        <div className="relative mx-auto w-full">
           <div className="overflow-hidden" ref={emblaRef}>
             <div className="flex" style={{ backfaceVisibility: "hidden" }}>
               {sortedSetups.map((setup) => (

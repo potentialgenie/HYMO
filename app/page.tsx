@@ -16,11 +16,9 @@ export default function Home() {
       <div className="relative z-10">
         <Navbar />
         <Hero />
-        <div className="px-14 sm:px-16 lg:px-28">
+        {/* <BrandingMarquee /> */}
+        <div className="px-16 sm:px-30 lg:px-46 w-full">
           <Setups />
-        </div>
-        <BrandingMarquee />
-        <div className="px-14 sm:px-16 lg:px-28">
           <TrustedPerformance />
           <SetupDifference />
           <Testimonials />

@@ -3,11 +3,11 @@ import Image from "next/image"
 export function SetupDifference() {
   return (
     <section className="mt-8">
-      <div className="relative overflow-hidden px-18 sm:px-20 py-25 md:px-12 max-w-8xl mx-auto">
-        <div className="relative z-10 flex flex-col items-start gap-10 lg:flex-row lg:items-center lg:gap-12 px-18 sm:px-20 lg:px-28">
+      <div className="relative overflow-hidden py-25 w-full">
+        <div className="relative z-10 flex flex-col items-start gap-10 lg:flex-row lg:items-center lg:gap-12 w-full">
           <div className="max-w-xl flex flex-col gap-55">
             <div className="flex flex-col gap-4">
-              <h3 className="text-3xl sm:text-4xl md:text-5xl font-display text-white">
+              <h3 className="text-3xl sm:text-4xl md:text-5xl font-display text-white w-full">
                 The Difference
               </h3>
               <p className="text-3xl sm:text-4xl md:text-5xl font-display">
@@ -22,7 +22,7 @@ export function SetupDifference() {
             </p>
           </div>
 
-          <div className="absolute left-43 w-full flex-1 flex flex-col items-center justify-center">
+          <div className="absolute left-35 w-full flex-1 flex flex-col items-center justify-center">
             <div className="relative w-full max-w-5xl aspect-[17/8] mx-auto">
               <Image
                 src="/images/ads.png"
