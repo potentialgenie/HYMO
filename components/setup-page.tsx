@@ -58,11 +58,9 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
     setFilter2("")
     setFilter3("")
     setFilter4("")
-    if (game !== "iracing") {
-      setFilter5("")
-    }
+    setFilter5("")
     setSearchQuery("")
-  }, [game])
+  }, [])
 
   // Helper function to format season display (combines season and week for iRacing)
   const formatSeasonDisplay = useCallback((setup: { season: string; week?: string; game: string }) => {
@@ -93,27 +91,28 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
       const matchesFilter2 = filter2 === "" || setup.car.toLowerCase().includes(filter2.toLowerCase())
       const matchesFilter3 = filter3 === "" || setup.track.toLowerCase().includes(filter3.toLowerCase())
     
-    // For iRacing: filter4 combines season and week, so check both
+    // For iRacing: filter4 = season, filter5 = week (separate)
     let matchesFilter4 = true
-    if (filter4 !== "" && game === "iracing") {
-      // Filter value format: "2025s1w1" (season + week combined)
-      const seasonMatch = setup.season.match(/(\d{4})\s*S(\d+)/i)
-      const weekMatch = setup.week?.match(/week\s*(\d+)/i)
-      if (seasonMatch && weekMatch) {
-        const year = seasonMatch[1]
-        const seasonNum = seasonMatch[2]
-        const weekNum = weekMatch[1]
-        const combinedValue = `${year}s${seasonNum}w${weekNum}`
-        matchesFilter4 = filter4.toLowerCase() === combinedValue.toLowerCase()
+    if (filter4 !== "") {
+      if (game === "iracing") {
+        const seasonMatch = setup.season.match(/(\d{4})\s*S(\d+)/i)
+        const normalized = seasonMatch ? `${seasonMatch[1]}s${seasonMatch[2]}` : ""
+        matchesFilter4 = normalized ? filter4.toLowerCase() === normalized.toLowerCase() : setup.season.toLowerCase().includes(filter4.toLowerCase())
       } else {
-        // Fallback: check if season matches
         matchesFilter4 = setup.season.toLowerCase().includes(filter4.toLowerCase())
       }
-    } else if (filter4 !== "") {
-      matchesFilter4 = setup.season.toLowerCase().includes(filter4.toLowerCase())
     }
-    
-      const matchesFilter5 = filter5 === "" || setup.series.toLowerCase().includes(filter5.toLowerCase())
+
+    let matchesFilter5 = true
+    if (filter5 !== "") {
+      if (game === "iracing") {
+        const weekNum = setup.week?.match(/(\d+)/)?.[0]
+        const normalized = weekNum ? `week${weekNum}` : ""
+        matchesFilter5 = normalized ? filter5.toLowerCase() === normalized.toLowerCase() : !!(setup.week && setup.week.toLowerCase().includes(filter5.toLowerCase()))
+      } else {
+        matchesFilter5 = setup.series.toLowerCase().includes(filter5.toLowerCase())
+      }
+    }
       
       return matchesSearch && matchesFilter1 && matchesFilter2 && matchesFilter3 && matchesFilter4 && matchesFilter5
     })
@@ -232,72 +231,50 @@ export function SetupPage({ game, title, logo, heroImage, filters, setups }: Set
               </SelectContent>
             </Select>
 
-            {/* Combined Season filter for iRacing, or separate filters for other games */}
-            {game === "iracing" ? (
-              <Select value={filter4} onValueChange={setFilter4}>
-                <SelectTrigger className="w-[200px] bg-secondary border-border">
-                  <SelectValue placeholder="Season" />
+            {/* Season filter (and Week for iRacing) */}
+            <Select value={filter4} onValueChange={setFilter4}>
+              <SelectTrigger className="w-[140px] bg-secondary border-border">
+                <SelectValue placeholder={filters.filter4.label} />
+              </SelectTrigger>
+              <SelectContent>
+                {filters.filter4.options.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Week filter: only for iRacing, to the right of Season */}
+            {game === "iracing" && (
+              <Select value={filter5} onValueChange={setFilter5}>
+                <SelectTrigger className="w-[140px] bg-secondary border-border">
+                  <SelectValue placeholder={filters.filter5.label} />
                 </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  {(() => {
-                    // Generate combined season+week options
-                    const seasonOptions = filters.filter4.options
-                    const weekOptions = filters.filter5.options
-                    const combinedOptions: FilterOption[] = []
-                    
-                    seasonOptions.forEach(season => {
-                      weekOptions.forEach(week => {
-                        // Extract year and season number from season value like "2025s1"
-                        const seasonValueMatch = season.value.match(/(\d{4})s(\d+)/i)
-                        const weekValueMatch = week.value.match(/week(\d+)/i)
-                        if (seasonValueMatch && weekValueMatch) {
-                          const year = seasonValueMatch[1]
-                          const seasonNum = seasonValueMatch[2]
-                          const weekNum = weekValueMatch[1]
-                          combinedOptions.push({
-                            value: `${year}s${seasonNum}w${weekNum}`,
-                            label: `${season.label} ${week.label}`
-                          })
-                        }
-                      })
-                    })
-                    
-                    return combinedOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))
-                  })()}
+                <SelectContent>
+                  {filters.filter5.options.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-            ) : (
-              <>
-                <Select value={filter4} onValueChange={setFilter4}>
-                  <SelectTrigger className="w-[140px] bg-secondary border-border">
-                    <SelectValue placeholder={filters.filter4.label} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filters.filter4.options.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            )}
 
-                <Select value={filter5} onValueChange={setFilter5}>
-                  <SelectTrigger className="w-[140px] bg-secondary border-border">
-                    <SelectValue placeholder={filters.filter5.label} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filters.filter5.options.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </>
+            {/* filter5 (e.g. Series) for ACC/LMU – not used for iRacing where filter5 is Week */}
+            {game !== "iracing" && (
+              <Select value={filter5} onValueChange={setFilter5}>
+                <SelectTrigger className="w-[140px] bg-secondary border-border">
+                  <SelectValue placeholder={filters.filter5.label} />
+                </SelectTrigger>
+                <SelectContent>
+                  {filters.filter5.options.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
 
             <Button className="transition-all duration-200 hover:scale-105 shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)]">
