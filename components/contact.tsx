@@ -110,7 +110,7 @@ export function Contact() {
   }
 
   return (
-    <AnimateSection id="contact" className="relative py-24 px-4 sm:px-6 lg:px-24 overflow-hidden">
+    <AnimateSection id="contact" className="relative py-24 px-16 sm:px-30 lg:px-46 overflow-hidden">
       {/* Seamless gradient transition from pricing/FAQ */}
       <div className="absolute top-0 left-0 right-0 h-80 bg-[linear-gradient(180deg,#1a191e_0%,rgba(31,19,41,0.8)_35%,rgba(31,19,41,0.35)_70%,rgba(31,19,41,0)_100%)] z-10" />
       {/* Background image */}

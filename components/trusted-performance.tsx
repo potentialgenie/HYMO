@@ -3,6 +3,7 @@ import Image from "next/image"
 export function TrustedPerformance() {
   return (
     <section className="relative py-24 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(228,0,188,0.22)_0%,rgba(31,19,41,0.2)_40%,rgba(26,25,30,0)_70%)]" />
       <div className="relative z-10 w-full">
         <div className="text-center mb-10">
           <h3 className="text-3xl sm:text-4xl md:text-5xl font-display text-white">

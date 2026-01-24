@@ -1,31 +1,34 @@
 import Image from "next/image"
-import { Star } from "lucide-react"
 
 const testimonials = [
   {
-    quote: "Shaved seconds off my lap times. Night and day difference.",
-    name: "Jane Smith",
-    avatar: "/placeholder-user.jpg",
-    rating: 5,
+    quote:
+      "The setup felt stable right away. I spent less time tweaking and more time focusing on race pace and consistency.",
+    name: "Cameron Williamson",
+    role: "iRacing Competitive Driver",
+    logo: "/images/sublogo-1.png",
+  },
+  {
+    quote:
+      "These setups are race-ready out of the box. My lap times improved and the car felt predictable over long stints.",
+    name: "Albert Flores",
+    role: "Formula Series Driver",
+    logo: "/images/sublogo-3.png",
     featured: true,
   },
   {
-    quote: "Incredible balance. The car feels planted every stint.",
-    name: "Tom Williams",
-    avatar: "/placeholder-user.jpg",
-    rating: 4,
+    quote:
+      "As a non-pro driver, the setups helped me understand car balance better. The difference was noticeable from the first session.",
+    name: "Eleanor Pena",
+    role: "Sim Racing Enthusiast",
+    logo: "/images/sublogo-2.png",
   },
   {
-    quote: "Lets me focus on racing, not tinkering.",
-    name: "Michael Brown",
-    avatar: "/placeholder-user.jpg",
-    rating: 4,
-  },
-  {
-    quote: "Pro-level balance without guesswork. Easy to dial in.",
-    name: "Emily Carter",
-    avatar: "/placeholder-user.jpg",
-    rating: 5,
+    quote:
+      "Pro-level balance without the guesswork. Easy to dial in and consistent across sessions.",
+    name: "Courtney Henry",
+    role: "GT Series Driver",
+    logo: "/images/sublogo-1.png",
   },
 ]
 
@@ -39,51 +42,40 @@ export function Testimonials() {
               Testimonials
             </h3>
             <p className="mt-3 text-white/70 text-sm sm:text-base">
-              {"Don't just take out word for it - see what actual users of our service have to say."}
+              {"Don't just take our word for it - see what actual users of our service have to say."}
             </p>
-          </div>
-          <div className="text-sm text-white/60">
-            4.8 average rating from 2,300+ drivers
           </div>
         </div>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-10 grid gap-6 md:grid-cols-3 xl:grid-cols-4">
           {testimonials.map((testimonial) => (
             <article
               key={testimonial.name}
-              className="relative overflow-hidden rounded-2xl border border-white/8 bg-[linear-gradient(160deg,#1f1329_0%,#241027_45%,#1a191e_100%)] p-6 flex h-full flex-col items-center text-center"
+              className={`relative overflow-hidden rounded-2xl border border-white/10 p-6 flex h-full flex-col text-left ${
+                testimonial.featured
+                  ? "bg-[linear-gradient(160deg,#3b0a50_0%,#6d0aa0_45%,#3b0a50_100%)]"
+                  : "bg-[linear-gradient(160deg,#1f1329_0%,#241027_45%,#1a191e_100%)]"
+              }`}
             >
-              <div className="min-h-[96px] flex items-center">
-                <p className="text-sm sm:text-base text-white/80 leading-relaxed">
+              <div className="flex items-start justify-between">
+                <Image
+                  src={testimonial.logo}
+                  alt={`${testimonial.name} series logo`}
+                  width={120}
+                  height={32}
+                  className="h-6 w-auto opacity-40"
+                />
+              </div>
+
+              <div className="mt-6 min-h-[120px]">
+                <p className="text-sm sm:text-base text-white/75 leading-relaxed">
                   “{testimonial.quote}”
                 </p>
               </div>
 
-              <div className="mt-5 flex h-5 items-center justify-center gap-1 text-[#F5B431]">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Star
-                    key={`${testimonial.name}-star-${index}`}
-                    className="h-4 w-4"
-                    fill={index < testimonial.rating ? "currentColor" : "none"}
-                    stroke="currentColor"
-                  />
-                ))}
-              </div>
-
-              <div className="mt-5 flex min-h-[84px] flex-col items-center gap-2">
-                <div className="relative h-12 w-12 overflow-hidden rounded-full border border-white/15">
-                  <Image
-                    src={testimonial.avatar}
-                    alt={testimonial.name}
-                    fill
-                    sizes="48px"
-                    className="object-cover"
-                  />
-                </div>
-                <div>
-                  <p className="text-white/90 font-medium">{testimonial.name}</p>
-                  <p className="text-xs text-white/40">Verified Customer</p>
-                </div>
+              <div className="mt-auto pt-6">
+                <p className="text-white/90 font-medium">{testimonial.name}</p>
+                <p className="text-xs text-white/50">{testimonial.role}</p>
               </div>
             </article>
           ))}
