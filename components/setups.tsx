@@ -201,7 +201,7 @@ export function Setups() {
                 "relative z-10 px-5 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 activeGame === game.id
-                  ? "text-primary-foreground bg-primary"
+                  ? "text-primary-foreground bg-brand-gradient"
                   : "text-white hover:text-foreground bg-[#242529]"
               )}
             >

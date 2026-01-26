@@ -266,7 +266,7 @@ export function Contact() {
                 type="submit"
                 size="lg"
                 disabled={isSubmitting}
-                className="h-12 w-full cursor-pointer rounded-md font-semibold transition-colors duration-200 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-12 w-full cursor-pointer rounded-md font-semibold transition-colors duration-200 bg-brand-gradient hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>

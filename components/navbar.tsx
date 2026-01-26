@@ -198,7 +198,7 @@ export function Navbar() {
             <Button
               asChild
               size="sm"
-              className="px-5 py-2.5 rounded-md font-medium text-sm tracking-wide transition-all duration-200 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A191E]"
+              className="px-5 py-2.5 rounded-md font-medium text-sm tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A191E]"
             >
               <Link href="/login">{t.nav.login}</Link>
             </Button>

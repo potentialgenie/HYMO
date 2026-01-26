@@ -198,14 +198,14 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                 "relative z-10 px-5 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 billingPeriod === period
-                  ? "text-primary-foreground bg-primary"
+                  ? "text-primary-foreground bg-brand-gradient"
                   : "text-white hover:text-foreground bg-[#242529]"
               )}
             >
               {billingPeriod === period && (
                 <motion.span
                   layoutId="pricing-pill"
-                  className="absolute inset-0 rounded-md bg-primary shadow-lg shadow-primary/25"
+                  className="absolute inset-0 rounded-md bg-brand-gradient shadow-lg shadow-primary/25"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
                   aria-hidden
                 />
@@ -293,7 +293,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                   </CardContent>
                   <CardFooter className="pt-2 pb-8 flex items-center justify-center">
                     <Button
-                      className="flex rounded-md cursor-pointer h-12 px-16 transition-all duration-200 hover:brightness-110"
+                      className="flex rounded-md cursor-pointer h-12 px-16 transition-all duration-200 bg-brand-gradient text-white hover:brightness-110"
                       size="lg"
                       data-stripe-price-id={permanentPlan.stripe_price_id}
                     >
@@ -438,7 +438,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                     </CardContent>
                     <CardFooter className="pt-2 pb-6 flex items-center justify-center">
                       <Button
-                        className="flex cursor-pointer h-12 px-16 rounded-md text-sm font-semibold tracking-wide transition-all duration-200 hover:brightness-110"
+                        className="flex cursor-pointer h-12 px-16 rounded-md text-sm font-semibold tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110"
                         size="lg"
                         data-stripe-price-id={
                           (billingPeriod === "monthly" ? monthly : yearly)

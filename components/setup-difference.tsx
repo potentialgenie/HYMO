@@ -13,7 +13,7 @@ export function SetupDifference() {
               </h3>
               <p className="text-3xl sm:text-4xl md:text-5xl font-display">
                 <span className="text-white">Behind </span>
-                <span className="text-[#E400BC]"><span className="text-[#7000BF]">Our</span> Setups</span>
+                <span className="text-brand-gradient bg-clip-text text-transparent"><span>Our</span> Setups</span>
               </p>
             </div>
             <p className="mt-6 max-w-sm flex flex-col gap-4 text-sm sm:text-[20px] text-white/60 line-">
@@ -24,23 +24,23 @@ export function SetupDifference() {
           </div>
 
           <div className="absolute left-35 w-full flex-1 flex flex-col items-center justify-center">
-            <div className="relative w-full max-w-5xl aspect-[17/8] mx-auto">
+            <div className="relative w-full max-w-7xl aspect-[17/8] mx-auto">
               <Image
                 src="/images/ads.png"
                 alt="Setup performance preview"
                 fill  
                 className="object-contain"
-                sizes="(max-width: 1024px) 150vw, (max-width: 1440px) 140vw, 130vw"
+                sizes="(max-width: 1024px) 160vw, (max-width: 1440px) 140vw, 130vw"
               />
             </div>
 
-            <div className="pointer-events-none absolute left-2/7 top-1/3 -translate-x-1/3 rounded-[2.5rem] border border-white/15 bg-[linear-gradient(90deg,rgba(17,15,21,0.96)_10%,rgba(38,17,39,0.97)_25%,rgba(40,24,40,0.6)_50%,rgba(34,34,38,0.1)_80%,rgba(17,15,21,0.1)_100%)] px-4 py-2.5 text-[24px] font-display text-white/95 shadow-lg shadow-black/40 backdrop-blur-md whitespace-nowrap tracking-wide">
+            <div className="pointer-events-none absolute left-2/7 top-4/9 -translate-x-1/3 rounded-[2.5rem] border border-white/15 bg-[linear-gradient(90deg,rgba(17,15,21,0.96)_10%,rgba(38,17,39,0.97)_25%,rgba(40,24,40,0.6)_50%,rgba(34,34,38,0.1)_80%,rgba(17,15,21,0.1)_100%)] px-4 py-2.5 text-[24px] font-display text-white/95 shadow-lg shadow-black/40 backdrop-blur-md whitespace-nowrap tracking-wide">
               Performance &amp; Consistency
             </div>
             <div className="pointer-events-none absolute right-0 top-4/7 -translate-x-1/3 rounded-[2.5rem] border border-white/15 bg-[linear-gradient(90deg,rgba(17,15,21,0.96)_10%,rgba(38,17,39,0.97)_25%,rgba(40,24,40,0.6)_50%,rgba(34,34,38,0.1)_80%,rgba(17,15,21,0.1)_100%)] px-4 py-2.5 text-2xl font-display text-white/95 shadow-lg shadow-black/40 backdrop-blur-md whitespace-nowrap tracking-wide">
               Built by Competitive Drivers
             </div>
-            <div className="pointer-events-none absolute left-3/7 bottom-10 -translate-x-1/2 rounded-[2.5rem] border border-white/15 bg-[linear-gradient(90deg,rgba(17,15,21,0.96)_10%,rgba(38,17,39,0.97)_25%,rgba(40,24,40,0.6)_50%,rgba(34,34,38,0.1)_80%,rgba(17,15,21,0.1)_100%)] px-4 py-2.5 text-2xl font-display text-white/95 shadow-lg shadow-black/40 backdrop-blur-md whitespace-nowrap tracking-wide">
+            <div className="pointer-events-none absolute left-6/16 bottom-22 -translate-x-1/2 rounded-[2.5rem] border border-white/15 bg-[linear-gradient(90deg,rgba(17,15,21,0.96)_10%,rgba(38,17,39,0.97)_25%,rgba(40,24,40,0.6)_50%,rgba(34,34,38,0.1)_80%,rgba(17,15,21,0.1)_100%)] px-4 py-2.5 text-2xl font-display text-white/95 shadow-lg shadow-black/40 backdrop-blur-md whitespace-nowrap tracking-wide">
               Easy to Use
             </div>
           </div>

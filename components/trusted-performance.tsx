@@ -9,9 +9,8 @@ export function TrustedPerformance() {
           <h3 className="text-3xl sm:text-4xl md:text-5xl font-display text-white">
             Trusted Performance
           </h3>
-          <p className="text-3xl sm:text-4xl md:text-5xl font-display">
-            <span className="text-[#7000BF]">Proven </span>
-            <span className="text-[#E400BC]">Results</span>
+          <p className="text-3xl sm:text-4xl md:text-5xl font-display text-brand-gradient bg-clip-text text-transparent">
+            Proven Results
           </p>
         </div>
         <div className="flex flex-col items-center gap-4 w-full">
