@@ -104,9 +104,9 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             <img
-              src="/images/hymo-logo.png"
+              src="/images/hymo-logo1.png"
               alt="HYMO"
-              className="h-10 w-auto"
+              className="h-6 w-auto"
             />
           </Link>
 

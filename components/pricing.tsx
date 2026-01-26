@@ -137,7 +137,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch("/api/plans")
+      const res = await fetch("https://www.hymosetups.com/api/v1/plans")
       const json: ApiResponse = await res.json()
       if (!res.ok || !json.status || !Array.isArray(json.data)) {
         throw new Error(json.message || "Failed to load plans")

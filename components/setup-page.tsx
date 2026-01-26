@@ -46,6 +46,9 @@ interface SetupPageProps {
     week?: string // Optional week for iRacing
     series: string
     version?: string
+    year?: string
+    videoUrl?: string
+    trackGuideUrl?: string
     lapTime?: string
   }[]
 }
@@ -105,6 +108,8 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
   const [showMoreFilters, setShowMoreFilters] = useState(false)
   const clearOptionValue = "__all__"
   const skipNextFiltersFetchRef = useRef(false)
+  const removalTriggeredRef = useRef(false)
+  const [selectedSetupId, setSelectedSetupId] = useState<string>("")
   const selectionOrderRef = useRef<Array<
     "class" | "car" | "track" | "season" | "week" | "variation" | "series" | "year" | "version"
   >>([])
@@ -240,6 +245,27 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     return trimmed
   }, [])
 
+  const getLatestSeasonOption = useCallback((options: FilterOption[]) => {
+    if (options.length === 0) return null
+    const scored = options
+      .map((option) => {
+        const raw = `${option.label} ${option.value}`
+        const seasonMatch = raw.match(/(\d{4})\s*S(\d+)/i)
+        if (seasonMatch) {
+          const year = Number(seasonMatch[1])
+          const seasonNum = Number(seasonMatch[2])
+          return { option, score: year * 10 + seasonNum }
+        }
+        const yearMatch = raw.match(/(\d{4})/)
+        if (yearMatch) {
+          return { option, score: Number(yearMatch[1]) * 10 }
+        }
+        return { option, score: 0 }
+      })
+      .sort((a, b) => b.score - a.score)
+    return scored[0]?.option ?? null
+  }, [])
+
   const handleSelectChange = useCallback(
     (
       field: "class" | "car" | "track" | "season" | "week" | "variation" | "series" | "year" | "version",
@@ -247,6 +273,9 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
       options?: { skipFetch?: boolean }
     ) => {
       const normalized = normalizeSelectValue(value)
+      if (!normalized) {
+        removalTriggeredRef.current = true
+      }
       if (options?.skipFetch) {
         skipNextFiltersFetchRef.current = true
       }
@@ -373,6 +402,34 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
   }, [game])
 
   useEffect(() => {
+    if (game !== "iracing") return
+    if (!selectedCar || !selectedTrack) return
+
+    if (!selectedSeason && filterOptions.seasons.length > 0) {
+      const latestSeason = getLatestSeasonOption(filterOptions.seasons)
+      if (latestSeason) {
+        handleSelectChange("season", latestSeason.value)
+      }
+    }
+    if (!selectedWeek && filterOptions.weeks.length > 0) {
+      const latestWeek = filterOptions.weeks[0]
+      if (latestWeek) {
+        handleSelectChange("week", latestWeek.value)
+      }
+    }
+  }, [
+    filterOptions.seasons,
+    filterOptions.weeks,
+    game,
+    getLatestSeasonOption,
+    handleSelectChange,
+    selectedCar,
+    selectedSeason,
+    selectedTrack,
+    selectedWeek,
+  ])
+
+  useEffect(() => {
     if (!filterOptions.classes.length && !filterOptions.cars.length && !filterOptions.tracks.length) {
       return
     }
@@ -465,7 +522,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     setSearchLoading(true)
     console.log("=== SEARCH REQUEST BODY ===", requestBody)
     try {
-      const response = await fetch("/api/setups/search", {
+      const response = await fetch("https://www.hymosetups.com/api/v1/setups/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
@@ -474,12 +531,40 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
         throw new Error(`Search API responded with ${response.status}`)
       }
       const data = await response.json()
+      console.log("=== SEARCH API RESPONSE ===", data)
       const payload =
         data && typeof data === "object" && "data" in (data as Record<string, unknown>)
           ? (data as Record<string, unknown>).data
           : data
       if (Array.isArray(payload)) {
-        setTableSetups(payload as SetupPageProps["setups"])
+        const normalized = payload.map((item) => {
+          const entry = item as Record<string, unknown>
+          const getName = (value: unknown) => {
+            if (!value) return ""
+            if (typeof value === "string") return value
+            if (typeof value === "object") {
+              const record = value as Record<string, unknown>
+              if (typeof record.name === "string") return record.name
+              if (typeof record.label === "string") return record.label
+            }
+            return ""
+          }
+          return {
+            id: String(entry.id ?? ""),
+            game: getName(entry.category) || String(entry.game ?? game),
+            car: getName(entry.car),
+            track: getName(entry.track),
+            season: getName(entry.season),
+            week: entry.week ? String(entry.week) : undefined,
+            series: getName(entry.series),
+            lapTime: typeof entry.lap_time === "string" ? entry.lap_time : undefined,
+            version: getName(entry.version) || undefined,
+            year: entry.year ? String(entry.year) : undefined,
+            videoUrl: typeof entry.video_url === "string" ? entry.video_url : undefined,
+            trackGuideUrl: typeof entry.track_guide_url === "string" ? entry.track_guide_url : undefined,
+          }
+        })
+        setTableSetups(normalized as SetupPageProps["setups"])
       } else {
         console.warn("Search API payload is not an array", payload)
         setTableSetups([])
@@ -492,34 +577,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     }
   }, [buildRequestBody])
 
-  useEffect(() => {
-    const hasUrlFilters = Object.values(urlFilters).some(Boolean)
-    const hasSelection =
-      selectedClass ||
-      selectedCar ||
-      selectedTrack ||
-      selectedVariation ||
-      selectedSeason ||
-      selectedWeek ||
-      selectedSeries ||
-      selectedYear ||
-      selectedVersion
-    if (hasUrlFilters && hasSelection) {
-      fetchSetups()
-    }
-  }, [
-    fetchSetups,
-    selectedCar,
-    selectedClass,
-    selectedSeason,
-    selectedSeries,
-    selectedTrack,
-    selectedVariation,
-    selectedWeek,
-    selectedYear,
-    selectedVersion,
-    urlFilters,
-  ])
+  // Removed auto search on selection; use Find Setup button only.
 
   useEffect(() => {
     let cancelled = false
@@ -543,7 +601,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
       version: selectedVersion,
       game,
     })
-    fetch("/api/setups/filters", {
+    fetch("https://www.hymosetups.com/api/v1/setups/filters", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody),
@@ -631,42 +689,15 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     }
 
     setOrDelete("category_id", String(categoryId))
-    setOrDelete(
-      "class_id",
-      getLabelFromOptions(filterOptions.classes, selectedClass || urlFilters.class_id)
-    )
-    setOrDelete(
-      "car_id",
-      getLabelFromOptions(filterOptions.cars, selectedCar || urlFilters.car_id)
-    )
-    setOrDelete(
-      "track_id",
-      getLabelFromOptions(filterOptions.tracks, selectedTrack || urlFilters.track_id)
-    )
-    setOrDelete(
-      "variation_id",
-      getLabelFromOptions(filterOptions.variations, selectedVariation || urlFilters.variation_id)
-    )
-    setOrDelete(
-      "season_id",
-      getLabelFromOptions(filterOptions.seasons, selectedSeason || urlFilters.season_id)
-    )
-    setOrDelete(
-      "week",
-      getLabelFromOptions(filterOptions.weeks, selectedWeek || urlFilters.week)
-    )
-    setOrDelete(
-      "series_id",
-      getLabelFromOptions(filterOptions.series, selectedSeries || urlFilters.series_id)
-    )
-    setOrDelete(
-      "year",
-      getLabelFromOptions(filterOptions.years, selectedYear || urlFilters.year)
-    )
-    setOrDelete(
-      "version",
-      getLabelFromOptions(filterOptions.versions, selectedVersion || urlFilters.version)
-    )
+    setOrDelete("class_id", getLabelFromOptions(filterOptions.classes, selectedClass))
+    setOrDelete("car_id", getLabelFromOptions(filterOptions.cars, selectedCar))
+    setOrDelete("track_id", getLabelFromOptions(filterOptions.tracks, selectedTrack))
+    setOrDelete("variation_id", getLabelFromOptions(filterOptions.variations, selectedVariation))
+    setOrDelete("season_id", getLabelFromOptions(filterOptions.seasons, selectedSeason))
+    setOrDelete("week", getLabelFromOptions(filterOptions.weeks, selectedWeek))
+    setOrDelete("series_id", getLabelFromOptions(filterOptions.series, selectedSeries))
+    setOrDelete("year", getLabelFromOptions(filterOptions.years, selectedYear))
+    setOrDelete("version", getLabelFromOptions(filterOptions.versions, selectedVersion))
 
     const nextQuery = params.toString()
     const currentQuery = searchParams.toString()
@@ -689,7 +720,23 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     selectedWeek,
     selectedYear,
     selectedVersion,
-    urlFilters,
+  ])
+
+  useEffect(() => {
+    if (!removalTriggeredRef.current) return
+    removalTriggeredRef.current = false
+    updateUrlFromSelections()
+  }, [
+    selectedClass,
+    selectedCar,
+    selectedTrack,
+    selectedSeason,
+    selectedWeek,
+    selectedVariation,
+    selectedSeries,
+    selectedYear,
+    selectedVersion,
+    updateUrlFromSelections,
   ])
 
   useEffect(() => {
@@ -750,10 +797,12 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
 
   // Helper function to format season display (combines season and week for iRacing)
   const formatSeasonDisplay = useCallback((setup: { season: string; week?: string; game: string }) => {
+    const seasonText = String(setup.season ?? "")
     if (game === "iracing" && setup.week) {
       // Format: "iRacing Season 1 Week 1 2026"
-      const seasonMatch = setup.season.match(/(\d{4})\s*S(\d+)/i)
-      const weekMatch = setup.week.match(/week\s*(\d+)/i)
+      const seasonMatch = seasonText.match(/(\d{4})\s*S(\d+)/i)
+      const weekValue = String(setup.week ?? "")
+      const weekMatch = weekValue.match(/week\s*(\d+)/i) ?? weekValue.match(/(\d+)/)
       if (seasonMatch && weekMatch) {
         const year = seasonMatch[1]
         const seasonNum = seasonMatch[2]
@@ -761,79 +810,26 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
         return `${setup.game} Season ${seasonNum} Week ${weekNum} ${year}`
       }
       // Fallback format
-      return `${setup.season} ${setup.week}`
+      return `${seasonText} ${weekValue}`
     }
-    return setup.season
+    return seasonText
   }, [game])
 
   const filteredSetups = useMemo(() => {
     return tableSetups.filter((setup) => {
-      const matchesSearch = searchQuery === "" || 
-        setup.car.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        setup.track.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        setup.series.toLowerCase().includes(searchQuery.toLowerCase())
-      
-      const matchesClass = selectedClass === "" || setup.car.toLowerCase().includes(selectedClass.toLowerCase())
-      const matchesCar = selectedCar === "" || setup.car.toLowerCase().includes(selectedCar.toLowerCase())
-      const matchesTrack = selectedTrack === "" || setup.track.toLowerCase().includes(selectedTrack.toLowerCase())
-    
-    // For iRacing: season + week; for ACC/LMU: season + series
-    let matchesFilter4 = true
-    if (selectedSeason !== "") {
-      if (game === "iracing") {
-        const seasonMatch = setup.season.match(/(\d{4})\s*S(\d+)/i)
-        const normalized = seasonMatch ? `${seasonMatch[1]}s${seasonMatch[2]}` : ""
-        matchesFilter4 = normalized ? selectedSeason.toLowerCase() === normalized.toLowerCase() : setup.season.toLowerCase().includes(selectedSeason.toLowerCase())
-      } else {
-        matchesFilter4 = setup.season.toLowerCase().includes(selectedSeason.toLowerCase())
-      }
-    }
+      const carText = String(setup.car ?? "")
+      const trackText = String(setup.track ?? "")
+      const seriesText = String(setup.series ?? "")
 
-    let matchesFilter5 = true
-    if (game === "iracing") {
-      if (selectedWeek !== "") {
-        const weekNum = setup.week?.match(/(\d+)/)?.[0]
-        const normalized = weekNum ? `week${weekNum}` : ""
-        matchesFilter5 = normalized ? selectedWeek.toLowerCase() === normalized.toLowerCase() : !!(setup.week && setup.week.toLowerCase().includes(selectedWeek.toLowerCase()))
-      }
-    }
+      const matchesSearch =
+        searchQuery === "" ||
+        carText.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        trackText.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        seriesText.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesVariation =
-      selectedVariation === "" || setup.track.toLowerCase().includes(selectedVariation.toLowerCase())
-    const matchesYear =
-      selectedYear === "" || setup.season.toLowerCase().includes(selectedYear.toLowerCase())
-    const matchesSeries =
-      selectedSeries === "" || setup.series.toLowerCase().includes(selectedSeries.toLowerCase())
-    const matchesVersion =
-      selectedVersion === "" || (setup.version ?? "").toLowerCase().includes(selectedVersion.toLowerCase())
-      
-      return (
-        matchesSearch &&
-        matchesClass &&
-        matchesCar &&
-        matchesTrack &&
-        matchesFilter4 &&
-        matchesFilter5 &&
-        matchesVariation &&
-        matchesYear &&
-        matchesSeries &&
-        matchesVersion
-      )
+      return matchesSearch
     })
-  }, [
-    tableSetups,
-    searchQuery,
-    selectedClass,
-    selectedCar,
-    selectedTrack,
-    selectedSeason,
-    selectedWeek,
-    selectedVariation,
-    selectedSeries,
-    selectedYear,
-    selectedVersion,
-    game,
-  ])
+  }, [tableSetups, searchQuery])
 
   const [currentPage, setCurrentPage] = useState(0)
   const rowLimit = 10 // Fixed to 10 items per page
@@ -857,6 +853,39 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     currentPage * rowLimit,
     (currentPage + 1) * rowLimit
   )
+  const bestLapSetupId = useMemo(() => {
+    const parseLapTime = (value?: string) => {
+      if (!value) return Number.POSITIVE_INFINITY
+      const trimmed = value.trim()
+      if (trimmed === "—") return Number.POSITIVE_INFINITY
+      const parts = trimmed.split(":")
+      if (parts.length === 2) {
+        const minutes = Number(parts[0])
+        const seconds = Number(parts[1])
+        if (Number.isFinite(minutes) && Number.isFinite(seconds)) {
+          return minutes * 60 + seconds
+        }
+      }
+      const seconds = Number(trimmed)
+      return Number.isFinite(seconds) ? seconds : Number.POSITIVE_INFINITY
+    }
+
+    let bestId = ""
+    let bestTime = Number.POSITIVE_INFINITY
+    filteredSetups.forEach((setup) => {
+      const current = parseLapTime(setup.lapTime)
+      if (current < bestTime) {
+        bestTime = current
+        bestId = setup.id
+      }
+    })
+    return bestId
+  }, [filteredSetups])
+
+  const activeSetupId = selectedSetupId || bestLapSetupId
+  const activeSetup = useMemo(() => {
+    return filteredSetups.find((setup) => setup.id === activeSetupId) ?? filteredSetups[0]
+  }, [activeSetupId, filteredSetups])
 
   const getPaginationTransform = useCallback((pageIndex: number, total: number): number => {
     const BTN_WIDTH = 4
@@ -869,16 +898,6 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
   const switchPage = useCallback((index: number) => {
     setCurrentPage(Math.max(0, Math.min(index, totalPages - 1)))
   }, [totalPages])
-
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    const direction = e.deltaY < 0
-    const canGoPrev = direction && currentPage > 0
-    const canGoNext = !direction && currentPage < totalPages - 1
-    if (canGoPrev || canGoNext) {
-      e.preventDefault()
-      switchPage(canGoPrev ? currentPage - 1 : currentPage + 1)
-    }
-  }, [currentPage, totalPages, switchPage])
 
   const displayFrom = filteredSetups.length === 0 ? 0 : currentPage * rowLimit + 1
   const displayTo = Math.min((currentPage + 1) * rowLimit, filteredSetups.length)
@@ -1148,7 +1167,6 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
         <div
           ref={tableContainerRef}
           className="relative w-full border border-primary/30 rounded-lg bg-card/50 backdrop-blur-sm overflow-hidden shadow-lg"
-          onWheel={handleWheel}
         >
           <div className="overflow-x-auto">
           <table className="w-full border-collapse bg-transparent">
@@ -1188,7 +1206,14 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
                 paginatedSetups.map((setup, i) => (
                   <tr 
                     key={setup.id} 
-                    className="border-b border-border/30 hover:bg-muted/30 transition-colors"
+                    onClick={() => setSelectedSetupId(setup.id)}
+                    className={`border-b border-border/30 hover:bg-muted/30 transition-colors cursor-pointer ${
+                      activeSetupId && setup.id === activeSetupId
+                        ? "bg-primary/15 ring-1 ring-primary/40"
+                        : bestLapSetupId && setup.id === bestLapSetupId
+                          ? "bg-primary/10 ring-1 ring-primary/30"
+                          : ""
+                    }`}
                   >
                     <td className="px-4 py-3 text-sm text-muted-foreground">
                       {currentPage * rowLimit + i + 1}
@@ -1332,26 +1357,40 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
           let carText = "your car"
           let trackText = "the track"
           
-    if (filteredSetups.length > 0) {
-      const firstSetup = filteredSetups[0]
+          if (activeSetup) {
+            const firstSetup = activeSetup
             
             // Extract season, year, week from first setup
             if (game === "iracing" && firstSetup.week) {
-              const seasonMatch = firstSetup.season.match(/(\d{4})\s*S(\d+)/i)
-              const weekMatch = firstSetup.week.match(/week\s*(\d+)/i)
-              if (seasonMatch && weekMatch) {
-                year = seasonMatch[1]
-                const seasonNum = seasonMatch[2]
+              const seasonTextValue = String(firstSetup.season ?? "")
+              const weekTextValue = String(firstSetup.week ?? "")
+              const seasonMatch =
+                seasonTextValue.match(/(\d{4})\s*S(\d+)/i) ??
+                seasonTextValue.match(/Season\s*(\d+)\s*(\d{4})/i) ??
+                seasonTextValue.match(/(\d{4}).*Season\s*(\d+)/i)
+              const weekMatch = weekTextValue.match(/week\s*(\d+)/i) ?? weekTextValue.match(/(\d+)/)
+              if (seasonMatch) {
+                const maybeYear = seasonMatch[1].length === 4 ? seasonMatch[1] : seasonMatch[2]
+                const maybeSeason = seasonMatch[1].length === 4 ? seasonMatch[2] : seasonMatch[1]
+                year = maybeYear
+                seasonText = `Season ${maybeSeason}`
+              }
+              if (weekMatch) {
                 weekText = weekMatch[1]
-                seasonText = `Season ${seasonNum}`
+              }
+              if (!year && firstSetup.year) {
+                year = String(firstSetup.year)
               }
             } else if (firstSetup.season) {
               // For non-iRacing games, try to extract year from season
-              const yearMatch = firstSetup.season.match(/(\d{4})/i)
+              const seasonTextValue = String(firstSetup.season ?? "")
+              const yearMatch = seasonTextValue.match(/(\d{4})/i)
               if (yearMatch) {
                 year = yearMatch[1]
+              } else if (firstSetup.year) {
+                year = String(firstSetup.year)
               }
-              seasonText = firstSetup.season
+              seasonText = seasonTextValue
             }
             
             carText = firstSetup.car || carText
@@ -1365,8 +1404,12 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
           // Split description into paragraphs for better readability
           const descriptionParts = [
             `Experience the ultimate in-game performance with professional car setups developed by elite E-Sports drivers.`,
-            `This setup pack is specifically engineered for ${gameName}${seasonPart}${weekPart}, optimised for the ${carText} at ${trackText} combination to deliver maximum performance in competitive conditions.`,
-            `The package includes Consistent, E-Sports, and Wet setup variants, fully optimised for both Qualifying and Race sessions. Consistent setups focus on stability, control, and long-run confidence, E-Sports setups are designed to extract ultimate lap time, while Wet setups are tuned to provide maximum grip, predictability, and confidence in low-traction conditions.`,
+            <>
+              This setup pack is specifically engineered for <strong>{gameName}{seasonPart}{weekPart}</strong>, optimised for the <strong>{carText}</strong> at <strong>{trackText}</strong> combination to deliver maximum performance in competitive conditions.
+            </>,
+            <>
+              The package includes <strong>Consistent</strong>, <strong>E-Sports</strong>, and <strong>Wet</strong> setup variants, fully optimised for both Qualifying and Race sessions. Consistent setups focus on stability, control, and long-run confidence, E-Sports setups are designed to extract ultimate lap time, while Wet setups are tuned to provide maximum grip, predictability, and confidence in low-traction conditions.
+            </>,
             `Whether you are racing in official events or pushing for personal bests, these professionally developed setups help you achieve faster lap times, improved tyre management, and greater overall race consistency across all conditions.`
           ]
           
@@ -1417,8 +1460,8 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
             <div className="w-full aspect-video max-h-[400px] rounded-lg overflow-hidden shadow-lg border border-primary/30 bg-card/50 backdrop-blur-sm">
               <iframe
                 className="w-full h-full"
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-                title="Racing Hotlap | Ford Mustang GT3 @ Mexico City | IMSA | 2026 S1 Week 1"
+                src={activeSetup?.videoUrl || "https://www.youtube.com/embed/dQw4w9WgXcQ"}
+                title={`Racing Hotlap | ${activeSetup?.car || "Car"} @ ${activeSetup?.track || "Track"}`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>
@@ -1436,8 +1479,8 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
             <div className="w-full aspect-video max-h-[400px] rounded-lg overflow-hidden shadow-lg border border-primary/30 bg-card/50 backdrop-blur-sm">
               <iframe
                 className="w-full h-full"
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-                title="HOW TO DO MEXICO IN iRacing | GT3 Track Guide & Tips"
+                src={activeSetup?.trackGuideUrl || "https://www.youtube.com/embed/dQw4w9WgXcQ"}
+                title={`Track Guide | ${activeSetup?.track || "Track"}`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>
