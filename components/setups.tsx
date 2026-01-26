@@ -243,7 +243,7 @@ export function Setups() {
                         <p className="text-xs text-white/90">{setup.track}</p>
                       </div>
                       {setup.featured && (
-                        <span className="absolute bottom-3 left-3 text-[10px] font-bold uppercase tracking-wider text-primary-foreground bg-primary px-2.5 py-1 rounded">
+                        <span className="absolute bottom-3 left-3 text-[10px] font-bold uppercase tracking-wider text-primary-foreground bg-brand-gradient px-2.5 py-1 rounded">
                           Featured
                         </span>
                       )}
