@@ -1046,28 +1046,23 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     }
   }, [filteredSetups.length, rowLimit])
 
-  const totalPages = Math.max(1, Math.ceil(filteredSetups.length / rowLimit))
-  const paginatedSetups = filteredSetups.slice(
-    currentPage * rowLimit,
-    (currentPage + 1) * rowLimit
-  )
-  const bestLapSetupId = useMemo(() => {
-    const parseLapTime = (value?: string) => {
-      if (!value) return Number.POSITIVE_INFINITY
-      const trimmed = value.trim()
-      if (trimmed === "—") return Number.POSITIVE_INFINITY
-      const parts = trimmed.split(":")
-      if (parts.length === 2) {
-        const minutes = Number(parts[0])
-        const seconds = Number(parts[1])
-        if (Number.isFinite(minutes) && Number.isFinite(seconds)) {
-          return minutes * 60 + seconds
-        }
+  const parseLapTime = useCallback((value?: string) => {
+    if (!value) return Number.POSITIVE_INFINITY
+    const trimmed = value.trim()
+    if (trimmed === "—") return Number.POSITIVE_INFINITY
+    const parts = trimmed.split(":")
+    if (parts.length === 2) {
+      const minutes = Number(parts[0])
+      const seconds = Number(parts[1])
+      if (Number.isFinite(minutes) && Number.isFinite(seconds)) {
+        return minutes * 60 + seconds
       }
-      const seconds = Number(trimmed)
-      return Number.isFinite(seconds) ? seconds : Number.POSITIVE_INFINITY
     }
+    const seconds = Number(trimmed)
+    return Number.isFinite(seconds) ? seconds : Number.POSITIVE_INFINITY
+  }, [])
 
+  const bestLapSetupId = useMemo(() => {
     let bestId = ""
     let bestTime = Number.POSITIVE_INFINITY
     filteredSetups.forEach((setup) => {
@@ -1078,7 +1073,20 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
       }
     })
     return bestId
-  }, [filteredSetups])
+  }, [filteredSetups, parseLapTime])
+
+  const sortedSetups = useMemo(() => {
+    if (!bestLapSetupId) return filteredSetups
+    const bestSetup = filteredSetups.find((setup) => setup.id === bestLapSetupId)
+    if (!bestSetup) return filteredSetups
+    return [bestSetup, ...filteredSetups.filter((setup) => setup.id !== bestLapSetupId)]
+  }, [bestLapSetupId, filteredSetups])
+
+  const totalPages = Math.max(1, Math.ceil(sortedSetups.length / rowLimit))
+  const paginatedSetups = sortedSetups.slice(
+    currentPage * rowLimit,
+    (currentPage + 1) * rowLimit
+  )
 
   const activeSetupId = selectedSetupId || bestLapSetupId
   const activeSetup = useMemo(() => {
@@ -1449,8 +1457,10 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
                     key={setup.id} 
                     onClick={() => setSelectedSetupId(setup.id)}
                     className={`border-b border-border/30 hover:bg-muted/30 transition-colors cursor-pointer ${
-                      activeSetupId && setup.id === activeSetupId
-                        ? "bg-primary/15 ring-1 ring-primary/40"
+                      selectedSetupId
+                        ? setup.id === selectedSetupId
+                          ? "bg-primary/15 ring-1 ring-primary/40"
+                          : ""
                         : bestLapSetupId && setup.id === bestLapSetupId
                           ? "bg-primary/10 ring-1 ring-primary/30"
                           : ""
