@@ -147,10 +147,11 @@ export default function PricingPage() {
           >
             <div className="absolute inset-0">
               <Image
-                src="/images/contact-1.jpg"
+                src="/images/contact-1.webp"
                 alt=""
-                fill
-                className="object-cover"
+                width={1024}
+                height={1024}
+                className="w-full xl:translate-y-[-48%] lg:translate-y-[-33%] md:translate-y-[-30%]"
                 sizes="(max-width: 768px) 100vw, 1024px"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/40 to-black/20" />
