@@ -256,11 +256,6 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                         <CardTitle className="text-4xl font-bold tracking-tight uppercase">
                           {permanentPlan.name}
                         </CardTitle>
-                        {permanentPlan.description && (
-                          <CardDescription className="mt-1.5 text-sm text-white/80">
-                            {permanentPlan.description}
-                          </CardDescription>
-                        )}
                       </div>
                     </div>
                     <div className="mt-6">
@@ -334,16 +329,6 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                           >
                             {plan.name}
                           </CardTitle>
-                          {billingPeriod === "monthly" && plan.monthly?.description && (
-                            <CardDescription className="mt-1.5 text-sm text-white/80">
-                              {plan.monthly.description}
-                            </CardDescription>
-                          )}
-                          {billingPeriod === "yearly" && plan.yearly?.description && (
-                            <CardDescription className="mt-1.5 text-sm text-white/80">
-                              {plan.yearly.description}
-                            </CardDescription>
-                          )}
                         </div>
                       </div>
 

@@ -50,19 +50,141 @@ interface SetupPageProps {
     videoUrl?: string
     trackGuideUrl?: string
     lapTime?: string
+    weather?: SetupWeather
   }[]
 }
 
+interface SetupWeather {
+  airTemp?: number | string
+  humidity?: number | string
+  windSpeed?: number | string
+  windDirection?: string
+  trackTemp?: number | string
+  sky?: string
+  time?: string
+  date?: string
+}
+
 interface UrlFiltersState {
-  class_id: string
-  car_id: string
-  track_id: string
-  variation_id: string
-  season_id: string
+  class: string
+  car: string
+  track: string
+  variation: string
+  season: string
   week: string
-  series_id: string
+  series: string
   year: string
   version: string
+}
+
+const parseNumberValue = (value: unknown): number | undefined => {
+  if (value === null || value === undefined) return undefined
+  if (typeof value === "number") return Number.isFinite(value) ? value : undefined
+  if (typeof value === "string") {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : undefined
+  }
+  return undefined
+}
+
+const parseStringValue = (value: unknown): string | undefined => {
+  if (typeof value !== "string") return undefined
+  const trimmed = value.trim()
+  return trimmed ? trimmed : undefined
+}
+
+const normalizeWeather = (value: unknown): SetupWeather | undefined => {
+  if (!value || typeof value !== "object") return undefined
+  const record = value as Record<string, unknown>
+  const normalized: SetupWeather = {
+    airTemp:
+      parseNumberValue(record.air_temp) ??
+      parseNumberValue(record.airTemp) ??
+      parseNumberValue(record.temp) ??
+      parseNumberValue(record.airTemperature),
+    humidity:
+      parseNumberValue(record.hume) ??
+      parseNumberValue(record.humidity) ??
+      parseNumberValue(record.humid),
+    windSpeed:
+      parseNumberValue(record.mph) ??
+      parseNumberValue(record.wind_speed) ??
+      parseNumberValue(record.windSpeed) ??
+      parseNumberValue(record.wind),
+    windDirection:
+      parseStringValue(record.wind_dir) ??
+      parseStringValue(record.windDirection) ??
+      parseStringValue(record.wind_dir_label) ??
+      parseStringValue(record.windDir) ??
+      parseStringValue(record.wind_direction),
+    trackTemp:
+      parseNumberValue(record.trac) ??
+      parseNumberValue(record.track_temp) ??
+      parseNumberValue(record.trackTemp) ??
+      parseNumberValue(record.track_temperature),
+    sky:
+      parseStringValue(record.sky) ??
+      parseStringValue(record.sky_condition) ??
+      parseStringValue(record.conditions) ??
+      parseStringValue(record.skyConditions),
+    time:
+      parseStringValue(record.wdatetime) ??
+      parseStringValue(record.wdate_time) ??
+      parseStringValue(record.time) ??
+      parseStringValue(record.datetime) ??
+      parseStringValue(record.date_time),
+    date: parseStringValue(record.wdate) ?? parseStringValue(record.date),
+  }
+  const hasValue = Object.values(normalized).some(
+    (entry) => entry !== undefined && entry !== null && String(entry).trim() !== ""
+  )
+  return hasValue ? normalized : undefined
+}
+
+const formatTemperature = (value?: number | string) => {
+  if (value === undefined || value === null) return ""
+  const text = String(value).trim()
+  if (!text) return ""
+  if (/[CF]\b/i.test(text)) return text
+  return `${text} F`
+}
+
+const formatHumidity = (value?: number | string) => {
+  if (value === undefined || value === null) return ""
+  const text = String(value).trim()
+  if (!text) return ""
+  const withPercent = text.includes("%") ? text : `${text}%`
+  return /rh\b/i.test(withPercent) ? withPercent : `${withPercent} RH`
+}
+
+const formatWind = (speed?: number | string, direction?: string) => {
+  if (speed === undefined || speed === null) return ""
+  const text = String(speed).trim()
+  if (!text) return ""
+  const withUnit = /mph\b/i.test(text) ? text : `${text} MPH`
+  return direction ? `${withUnit} ${direction}` : withUnit
+}
+
+const parseWeatherDate = (value: string): Date | null => {
+  const candidate = value.includes(" ") && !value.includes("T") ? value.replace(" ", "T") : value
+  const parsed = new Date(candidate)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+const formatWeatherDateTime = (value?: string) => {
+  if (!value) return { timeLabel: "", dateLabel: "" }
+  const parsed = parseWeatherDate(value)
+  if (!parsed) {
+    return { timeLabel: value, dateLabel: "" }
+  }
+  return {
+    timeLabel: parsed.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+    dateLabel: parsed.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }),
+  }
 }
 
 export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: SetupPageProps) {
@@ -73,13 +195,13 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
   const [searchLoading, setSearchLoading] = useState(false)
   const [tableSetups, setTableSetups] = useState(setups)
   const [urlFilters, setUrlFilters] = useState<UrlFiltersState>({
-    class_id: "",
-    car_id: "",
-    track_id: "",
-    variation_id: "",
-    season_id: "",
+    class: "",
+    car: "",
+    track: "",
+    variation: "",
+    season: "",
     week: "",
-    series_id: "",
+    series: "",
     year: "",
     version: "",
   })
@@ -205,18 +327,31 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
   useEffect(() => {
     const getParam = (key: keyof UrlFiltersState) => searchParams.get(key) ?? ""
     setUrlFilters({
-      class_id: getParam("class_id"),
-      car_id: getParam("car_id"),
-      track_id: getParam("track_id"),
-      variation_id: getParam("variation_id"),
-      season_id: getParam("season_id"),
+      class: getParam("class"),
+      car: getParam("car"),
+      track: getParam("track"),
+      variation: getParam("variation"),
+      season: getParam("season"),
       week: getParam("week"),
-      series_id: getParam("series_id"),
+      series: getParam("series"),
       year: getParam("year"),
       version: getParam("version"),
     })
     hasHydratedUrlRef.current = true
   }, [searchParams])
+
+  const slugify = useCallback((value: string) => {
+    return value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+  }, [])
+
+  const getWeekNumber = useCallback((value: string) => {
+    const match = value.match(/(\d+)/)
+    return match ? match[1] : ""
+  }, [])
 
   const resolveSelectionValue = useCallback((options: FilterOption[], urlValue: string): string => {
     if (!urlValue) return ""
@@ -226,12 +361,62 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
       (option) => option.label.toLowerCase() === urlValue.toLowerCase()
     )
     if (labelMatch) return labelMatch.value
+    const slugMatch = options.find((option) => {
+      const labelSlug = slugify(option.label)
+      const valueSlug = slugify(option.value)
+      return labelSlug === urlValue || valueSlug === urlValue
+    })
+    if (slugMatch) return slugMatch.value
     return ""
-  }, [])
+  }, [slugify])
+
+  const resolveWeekSelectionValue = useCallback(
+    (options: FilterOption[], urlValue: string): string => {
+      if (!urlValue) return ""
+      const direct = resolveSelectionValue(options, urlValue)
+      if (direct) return direct
+      const urlWeek = getWeekNumber(urlValue) || urlValue
+      if (!urlWeek) return ""
+      const weekMatch = options.find((option) => {
+        const optionWeek = getWeekNumber(option.value) || getWeekNumber(option.label)
+        return optionWeek === urlWeek
+      })
+      return weekMatch?.value ?? ""
+    },
+    [getWeekNumber, resolveSelectionValue]
+  )
 
   const normalizeSelectValue = useCallback((value: string) => {
     return value === clearOptionValue ? "" : value
   }, [clearOptionValue])
+
+  const getLabelFromOptions = useCallback((options: FilterOption[], value: string): string => {
+    if (!value) return ""
+    const match = options.find((option) => option.value === value)
+    return match?.label ?? value
+  }, [])
+
+  const getSlugFromOptions = useCallback(
+    (options: FilterOption[], value: string): string => {
+      if (!value) return ""
+      const label = getLabelFromOptions(options, value)
+      return slugify(label)
+    },
+    [getLabelFromOptions, slugify]
+  )
+
+  const getWeekSlugFromOptions = useCallback(
+    (options: FilterOption[], value: string): string => {
+      if (!value) return ""
+      const valueWeek = getWeekNumber(value)
+      if (valueWeek) return valueWeek
+      const label = getLabelFromOptions(options, value)
+      const labelWeek = getWeekNumber(label)
+      if (labelWeek) return labelWeek
+      return slugify(label)
+    },
+    [getLabelFromOptions, getWeekNumber, slugify]
+  )
 
   const formatWeekLabel = useCallback((label: string) => {
     const trimmed = label.trim()
@@ -342,12 +527,6 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     [normalizeSelectValue]
   )
 
-  const getLabelFromOptions = useCallback((options: FilterOption[], value: string): string => {
-    if (!value) return ""
-    const match = options.find((option) => option.value === value)
-    return match?.label ?? value
-  }, [])
-
   const toRequestValue = useCallback((value: string): string | number => {
     const num = Number(value)
     return Number.isFinite(num) ? num : value
@@ -404,6 +583,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
   useEffect(() => {
     if (game !== "iracing") return
     if (!selectedCar || !selectedTrack) return
+    if (urlFilters.season || urlFilters.week) return
 
     if (!selectedSeason && filterOptions.seasons.length > 0) {
       const latestSeason = getLatestSeasonOption(filterOptions.seasons)
@@ -411,10 +591,10 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
         handleSelectChange("season", latestSeason.value)
       }
     }
-    if (!selectedWeek && filterOptions.weeks.length > 0) {
-      const latestWeek = filterOptions.weeks[0]
-      if (latestWeek) {
-        handleSelectChange("week", latestWeek.value)
+    if (!selectedWeek && filterOptions.weeks.length === 1) {
+      const onlyWeek = filterOptions.weeks[0]
+      if (onlyWeek) {
+        handleSelectChange("week", onlyWeek.value)
       }
     }
   }, [
@@ -427,6 +607,8 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     selectedSeason,
     selectedTrack,
     selectedWeek,
+    urlFilters.season,
+    urlFilters.week,
   ])
 
   useEffect(() => {
@@ -437,57 +619,57 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
       if (!value) return
       handleSelectChange(field, value, { skipFetch: true })
     }
-    if (!selectedClass && filterOptions.classes.length === 1) {
+    if (!selectedClass && !urlFilters.class && filterOptions.classes.length === 1) {
       autoSelect("class", filterOptions.classes[0].value)
     }
-    if (!selectedCar && filterOptions.cars.length === 1) {
+    if (!selectedCar && !urlFilters.car && filterOptions.cars.length === 1) {
       autoSelect("car", filterOptions.cars[0].value)
     }
-    if (!selectedTrack && filterOptions.tracks.length === 1) {
+    if (!selectedTrack && !urlFilters.track && filterOptions.tracks.length === 1) {
       autoSelect("track", filterOptions.tracks[0].value)
     }
-    if (!selectedClass && urlFilters.class_id) {
-      const resolved = resolveSelectionValue(filterOptions.classes, urlFilters.class_id)
-      if (resolved) handleSelectChange("class", resolved, { skipFetch: true })
+    if (!selectedClass && urlFilters.class) {
+      const resolved = resolveSelectionValue(filterOptions.classes, urlFilters.class)
+      if (resolved) handleSelectChange("class", resolved)
     }
-    if (!selectedCar && urlFilters.car_id) {
-      const resolved = resolveSelectionValue(filterOptions.cars, urlFilters.car_id)
-      if (resolved) handleSelectChange("car", resolved, { skipFetch: true })
+    if (!selectedCar && urlFilters.car) {
+      const resolved = resolveSelectionValue(filterOptions.cars, urlFilters.car)
+      if (resolved) handleSelectChange("car", resolved)
     }
-    if (!selectedTrack && urlFilters.track_id) {
-      const resolved = resolveSelectionValue(filterOptions.tracks, urlFilters.track_id)
-      if (resolved) handleSelectChange("track", resolved, { skipFetch: true })
+    if (!selectedTrack && urlFilters.track) {
+      const resolved = resolveSelectionValue(filterOptions.tracks, urlFilters.track)
+      if (resolved) handleSelectChange("track", resolved)
     }
     if (game === "iracing") {
-      if (!selectedSeason && filterOptions.seasons.length === 1) {
+      if (!selectedSeason && !urlFilters.season && filterOptions.seasons.length === 1) {
         autoSelect("season", filterOptions.seasons[0].value)
       }
-      if (!selectedWeek && filterOptions.weeks.length === 1) {
+      if (!selectedWeek && !urlFilters.week && filterOptions.weeks.length === 1) {
         autoSelect("week", filterOptions.weeks[0].value)
       }
-      if (!selectedVariation && filterOptions.variations.length === 1) {
+      if (!selectedVariation && !urlFilters.variation && filterOptions.variations.length === 1) {
         autoSelect("variation", filterOptions.variations[0].value)
       }
-      if (!selectedSeries && filterOptions.series.length === 1) {
+      if (!selectedSeries && !urlFilters.series && filterOptions.series.length === 1) {
         autoSelect("series", filterOptions.series[0].value)
       }
-      if (!selectedYear && filterOptions.years.length === 1) {
+      if (!selectedYear && !urlFilters.year && filterOptions.years.length === 1) {
         autoSelect("year", filterOptions.years[0].value)
       }
-      if (!selectedVariation && urlFilters.variation_id) {
-        const resolved = resolveSelectionValue(filterOptions.variations, urlFilters.variation_id)
+      if (!selectedVariation && urlFilters.variation) {
+        const resolved = resolveSelectionValue(filterOptions.variations, urlFilters.variation)
         if (resolved) handleSelectChange("variation", resolved, { skipFetch: true })
       }
-      if (!selectedSeason && urlFilters.season_id) {
-        const resolved = resolveSelectionValue(filterOptions.seasons, urlFilters.season_id)
+      if (!selectedSeason && urlFilters.season) {
+        const resolved = resolveSelectionValue(filterOptions.seasons, urlFilters.season)
         if (resolved) handleSelectChange("season", resolved, { skipFetch: true })
       }
       if (!selectedWeek && urlFilters.week) {
-        const resolved = resolveSelectionValue(filterOptions.weeks, urlFilters.week)
+        const resolved = resolveWeekSelectionValue(filterOptions.weeks, urlFilters.week)
         if (resolved) handleSelectChange("week", resolved, { skipFetch: true })
       }
-      if (!selectedSeries && urlFilters.series_id) {
-        const resolved = resolveSelectionValue(filterOptions.series, urlFilters.series_id)
+      if (!selectedSeries && urlFilters.series) {
+        const resolved = resolveSelectionValue(filterOptions.series, urlFilters.series)
         if (resolved) handleSelectChange("series", resolved, { skipFetch: true })
       }
       if (!selectedYear && urlFilters.year) {
@@ -505,6 +687,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     game,
     handleSelectChange,
     resolveSelectionValue,
+    resolveWeekSelectionValue,
     selectedCar,
     selectedClass,
     selectedSeason,
@@ -562,6 +745,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
             year: entry.year ? String(entry.year) : undefined,
             videoUrl: typeof entry.video_url === "string" ? entry.video_url : undefined,
             trackGuideUrl: typeof entry.track_guide_url === "string" ? entry.track_guide_url : undefined,
+            weather: normalizeWeather(entry.weather),
           }
         })
         setTableSetups(normalized as SetupPageProps["setups"])
@@ -677,6 +861,35 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     return () => { cancelled = true }
   }, [buildRequestBody])
 
+  const buildUrlSelections = useCallback(() => {
+    return {
+      category: String(categoryId),
+      class: getSlugFromOptions(filterOptions.classes, selectedClass),
+      car: getSlugFromOptions(filterOptions.cars, selectedCar),
+      track: getSlugFromOptions(filterOptions.tracks, selectedTrack),
+      variation: getSlugFromOptions(filterOptions.variations, selectedVariation),
+      season: getSlugFromOptions(filterOptions.seasons, selectedSeason),
+      week: getWeekSlugFromOptions(filterOptions.weeks, selectedWeek),
+      series: getSlugFromOptions(filterOptions.series, selectedSeries),
+      year: getSlugFromOptions(filterOptions.years, selectedYear),
+      version: getSlugFromOptions(filterOptions.versions, selectedVersion),
+    }
+  }, [
+    categoryId,
+    filterOptions,
+    getWeekSlugFromOptions,
+    getSlugFromOptions,
+    selectedCar,
+    selectedClass,
+    selectedSeason,
+    selectedSeries,
+    selectedTrack,
+    selectedVariation,
+    selectedWeek,
+    selectedYear,
+    selectedVersion,
+  ])
+
   const updateUrlFromSelections = useCallback(() => {
     if (!hasHydratedUrlRef.current) return
     const params = new URLSearchParams(searchParams.toString())
@@ -688,39 +901,24 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
       }
     }
 
-    setOrDelete("category_id", String(categoryId))
-    setOrDelete("class_id", getLabelFromOptions(filterOptions.classes, selectedClass))
-    setOrDelete("car_id", getLabelFromOptions(filterOptions.cars, selectedCar))
-    setOrDelete("track_id", getLabelFromOptions(filterOptions.tracks, selectedTrack))
-    setOrDelete("variation_id", getLabelFromOptions(filterOptions.variations, selectedVariation))
-    setOrDelete("season_id", getLabelFromOptions(filterOptions.seasons, selectedSeason))
-    setOrDelete("week", getLabelFromOptions(filterOptions.weeks, selectedWeek))
-    setOrDelete("series_id", getLabelFromOptions(filterOptions.series, selectedSeries))
-    setOrDelete("year", getLabelFromOptions(filterOptions.years, selectedYear))
-    setOrDelete("version", getLabelFromOptions(filterOptions.versions, selectedVersion))
+    const selections = buildUrlSelections()
+    setOrDelete("category", selections.category)
+    setOrDelete("class", selections.class)
+    setOrDelete("car", selections.car)
+    setOrDelete("track", selections.track)
+    setOrDelete("variation", selections.variation)
+    setOrDelete("season", selections.season)
+    setOrDelete("week", selections.week)
+    setOrDelete("series", selections.series)
+    setOrDelete("year", selections.year)
+    setOrDelete("version", selections.version)
 
     const nextQuery = params.toString()
     const currentQuery = searchParams.toString()
     if (nextQuery !== currentQuery) {
       router.replace(`${pathname}${nextQuery ? `?${nextQuery}` : ""}`, { scroll: false })
     }
-  }, [
-    categoryId,
-    filterOptions,
-    getLabelFromOptions,
-    pathname,
-    router,
-    searchParams,
-    selectedClass,
-    selectedCar,
-    selectedSeason,
-    selectedSeries,
-    selectedTrack,
-    selectedVariation,
-    selectedWeek,
-    selectedYear,
-    selectedVersion,
-  ])
+  }, [buildUrlSelections, pathname, router, searchParams])
 
   useEffect(() => {
     if (!removalTriggeredRef.current) return
@@ -887,6 +1085,48 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     return filteredSetups.find((setup) => setup.id === activeSetupId) ?? filteredSetups[0]
   }, [activeSetupId, filteredSetups])
 
+  const weatherSummary = useMemo(() => {
+    if (!activeSetup) return { cards: [], hasWeather: false }
+    const weather = activeSetup.weather ?? {}
+    const { timeLabel, dateLabel } = formatWeatherDateTime(weather.time ?? "")
+    const timeValue = timeLabel || weather.date || ""
+    const timeSubValue = timeLabel ? dateLabel || weather.date || "" : ""
+    const cards = [
+      {
+        id: "air-temp",
+        title: "Air Temp",
+        value: formatTemperature(weather.airTemp),
+      },
+      {
+        id: "humidity",
+        title: "Humidity",
+        value: formatHumidity(weather.humidity),
+      },
+      {
+        id: "wind",
+        title: "Wind",
+        value: formatWind(weather.windSpeed, weather.windDirection),
+      },
+      {
+        id: "track-temp",
+        title: "Track Temp",
+        value: formatTemperature(weather.trackTemp),
+      },
+      {
+        id: "sky",
+        title: "Sky",
+        value: weather.sky ?? "",
+      },
+      {
+        id: "time",
+        title: "Time",
+        value: timeValue,
+        subValue: timeSubValue,
+      },
+    ]
+    return { cards, hasWeather: true }
+  }, [activeSetup])
+
   const getPaginationTransform = useCallback((pageIndex: number, total: number): number => {
     const BTN_WIDTH = 4
     if (total <= 5) return 0
@@ -976,7 +1216,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
                 onValueChange={(value) => handleSelectChange("season", value)}
                 disabled={filtersLoading}
               >
-                <SelectTrigger className="w-[140px] bg-secondary border-border">
+                <SelectTrigger className="w-[160px] bg-secondary border-border">
                   <SelectValue placeholder="Season" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1015,6 +1255,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
 
             <Button
               onClick={() => {
+                console.log("Find Setup slugs", buildUrlSelections())
                 updateUrlFromSelections()
                 fetchSetups()
               }}
@@ -1447,6 +1688,28 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
           )
         })()}
 
+        {/* {weatherSummary.hasWeather ? (
+          <div className="mt-8 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+              {weatherSummary.cards.map((card) => (
+                <div
+                  key={card.id}
+                  className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#110e0f]/85 px-4 py-3 shadow-[0_0_30px_rgba(124,58,237,0.15)] backdrop-blur-md game-card"
+                >
+                  <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-70" />
+                  <div className="text-[11px] font-semibold tracking-[0.25em] uppercase text-white/60">
+                    {card.title}
+                  </div>
+                  <div className="mt-3 text-2xl font-display text-white">{card.value}</div>
+                  {"subValue" in card && card.subValue ? (
+                    <div className="mt-1 text-sm text-white/60">{card.subValue}</div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null} */}
+
         {/* YouTube Video Players Section */}
         <div className="mt-8 space-y-8">
           {/* Hotlap Video */}
@@ -1457,18 +1720,19 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent"></span>
               </h3>
             </div>
-            <div className="w-full aspect-video max-h-[400px] rounded-lg overflow-hidden shadow-lg border border-primary/30 bg-card/50 backdrop-blur-sm">
+            <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg border border-primary/30 bg-card/50 backdrop-blur-sm">
               <iframe
                 className="w-full h-full"
-                src={activeSetup?.videoUrl || "https://www.youtube.com/embed/dQw4w9WgXcQ"}
+                src={activeSetup?.videoUrl}
                 title={`Racing Hotlap | ${activeSetup?.car || "Car"} @ ${activeSetup?.track || "Track"}`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
+                style={{ border: 0 }}
               ></iframe>
             </div>
           </div>
 
-          {/* Track Guide Video */}
+        {activeSetup?.trackGuideUrl?.trim() ? (
           <div className="w-full max-w-4xl mx-auto">
             <div className="text-center mb-4">
               <h3 className="text-xl md:text-2xl font-display font-bold text-foreground inline-block relative">
@@ -1476,16 +1740,18 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent"></span>
               </h3>
             </div>
-            <div className="w-full aspect-video max-h-[400px] rounded-lg overflow-hidden shadow-lg border border-primary/30 bg-card/50 backdrop-blur-sm">
+            <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg border border-primary/30 bg-card/50 backdrop-blur-sm">
               <iframe
                 className="w-full h-full"
-                src={activeSetup?.trackGuideUrl || "https://www.youtube.com/embed/dQw4w9WgXcQ"}
+                src={activeSetup?.trackGuideUrl}
                 title={`Track Guide | ${activeSetup?.track || "Track"}`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
+                style={{ border: 0 }}
               ></iframe>
             </div>
           </div>
+        ) : null}
         </div>
       </div>
     </div>

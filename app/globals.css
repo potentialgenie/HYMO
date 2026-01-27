@@ -60,13 +60,17 @@
 
 @layer utilities {
   .text-brand-gradient {
-    @apply bg-gradient-to-r from-purple-600  to-pink-600 bg-clip-text text-transparent;
+    background: linear-gradient(14deg, #7000BF 0%, #E800BC 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
     display: inline-block;
     padding-right: 0.2em;
   }
 
   .bg-brand-gradient {
-    @apply bg-gradient-to-r from-purple-600  to-pink-600;
+    background: linear-gradient(14deg, #7000BF 0%, #E800BC 100%);
   }
 
   .border-brand-gradient {

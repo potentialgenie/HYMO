@@ -17,9 +17,9 @@ export function SetupDifference() {
               </p>
             </div>
             <p className="mt-6 max-w-sm flex flex-col gap-4 text-sm sm:text-[20px] text-white/60 line-">
-              <span>Built for confidence, </span>
-              <span>consistency, and competitive</span>
-              <span>performance</span>
+              <span>Trusted by Competative, </span>
+              <span>Esports & Real-World</span>
+              <span>Drivers Worldwide</span>
             </p>
           </div>
 
@@ -33,7 +33,7 @@ export function SetupDifference() {
                 sizes="(max-width: 1024px) 160vw, (max-width: 1440px) 140vw, 130vw"
               />
             </div>
-
+            
             <div className="pointer-events-none absolute left-2/7 top-4/9 -translate-x-1/3 rounded-[2.5rem] border border-white/15 bg-[linear-gradient(90deg,rgba(17,15,21,0.96)_10%,rgba(38,17,39,0.97)_25%,rgba(40,24,40,0.6)_50%,rgba(34,34,38,0.1)_80%,rgba(17,15,21,0.1)_100%)] px-4 py-2.5 text-[24px] font-display text-white/95 shadow-lg shadow-black/40 backdrop-blur-md whitespace-nowrap tracking-wide">
               Performance &amp; Consistency
             </div>

@@ -147,7 +147,7 @@ export default function PricingPage() {
           >
             <div className="absolute inset-0">
               <Image
-                src="/images/pricing-cta.jpg"
+                src="/images/contact-1.jpg"
                 alt=""
                 fill
                 className="object-cover"

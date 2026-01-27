@@ -25,9 +25,9 @@ export function TrustedPerformance() {
               />
             </div>
             <div className="md:col-span-4 rounded-full border border-white/10 bg-[#27102be6]/90 h-[136px] flex items-center justify-center gap-4 shadow-[0_0_40px_rgba(124,58,237,0.16)]">
-              <span className="text-4xl sm:text-[48px] text-purple-400">5,000+</span>
+              <span className="text-4xl sm:text-[48px] text-purple-400">100,000</span>
               <span className="text-sm sm:text-xl text-white/80 tracking-wide">
-                Worldwide Setup Downloads
+                Setups Sold Worldwide
               </span>
             </div>
             <div className="md:col-span-2 rounded-full border border-white/10 bg-[#110e0f]/80 h-[136px] flex items-center justify-center shadow-[0_0_40px_rgba(124,58,237,0.12)]">
