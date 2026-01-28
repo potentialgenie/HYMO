@@ -2,7 +2,22 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { Search, Filter, Download, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react"
+import {
+  Search,
+  Filter,
+  Download,
+  ChevronsLeft,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsRight,
+  ThermometerSun,
+  Droplet,
+  Wind,
+  Thermometer,
+  Cloud,
+  Clock,
+  type LucideIcon,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -1328,39 +1343,66 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     const { timeLabel, dateLabel } = formatWeatherDateTime(weather.time ?? "")
     const timeValue = timeLabel || weather.date || ""
     const timeSubValue = timeLabel ? dateLabel || weather.date || "" : ""
-    const cards = [
+    const cards: Array<{
+      id: string
+      title: string
+      value: string
+      subValue?: string
+      icon: LucideIcon
+      iconClass: string
+      iconBgClass: string
+    }> = [
       {
         id: "air-temp",
         title: "Air Temp",
         value: formatTemperature(weather.airTemp),
+        icon: ThermometerSun,
+        iconClass: "text-amber-400",
+        iconBgClass: "border-amber-400/40 bg-amber-400/10",
       },
       {
         id: "humidity",
         title: "Humidity",
         value: formatHumidity(weather.humidity),
+        icon: Droplet,
+        iconClass: "text-sky-400",
+        iconBgClass: "border-sky-400/40 bg-sky-400/10",
       },
       {
         id: "wind",
         title: "Wind",
         value: formatWind(weather.windSpeed, weather.windDirection),
+        icon: Wind,
+        iconClass: "text-emerald-400",
+        iconBgClass: "border-emerald-400/40 bg-emerald-400/10",
       },
       {
         id: "track-temp",
         title: "Track Temp",
         value: formatTemperature(weather.trackTemp),
+        icon: Thermometer,
+        iconClass: "text-rose-400",
+        iconBgClass: "border-rose-400/40 bg-rose-400/10",
       },
       {
         id: "sky",
         title: "Sky",
         value: weather.sky ?? "",
+        icon: Cloud,
+        iconClass: "text-slate-300",
+        iconBgClass: "border-white/15 bg-white/5",
       },
       {
         id: "time",
         title: "Time",
         value: timeValue,
         subValue: timeSubValue,
+        icon: Clock,
+        iconClass: "text-amber-300",
+        iconBgClass: "border-amber-300/40 bg-amber-300/10",
       },
     ]
+    console.log("weatherSummary", cards)
     return { cards, hasWeather: true }
   }, [activeSetup])
 
@@ -1956,27 +1998,37 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
           )
         })()}
 
-        {/* {weatherSummary.hasWeather ? (
+        {weatherSummary.hasWeather ? (
           <div className="mt-8 max-w-5xl mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-              {weatherSummary.cards.map((card) => (
-                <div
-                  key={card.id}
-                  className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#110e0f]/85 px-4 py-3 shadow-[0_0_30px_rgba(124,58,237,0.15)] backdrop-blur-md game-card"
-                >
-                  <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-70" />
-                  <div className="text-[11px] font-semibold tracking-[0.25em] uppercase text-white/60">
-                    {card.title}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-1">
+              {weatherSummary.cards.map((card) => {
+                const Icon = card.icon
+                return (
+                  <div
+                    key={card.id}
+                    className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#141219]/90 px-4 py-3 shadow-[0_10px_35px_rgba(0,0,0,0.35)] backdrop-blur-md game-card"
+                  >
+                    <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-70" />
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-full border ${card.iconBgClass}`}>
+                        <Icon className={`h-4 w-4 ${card.iconClass}`} aria-hidden />
+                      </div>
+                      <div className="text-[10px] font-bold tracking-[0.25em] uppercase text-white/70">
+                        {card.title}
+                      </div>
+                    </div>
+                    <div className="mt-4 text-2xl font-semibold text-white text-center font-sans">
+                      {card.value}
+                    </div>
+                    {card.subValue ? (
+                      <div className="mt-1 text-xs text-white/60">{card.subValue}</div>
+                    ) : null}
                   </div>
-                  <div className="mt-3 text-2xl font-display text-white">{card.value}</div>
-                  {"subValue" in card && card.subValue ? (
-                    <div className="mt-1 text-sm text-white/60">{card.subValue}</div>
-                  ) : null}
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
-        ) : null} */}
+        ) : null}
 
         {/* YouTube Video Players Section */}
         <div className="mt-8 space-y-8">
