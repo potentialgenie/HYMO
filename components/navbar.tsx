@@ -87,6 +87,23 @@ export function Navbar() {
   ]
 
   const currentLanguage = languages.find((l) => l.code === language)
+  const handleNavLinkClick = (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+    options?: { closeMenu?: boolean; closeSetups?: boolean; setAnchor?: string }
+  ) => {
+    event.preventDefault()
+    if (options?.closeMenu) setIsOpen(false)
+    if (options?.closeSetups) setSetupsDropdownOpen(false)
+    if (typeof options?.setAnchor === "string") {
+      setActiveAnchor(options.setAnchor)
+    } else {
+      setActiveAnchor("")
+    }
+    if (typeof window !== "undefined") {
+      window.location.href = href
+    }
+  }
 
   return (
     <motion.nav
@@ -102,7 +119,11 @@ export function Navbar() {
       <div className="px-4 sm:px-6 lg:px-24">
         <div className="flex items-center justify-between h-22">
           {/* Logo */}
-          <Link href="/" className="flex-shrink-0">
+          <Link
+            href="/"
+            className="flex-shrink-0"
+            onClick={(event) => handleNavLinkClick(event, "/")}
+          >
             <img
               src="/images/hymo-logo1.png"
               alt="HYMO"
@@ -112,7 +133,11 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href="/pricing" className={linkCls("/pricing")} onClick={() => setActiveAnchor("")}>
+            <Link
+              href="/pricing"
+              className={linkCls("/pricing")}
+              onClick={(event) => handleNavLinkClick(event, "/pricing")}
+            >
               {t.nav.pricing}
             </Link>
             
@@ -135,7 +160,9 @@ export function Navbar() {
                     <Link
                       key={link.href}
                       href={link.href}
-                      onClick={() => setSetupsDropdownOpen(false)}
+                      onClick={(event) =>
+                        handleNavLinkClick(event, link.href, { closeSetups: true })
+                      }
                       className={`block px-5 py-3.5 text-sm tracking-wide transition-all duration-200 hover:bg-primary/10 hover:pl-6 ${
                         pathname === link.href
                           ? "text-primary font-semibold bg-primary/5 border-l-2 border-primary"
@@ -149,13 +176,19 @@ export function Navbar() {
               )}
             </div>
 
-            <Link href="/team" className={linkCls("/team")} onClick={() => setActiveAnchor("")}>
+            <Link
+              href="/team"
+              className={linkCls("/team")}
+              onClick={(event) => handleNavLinkClick(event, "/team")}
+            >
               {t.nav.team}
             </Link>
             <Link
               href="/#contact"
               className={linkCls("/#contact")}
-              onClick={() => setActiveAnchor("contact")}
+              onClick={(event) =>
+                handleNavLinkClick(event, "/#contact", { setAnchor: "contact" })
+              }
             >
               {t.nav.contact}
             </Link>
@@ -200,7 +233,9 @@ export function Navbar() {
               size="sm"
               className="px-5 py-2.5 rounded-md font-medium text-sm tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A191E]"
             >
-              <Link href="/login">{t.nav.login}</Link>
+              <Link href="/login" onClick={(event) => handleNavLinkClick(event, "/login")}>
+                {t.nav.login}
+              </Link>
             </Button>
           </div>
 
@@ -218,9 +253,11 @@ export function Navbar() {
         {isOpen && (
           <div className="md:hidden py-4 border-t border-border">
             <div className="flex flex-col gap-4">
-              <Link 
-                href="/pricing" 
-                onClick={() => setIsOpen(false)}
+              <Link
+                href="/pricing"
+                onClick={(event) =>
+                  handleNavLinkClick(event, "/pricing", { closeMenu: true })
+                }
                 className={linkCls("/pricing")}
               >
                 {t.nav.pricing}
@@ -241,9 +278,9 @@ export function Navbar() {
                       <Link
                         key={link.href}
                         href={link.href}
-                        onClick={() => {
+                        onClick={(event) => {
                           setMobileSetupsOpen(false)
-                          setIsOpen(false)
+                          handleNavLinkClick(event, link.href, { closeMenu: true })
                         }}
                         className={`text-sm font-display tracking-wide transition-all duration-200 py-2 px-3 rounded-md ${
                           pathname === link.href
@@ -258,22 +295,23 @@ export function Navbar() {
                 )}
               </div>
 
-              <Link 
-                href="/team" 
-                onClick={() => {
-                  setIsOpen(false)
-                  setActiveAnchor("")
-                }}
+              <Link
+                href="/team"
+                onClick={(event) =>
+                  handleNavLinkClick(event, "/team", { closeMenu: true })
+                }
                 className={linkCls("/team")}
               >
                 {t.nav.team}
               </Link>
-              <Link 
-                href="/#contact" 
-                onClick={() => {
-                  setIsOpen(false)
-                  setActiveAnchor("contact")
-                }}
+              <Link
+                href="/#contact"
+                onClick={(event) =>
+                  handleNavLinkClick(event, "/#contact", {
+                    closeMenu: true,
+                    setAnchor: "contact",
+                  })
+                }
                 className={linkCls("/#contact")}
               >
                 {t.nav.contact}
@@ -318,7 +356,12 @@ export function Navbar() {
                 size="sm"
                 className="w-full px-5 py-3 rounded-md font-medium text-sm tracking-wide transition-all duration-200 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A191E]"
               >
-                <Link href="/login" onClick={() => setIsOpen(false)}>
+                <Link
+                  href="/login"
+                  onClick={(event) =>
+                    handleNavLinkClick(event, "/login", { closeMenu: true })
+                  }
+                >
                   {t.nav.login}
                 </Link>
               </Button>

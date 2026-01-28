@@ -70,6 +70,7 @@ interface UrlFiltersState {
   car: string
   track: string
   variation: string
+  variationId: string
   season: string
   week: string
   series: string
@@ -194,11 +195,31 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
   const hasHydratedUrlRef = useRef(false)
   const [searchLoading, setSearchLoading] = useState(false)
   const [tableSetups, setTableSetups] = useState(setups)
+  const pathFilters = useMemo(() => {
+    const safeDecode = (value: string) => {
+      try {
+        return decodeURIComponent(value)
+      } catch {
+        return value
+      }
+    }
+    const segments = pathname.split("/").filter(Boolean)
+    const setupsIndex = segments.indexOf("setups")
+    const gameSegment = setupsIndex >= 0 ? segments[setupsIndex + 1] : ""
+    if (!gameSegment || gameSegment !== game) {
+      return { car: "", track: "" }
+    }
+    return {
+      car: safeDecode(segments[setupsIndex + 2] ?? ""),
+      track: safeDecode(segments[setupsIndex + 3] ?? ""),
+    }
+  }, [game, pathname])
   const [urlFilters, setUrlFilters] = useState<UrlFiltersState>({
     class: "",
     car: "",
     track: "",
     variation: "",
+    variationId: "",
     season: "",
     week: "",
     series: "",
@@ -231,6 +252,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
   const clearOptionValue = "__all__"
   const skipNextFiltersFetchRef = useRef(false)
   const removalTriggeredRef = useRef(false)
+  const [filtersRefreshTick, setFiltersRefreshTick] = useState(0)
   const [selectedSetupId, setSelectedSetupId] = useState<string>("")
   const selectionOrderRef = useRef<Array<
     "class" | "car" | "track" | "season" | "week" | "variation" | "series" | "year" | "version"
@@ -328,9 +350,10 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     const getParam = (key: keyof UrlFiltersState) => searchParams.get(key) ?? ""
     setUrlFilters({
       class: getParam("class"),
-      car: getParam("car"),
-      track: getParam("track"),
+      car: pathFilters.car || getParam("car"),
+      track: pathFilters.track || getParam("track"),
       variation: getParam("variation"),
+      variationId: searchParams.get("variation_id") ?? "",
       season: getParam("season"),
       week: getParam("week"),
       series: getParam("series"),
@@ -338,7 +361,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
       version: getParam("version"),
     })
     hasHydratedUrlRef.current = true
-  }, [searchParams])
+  }, [pathFilters.car, pathFilters.track, searchParams])
 
   const slugify = useCallback((value: string) => {
     return value
@@ -356,17 +379,26 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
   const resolveSelectionValue = useCallback((options: FilterOption[], urlValue: string): string => {
     if (!urlValue) return ""
     const directMatch = options.find((option) => option.value === urlValue)
-    if (directMatch) return directMatch.value
+    if (directMatch) {
+      console.log("resolveSelectionValue: direct match", { urlValue, resolvedId: directMatch.value })
+      return directMatch.value
+    }
     const labelMatch = options.find(
       (option) => option.label.toLowerCase() === urlValue.toLowerCase()
     )
-    if (labelMatch) return labelMatch.value
+    if (labelMatch) {
+      console.log("resolveSelectionValue: label match", { urlValue, resolvedId: labelMatch.value })
+      return labelMatch.value
+    }
     const slugMatch = options.find((option) => {
       const labelSlug = slugify(option.label)
       const valueSlug = slugify(option.value)
       return labelSlug === urlValue || valueSlug === urlValue
     })
-    if (slugMatch) return slugMatch.value
+    if (slugMatch) {
+      console.log("resolveSelectionValue: slug match", { urlValue, resolvedId: slugMatch.value })
+      return slugMatch.value
+    }
     return ""
   }, [slugify])
 
@@ -389,6 +421,10 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
   const normalizeSelectValue = useCallback((value: string) => {
     return value === clearOptionValue ? "" : value
   }, [clearOptionValue])
+
+  const hasUrlFilters = useMemo(() => {
+    return Object.values(urlFilters).some((value) => Boolean(value))
+  }, [urlFilters])
 
   const getLabelFromOptions = useCallback((options: FilterOption[], value: string): string => {
     if (!value) return ""
@@ -563,6 +599,98 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     toRequestValue,
   ])
 
+  const displayFilterOptions = useMemo(() => {
+    const limitToUrlSelection = (
+      options: FilterOption[],
+      selectedValue: string,
+      urlValue: string,
+      resolver: (options: FilterOption[], urlValue: string) => string
+    ) => {
+      if (!urlValue) return options
+      const resolved = resolver(options, urlValue)
+      const matchValue = resolved || selectedValue
+      if (!matchValue) return []
+      return options.filter((option) => option.value === matchValue)
+    }
+    const withUrlLabelFallback = (
+      options: FilterOption[],
+      value: string,
+      label: string
+    ): FilterOption[] => {
+      if (!value || !label) return options
+      if (options.some((option) => option.value === value)) return options
+      return [{ value, label }, ...options]
+    }
+
+    const variationOptions = limitToUrlSelection(
+      filterOptions.variations,
+      selectedVariation,
+      urlFilters.variation || urlFilters.variationId,
+      resolveSelectionValue
+    )
+    const variationValue = selectedVariation || urlFilters.variationId
+
+    return {
+      classes: limitToUrlSelection(filterOptions.classes, selectedClass, urlFilters.class, resolveSelectionValue),
+      cars: limitToUrlSelection(filterOptions.cars, selectedCar, urlFilters.car, resolveSelectionValue),
+      tracks: limitToUrlSelection(filterOptions.tracks, selectedTrack, urlFilters.track, resolveSelectionValue),
+      seasons: limitToUrlSelection(filterOptions.seasons, selectedSeason, urlFilters.season, resolveSelectionValue),
+      weeks: limitToUrlSelection(filterOptions.weeks, selectedWeek, urlFilters.week, resolveWeekSelectionValue),
+      variations: withUrlLabelFallback(
+        variationOptions,
+        variationValue,
+        urlFilters.variation
+      ),
+      series: limitToUrlSelection(filterOptions.series, selectedSeries, urlFilters.series, resolveSelectionValue),
+      years: limitToUrlSelection(filterOptions.years, selectedYear, urlFilters.year, resolveSelectionValue),
+      versions: limitToUrlSelection(filterOptions.versions, selectedVersion, urlFilters.version, resolveSelectionValue),
+    }
+  }, [
+    filterOptions,
+    resolveSelectionValue,
+    resolveWeekSelectionValue,
+    selectedCar,
+    selectedClass,
+    selectedSeason,
+    selectedSeries,
+    selectedTrack,
+    selectedVariation,
+    selectedWeek,
+    selectedYear,
+    selectedVersion,
+    urlFilters,
+  ])
+
+  const urlFiltersRefreshTriggeredRef = useRef(false)
+  const lastAutoSearchQueryRef = useRef("")
+  const urlSelectionsReady = useMemo(() => {
+    const needsVariation = Boolean(urlFilters.variation || urlFilters.variationId)
+    return (
+      (!urlFilters.class || selectedClass) &&
+      (!urlFilters.car || selectedCar) &&
+      (!urlFilters.track || selectedTrack) &&
+      (!needsVariation || selectedVariation) &&
+      (!urlFilters.season || selectedSeason) &&
+      (!urlFilters.week || selectedWeek) &&
+      (!urlFilters.series || selectedSeries) &&
+      (!urlFilters.year || selectedYear) &&
+      (!urlFilters.version || selectedVersion)
+    )
+  }, [
+    urlFilters.variation,
+    urlFilters.variationId,
+    selectedCar,
+    selectedClass,
+    selectedSeason,
+    selectedSeries,
+    selectedTrack,
+    selectedVariation,
+    selectedWeek,
+    selectedYear,
+    selectedVersion,
+    urlFilters,
+  ])
+
   useEffect(() => {
     setTableSetups(setups)
   }, [setups])
@@ -615,6 +743,8 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     if (!filterOptions.classes.length && !filterOptions.cars.length && !filterOptions.tracks.length) {
       return
     }
+    console.log("URL filters snapshot", urlFilters)
+    console.log("Filter options snapshot", filterOptions)
     const autoSelect = (field: "class" | "car" | "track" | "season" | "week" | "variation" | "series" | "year" | "version", value: string) => {
       if (!value) return
       handleSelectChange(field, value, { skipFetch: true })
@@ -630,14 +760,17 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     }
     if (!selectedClass && urlFilters.class) {
       const resolved = resolveSelectionValue(filterOptions.classes, urlFilters.class)
+      console.log("URL -> id resolved", { field: "class", urlValue: urlFilters.class, resolvedId: resolved })
       if (resolved) handleSelectChange("class", resolved)
     }
     if (!selectedCar && urlFilters.car) {
       const resolved = resolveSelectionValue(filterOptions.cars, urlFilters.car)
+      console.log("URL -> id resolved", { field: "car", urlValue: urlFilters.car, resolvedId: resolved })
       if (resolved) handleSelectChange("car", resolved)
     }
     if (!selectedTrack && urlFilters.track) {
       const resolved = resolveSelectionValue(filterOptions.tracks, urlFilters.track)
+      console.log("URL -> id resolved", { field: "track", urlValue: urlFilters.track, resolvedId: resolved })
       if (resolved) handleSelectChange("track", resolved)
     }
     if (game === "iracing") {
@@ -656,28 +789,38 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
       if (!selectedYear && !urlFilters.year && filterOptions.years.length === 1) {
         autoSelect("year", filterOptions.years[0].value)
       }
-      if (!selectedVariation && urlFilters.variation) {
-        const resolved = resolveSelectionValue(filterOptions.variations, urlFilters.variation)
-        if (resolved) handleSelectChange("variation", resolved, { skipFetch: true })
+    if (!selectedVariation && urlFilters.variationId) {
+      handleSelectChange("variation", urlFilters.variationId, { skipFetch: true })
+    } else if (!selectedVariation && urlFilters.variation) {
+      const resolved = resolveSelectionValue(filterOptions.variations, urlFilters.variation)
+      console.log("URL -> id resolved", { field: "variation", urlValue: urlFilters.variation, resolvedId: resolved })
+      if (resolved) {
+        handleSelectChange("variation", resolved, { skipFetch: true })
       }
+    }
       if (!selectedSeason && urlFilters.season) {
         const resolved = resolveSelectionValue(filterOptions.seasons, urlFilters.season)
+        console.log("URL -> id resolved", { field: "season", urlValue: urlFilters.season, resolvedId: resolved })
         if (resolved) handleSelectChange("season", resolved, { skipFetch: true })
       }
       if (!selectedWeek && urlFilters.week) {
         const resolved = resolveWeekSelectionValue(filterOptions.weeks, urlFilters.week)
+        console.log("URL -> id resolved", { field: "week", urlValue: urlFilters.week, resolvedId: resolved })
         if (resolved) handleSelectChange("week", resolved, { skipFetch: true })
       }
       if (!selectedSeries && urlFilters.series) {
         const resolved = resolveSelectionValue(filterOptions.series, urlFilters.series)
+        console.log("URL -> id resolved", { field: "series", urlValue: urlFilters.series, resolvedId: resolved })
         if (resolved) handleSelectChange("series", resolved, { skipFetch: true })
       }
       if (!selectedYear && urlFilters.year) {
         const resolved = resolveSelectionValue(filterOptions.years, urlFilters.year)
+        console.log("URL -> id resolved", { field: "year", urlValue: urlFilters.year, resolvedId: resolved })
         if (resolved) handleSelectChange("year", resolved, { skipFetch: true })
       }
     } else if (!selectedVersion && urlFilters.version) {
       const resolved = resolveSelectionValue(filterOptions.versions, urlFilters.version)
+      console.log("URL -> id resolved", { field: "version", urlValue: urlFilters.version, resolvedId: resolved })
       if (resolved) handleSelectChange("version", resolved, { skipFetch: true })
     } else if (!selectedVersion && filterOptions.versions.length === 1) {
       autoSelect("version", filterOptions.versions[0].value)
@@ -792,6 +935,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     })
       .then((r) => r.json())
       .then((data) => {
+        console.log("=== FILTERS RESPONSE ===", data)
         if (cancelled) return
         const payload =
           data && typeof data === "object" && "data" in (data as Record<string, unknown>)
@@ -808,8 +952,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
         const hasVariations =
           "variations" in source ||
           "variation" in source ||
-          "track_variations" in source ||
-          "trackVariations" in source
+          "varation" in source
         const hasSeries =
           "serieses" in source || "series" in source || "type" in source || "types" in source || "serie" in source
         const hasYears = "years" in source || "year" in source
@@ -833,7 +976,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
                 })
             : prev.weeks,
           variations: hasVariations
-            ? mapOptions(source.variations ?? source.variation ?? source.track_variations ?? source.trackVariations)
+            ? mapOptions(source.variations ?? source.variation)
             : prev.variations,
           series: hasSeries ? mapOptions(source.serieses ?? source.series ?? source.type ?? source.types ?? source.serie) : prev.series,
           years: hasYears ? mapOptions(source.years ?? source.year) : prev.years,
@@ -859,15 +1002,18 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
         if (!cancelled) setFiltersLoading(false)
       })
     return () => { cancelled = true }
-  }, [buildRequestBody])
+  }, [buildRequestBody, filtersRefreshTick])
 
   const buildUrlSelections = useCallback(() => {
+    const variationLabel =
+      filterOptions.variations.find((option) => option.value === selectedVariation)?.label ?? ""
     return {
       category: String(categoryId),
       class: getSlugFromOptions(filterOptions.classes, selectedClass),
       car: getSlugFromOptions(filterOptions.cars, selectedCar),
       track: getSlugFromOptions(filterOptions.tracks, selectedTrack),
-      variation: getSlugFromOptions(filterOptions.variations, selectedVariation),
+      variation: variationLabel,
+      variationId: selectedVariation,
       season: getSlugFromOptions(filterOptions.seasons, selectedSeason),
       week: getWeekSlugFromOptions(filterOptions.weeks, selectedWeek),
       series: getSlugFromOptions(filterOptions.series, selectedSeries),
@@ -890,8 +1036,28 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     selectedVersion,
   ])
 
-  const updateUrlFromSelections = useCallback(() => {
-    if (!hasHydratedUrlRef.current) return
+  const buildPathFromSelections = useCallback(() => {
+    const basePath = `/setups/${game}`
+    if (!selectedCar) return basePath
+    const carSlug = getSlugFromOptions(filterOptions.cars, selectedCar) || pathFilters.car
+    if (!carSlug) return basePath
+    const trackSlug = selectedTrack
+      ? getSlugFromOptions(filterOptions.tracks, selectedTrack) || pathFilters.track
+      : pathFilters.track
+    if (!trackSlug) return `${basePath}/${carSlug}`
+    return `${basePath}/${carSlug}/${trackSlug}`
+  }, [
+    filterOptions.cars,
+    filterOptions.tracks,
+    game,
+    getSlugFromOptions,
+    pathFilters.car,
+    pathFilters.track,
+    selectedCar,
+    selectedTrack,
+  ])
+
+  const buildUrlQueryFromSelections = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString())
     const setOrDelete = (key: string, value: string) => {
       if (value) {
@@ -902,40 +1068,88 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     }
 
     const selections = buildUrlSelections()
+    const usePathForCar = Boolean(selectedCar || pathFilters.car)
+    const resolvedCar = selections.car || urlFilters.car
+    const resolvedTrack = selections.track || urlFilters.track
+    const resolvedVariation = selections.variation || urlFilters.variation
+    const resolvedVariationId = selections.variationId || urlFilters.variationId
     setOrDelete("category", selections.category)
     setOrDelete("class", selections.class)
-    setOrDelete("car", selections.car)
-    setOrDelete("track", selections.track)
-    setOrDelete("variation", selections.variation)
+    setOrDelete("car", usePathForCar ? "" : resolvedCar)
+    setOrDelete("track", usePathForCar ? "" : resolvedTrack)
+    setOrDelete("variation", resolvedVariation)
+    setOrDelete("variation_id", resolvedVariationId)
     setOrDelete("season", selections.season)
     setOrDelete("week", selections.week)
     setOrDelete("series", selections.series)
     setOrDelete("year", selections.year)
     setOrDelete("version", selections.version)
+    return params.toString()
+  }, [
+    buildUrlSelections,
+    pathFilters.car,
+    searchParams,
+    selectedCar,
+    urlFilters.car,
+    urlFilters.track,
+    urlFilters.variation,
+    urlFilters.variationId,
+  ])
 
-    const nextQuery = params.toString()
+  const buildUrlKeyFromSelections = useCallback(() => {
+    const nextQuery = buildUrlQueryFromSelections()
+    const nextPath = buildPathFromSelections()
+    return `${nextPath}?${nextQuery}`
+  }, [buildPathFromSelections, buildUrlQueryFromSelections])
+
+  const updateUrlFromSelections = useCallback(() => {
+    if (!hasHydratedUrlRef.current) return ""
+    const nextQuery = buildUrlQueryFromSelections()
+    const nextPath = buildPathFromSelections()
     const currentQuery = searchParams.toString()
-    if (nextQuery !== currentQuery) {
-      router.replace(`${pathname}${nextQuery ? `?${nextQuery}` : ""}`, { scroll: false })
+    const currentPath = pathname
+    if (nextQuery !== currentQuery || nextPath !== currentPath) {
+      router.replace(`${nextPath}${nextQuery ? `?${nextQuery}` : ""}`, { scroll: false })
     }
-  }, [buildUrlSelections, pathname, router, searchParams])
+    return `${nextPath}${nextQuery ? `?${nextQuery}` : ""}`
+  }, [buildPathFromSelections, buildUrlQueryFromSelections, pathname, router, searchParams])
 
   useEffect(() => {
-    if (!removalTriggeredRef.current) return
-    removalTriggeredRef.current = false
+    if (!hasUrlFilters) return
+    const needsMoreFilters =
+      Boolean(
+        urlFilters.variation ||
+          urlFilters.variationId ||
+          urlFilters.series ||
+          urlFilters.year ||
+          urlFilters.version
+      )
+  }, [hasUrlFilters, urlFilters])
+
+  useEffect(() => {
+    if (!hasUrlFilters) return
+    if (!urlSelectionsReady) return
+    const nextKey = buildUrlKeyFromSelections()
+    if (lastAutoSearchQueryRef.current === nextKey) return
+    lastAutoSearchQueryRef.current = nextKey
     updateUrlFromSelections()
+    fetchSetups()
   }, [
-    selectedClass,
-    selectedCar,
-    selectedTrack,
-    selectedSeason,
-    selectedWeek,
-    selectedVariation,
-    selectedSeries,
-    selectedYear,
-    selectedVersion,
+    buildUrlKeyFromSelections,
+    fetchSetups,
+    hasUrlFilters,
     updateUrlFromSelections,
+    urlSelectionsReady,
   ])
+
+  useEffect(() => {
+    if (!hasUrlFilters) return
+    if (!urlSelectionsReady) return
+    if (urlFiltersRefreshTriggeredRef.current) return
+    urlFiltersRefreshTriggeredRef.current = true
+    skipNextFiltersFetchRef.current = false
+    setFiltersRefreshTick((prev) => prev + 1)
+  }, [hasUrlFilters, urlSelectionsReady])
 
   useEffect(() => {
     if (filterOptions.tracks.length === 1 && !selectedTrack) {
@@ -949,9 +1163,11 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     const ensureValidSelection = (
       value: string,
       options: FilterOption[],
-      setter: React.Dispatch<React.SetStateAction<string>>
+      setter: React.Dispatch<React.SetStateAction<string>>,
+      allowMissing = false
     ) => {
       if (!value) return
+      if (allowMissing) return
       if (options.length > 0 && !options.some((option) => option.value === value)) {
         setter("")
       }
@@ -960,7 +1176,15 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     ensureValidSelection(selectedClass, filterOptions.classes, setSelectedClass)
     ensureValidSelection(selectedCar, filterOptions.cars, setSelectedCar)
     ensureValidSelection(selectedTrack, filterOptions.tracks, setSelectedTrack)
-    ensureValidSelection(selectedVariation, filterOptions.variations, setSelectedVariation)
+    ensureValidSelection(
+      selectedVariation,
+      filterOptions.variations,
+      setSelectedVariation,
+      Boolean(
+        (urlFilters.variation && selectedVariation === urlFilters.variation) ||
+          (urlFilters.variationId && selectedVariation === urlFilters.variationId)
+      )
+    )
     ensureValidSelection(selectedSeason, filterOptions.seasons, setSelectedSeason)
     ensureValidSelection(selectedWeek, filterOptions.weeks, setSelectedWeek)
     ensureValidSelection(selectedSeries, filterOptions.series, setSelectedSeries)
@@ -977,6 +1201,8 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     selectedSeries,
     selectedYear,
     selectedVersion,
+    urlFilters.variation,
+    urlFilters.variationId,
   ])
 
   const clearAllFilters = useCallback(() => {
@@ -991,7 +1217,10 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     setSelectedVersion("")
     setSearchQuery("")
     selectionOrderRef.current = []
-  }, [])
+    if (typeof window !== "undefined") {
+      window.location.href = `/setups/${game}`
+    }
+  }, [game])
 
   // Helper function to format season display (combines season and week for iRacing)
   const formatSeasonDisplay = useCallback((setup: { season: string; week?: string; game: string }) => {
@@ -1149,6 +1378,8 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
 
   const displayFrom = filteredSetups.length === 0 ? 0 : currentPage * rowLimit + 1
   const displayTo = Math.min((currentPage + 1) * rowLimit, filteredSetups.length)
+  const showIracingColumns = game === "iracing"
+  const tableColumnCount = showIracingColumns ? 8 : 7
 
   return (
     <div className="min-h-screen pt-16 z-10">
@@ -1173,7 +1404,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={clearOptionValue}>Classes</SelectItem>
-                {filterOptions.classes.map((option) => (
+                {displayFilterOptions.classes.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -1191,7 +1422,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={clearOptionValue}>Cars</SelectItem>
-                {filterOptions.cars.map((option) => (
+                {displayFilterOptions.cars.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -1209,7 +1440,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={clearOptionValue}>Tracks</SelectItem>
-                {filterOptions.tracks.map((option) => (
+                {displayFilterOptions.tracks.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -1229,7 +1460,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={clearOptionValue}>Season</SelectItem>
-                  {filterOptions.seasons.map((option) => (
+                  {displayFilterOptions.seasons.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -1250,7 +1481,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={clearOptionValue}>Week</SelectItem>
-                  {filterOptions.weeks.map((option) => (
+                  {displayFilterOptions.weeks.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -1264,6 +1495,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
             <Button
               onClick={() => {
                 console.log("Find Setup slugs", buildUrlSelections())
+                lastAutoSearchQueryRef.current = buildUrlKeyFromSelections()
                 updateUrlFromSelections()
                 fetchSetups()
               }}
@@ -1310,10 +1542,10 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={clearOptionValue}>Track Variation</SelectItem>
-                      {filterOptions.variations.length === 0 ? (
+                      {displayFilterOptions.variations.length === 0 ? (
                         <SelectItem value="_none" disabled>No variations available</SelectItem>
                       ) : (
-                        filterOptions.variations.map((option) => (
+                        displayFilterOptions.variations.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
@@ -1331,10 +1563,10 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={clearOptionValue}>Series</SelectItem>
-                      {filterOptions.series.length === 0 ? (
+                      {displayFilterOptions.series.length === 0 ? (
                         <SelectItem value="_none" disabled>No series available</SelectItem>
                       ) : (
-                        filterOptions.series.map((option) => (
+                        displayFilterOptions.series.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
@@ -1352,7 +1584,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={clearOptionValue}>Year</SelectItem>
-                      {filterOptions.years.map((option) => (
+                      {displayFilterOptions.years.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -1371,10 +1603,10 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={clearOptionValue}>Version</SelectItem>
-                    {filterOptions.versions.length === 0 ? (
+                    {displayFilterOptions.versions.length === 0 ? (
                       <SelectItem value="_none" disabled>No versions available</SelectItem>
                     ) : (
-                      filterOptions.versions.map((option) => (
+                      displayFilterOptions.versions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -1419,24 +1651,42 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
         >
           <div className="overflow-x-auto">
           <table className="w-full border-collapse bg-transparent">
-            <colgroup>
-              <col style={{ width: "4rem" }} />
-              <col style={{ width: "12%" }} />
-              <col style={{ width: "22%" }} />
-              <col style={{ width: "20%" }} />
-              <col style={{ width: "12%" }} />
-              <col style={{ width: "16%" }} />
-              <col style={{ width: "10%" }} />
-              <col style={{ width: "8%" }} />
-            </colgroup>
+            {showIracingColumns ? (
+              <colgroup>
+                <col style={{ width: "4rem" }} />
+                <col style={{ width: "12%" }} />
+                <col style={{ width: "22%" }} />
+                <col style={{ width: "20%" }} />
+                <col style={{ width: "12%" }} />
+                <col style={{ width: "16%" }} />
+                <col style={{ width: "10%" }} />
+                <col style={{ width: "8%" }} />
+              </colgroup>
+            ) : (
+              <colgroup>
+                <col style={{ width: "4rem" }} />
+                <col style={{ width: "12%" }} />
+                <col style={{ width: "24%" }} />
+                <col style={{ width: "24%" }} />
+                <col style={{ width: "16%" }} />
+                <col style={{ width: "12%" }} />
+                <col style={{ width: "8%" }} />
+              </colgroup>
+            )}
             <thead>
               <tr className="border-b border-border/50">
                 <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">#</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Game</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Car</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Track</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Season</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Series</th>
+                {showIracingColumns ? (
+                  <>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Season</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Series</th>
+                  </>
+                ) : (
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Version</th>
+                )}
                 <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Lap Time</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold text-primary uppercase tracking-wider">Action</th>
               </tr>
@@ -1444,7 +1694,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
             <tbody>
               {filteredSetups.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center">
+                  <td colSpan={tableColumnCount} className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <p className="text-muted-foreground text-lg font-medium">No setups found</p>
                       <p className="text-muted-foreground/70 text-sm">Try adjusting your filters</p>
@@ -1478,12 +1728,20 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
                     <td className="px-4 py-3 text-sm text-foreground" title={setup.track}>
                       {setup.track}
                     </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
-                      {formatSeasonDisplay(setup)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground" title={setup.series}>
-                      {setup.series}
-                    </td>
+                    {showIracingColumns ? (
+                      <>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">
+                          {formatSeasonDisplay(setup)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground" title={setup.series}>
+                          {setup.series}
+                        </td>
+                      </>
+                    ) : (
+                      <td className="px-4 py-3 text-sm text-muted-foreground" title={setup.version}>
+                        {setup.version || "—"}
+                      </td>
+                    )}
                     <td className="px-4 py-3 text-sm text-muted-foreground">
                       {setup.lapTime || "—"}
                     </td>
@@ -1496,7 +1754,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
                         <Download className="h-4 w-4" />
                       </Button>
                     </td>
-                  </tr>
+                  </tr> 
                 ))
               )}
             </tbody>
