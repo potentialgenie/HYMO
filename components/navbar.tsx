@@ -8,7 +8,7 @@ import { Menu, X, ChevronDown, Globe } from "lucide-react"
 import { useLanguage } from "@/lib/language-context"
 import type { Language } from "@/lib/translations"
 import { Button } from "@/components/ui/button"
-import { clearAuthData, getUser, hasSession, isAuthenticated, isTokenExpired, refreshAccessToken } from "@/lib/auth"
+import { clearAuthData, getUser, hasSession, isAuthenticated, isTokenExpired, logout, refreshAccessToken } from "@/lib/auth"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -94,8 +94,8 @@ export function Navbar() {
     setUserName(u ? `${u.name}${u.lastname ? ` ${u.lastname}` : ""}` : null)
   }, [pathname])
 
-  const handleLogout = () => {
-    clearAuthData()
+  const handleLogout = async () => {
+    await logout()
     setIsAuthed(false)
     setUserName(null)
     setAccountDropdownOpen(false)

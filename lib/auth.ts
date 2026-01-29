@@ -242,6 +242,35 @@ export function clearAuthData(): void {
 }
 
 /**
+ * Logout: call API with email (body) and Bearer refresh_token, then clear localStorage.
+ * POST https://www.hymosetups.com/api/v1/logout
+ * Always clears local auth data even if the API call fails.
+ */
+export async function logout(): Promise<void> {
+  if (typeof window === "undefined") return
+
+  const refreshToken = getRefreshToken()
+  const user = getUser()
+  const email = user?.email
+
+  try {
+    if (refreshToken && email) {
+      await fetch("https://www.hymosetups.com/api/v1/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${refreshToken}`,
+        },
+        body: JSON.stringify({ email }),
+      })
+    }
+  } finally {
+    clearAuthData()
+  }
+}
+
+/**
  * Get authorization header value for API requests
  */
 export function getAuthHeader(): string | null {

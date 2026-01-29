@@ -5,12 +5,11 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { LanguageSelect } from "@/components/language-select"
+import { Navbar } from "@/components/navbar"
 import { useLanguage } from "@/lib/language-context"
-import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react"
 
 export default function RegisterPage() {
   const { t } = useLanguage()
@@ -20,6 +19,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -29,7 +30,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (password !== confirmPassword) return
-    
+
     setIsSubmitting(true)
     setError(null)
     setSuccess(false)
@@ -56,7 +57,6 @@ export default function RegisterPage() {
         : await response.text().catch(() => "")
 
       if (!response.ok) {
-        // Handle validation errors or other API errors
         const errorMessage =
           (typeof data === "object" && data && "message" in data && typeof data.message === "string" && data.message) ||
           (typeof data === "object" && data && "error" in data && typeof data.error === "string" && data.error) ||
@@ -65,9 +65,7 @@ export default function RegisterPage() {
         throw new Error(errorMessage)
       }
 
-      // Success - show success message
       setSuccess(true)
-      // Redirect to verify-email page with email parameter
       setTimeout(() => {
         router.push(`/verify-email?email=${encodeURIComponent(email)}`)
       }, 2000)
@@ -78,85 +76,93 @@ export default function RegisterPage() {
     }
   }
 
+  const inputClass =
+    "input-dark h-11 rounded-full bg-[#1B1B1B] border-white/10 text-white placeholder:text-white/50 focus-visible:ring-0 focus-visible:border-primary/50"
+
   return (
-    <main className="min-h-screen bg-[#1A191E]">
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-20 px-4 sm:px-6 md:px-12 lg:px-24 pt-0 backdrop-blur-md bg-transparent">
-        <Link href="/" className="flex-shrink-0">
-          <img src="/images/hymo-logo.png" alt="HYMO" className="h-8 w-auto" />
-        </Link>
-        <LanguageSelect />
-      </header>
-      <div className="absolute inset-0" aria-hidden="true">
-        <Image
-          src="/images/hero-bg.jpg"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center rotate-y-180"
+    <main className="min-h-screen flex flex-col bg-[#1A191E] relative overflow-hidden">
+      {/* background glow */}
+      <div className="pointer-events-none absolute inset-0">
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/4 -translate-y-1/2 pointer-events-none"
+          style={{
+            width: "640px",
+            height: "640px",
+            borderRadius: "50%",
+            background: "radial-gradient(circle at 60% 54%, #E800BC 0%, rgba(232,0,188,0.30) 60%, rgba(0,0,0,0) 100%)",
+            filter: "blur(200px)",
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-background/30 to-background/20" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1A191E]/10 via-[#1A191E]/40 to-[#1A191E]" />
       </div>
-      <section className="relative pt-24 pb-24 px-4 sm:px-6 md:px-12 lg:px-24 min-h-screen flex items-center justify-end overflow-hidden">
-        <div className="absolute inset-0 bg-circuit opacity-[0.4]" aria-hidden />
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] via-transparent to-transparent" aria-hidden />
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[420px] rounded-full bg-primary/10 blur-[100px] pointer-events-none" aria-hidden />
-        <div className="relative z-10 w-full max-w-md">
-          <Card className="login-glass-card relative border-0 bg-transparent shadow-none overflow-hidden rounded-2xl backdrop-blur-sm">
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/80 to-transparent shadow-[0_0_12px_oklch(0.65_0.28_328_/_0.6)]" />
-            <CardHeader className="text-center pb-2 items-center">
-              <div className="flex flex-row items-center justify-center mt-12">
-                <Image src="/images/hymo-logo1.png" alt="HYMO" width={100} height={100} className="h-16 w-auto" />
-              </div>
-              <CardTitle className="font-display text-3xl uppercase mt-2 text-brand-gradient">
+
+      <Navbar />
+
+      <section className="relative z-10 flex-1 flex items-center">
+        <div className="w-full px-6 sm:px-10 lg:px-24 py-16 pt-28">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-10">
+            {/* Left: form */}
+            <div className="col-span-1 mx-auto w-full max-w-md">
+              <h1 className="text-white font-display text-4xl sm:text-5xl tracking-tight text-center">
                 {t.auth.register.title}
-              </CardTitle>
-              <CardDescription className="text-muted-foreground/90">{t.auth.register.subtitle}</CardDescription>
-            </CardHeader>
-            <form onSubmit={handleSubmit}>
-              <CardContent className="space-y-4 pb-2">
+              </h1>
+              <p className="mt-3 text-white/55 text-sm sm:text-base text-center">
+                {t.auth.register.subtitle}
+              </p>
+
+              <form onSubmit={handleSubmit} className="mt-10 space-y-5">
                 {success && (
-                  <div className="flex items-center gap-2 p-3 rounded-md bg-green-500/10 border border-green-500/20 text-sm text-green-400">
-                    <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-                    <span>Registration successful! Please check your email to verify your account.</span>
+                  <div className="flex items-center gap-2 p-3 rounded-full bg-[#CC00BC]/10 border border-[#CC00BC]/30 text-sm text-[#E800BC] shadow-sm">
+                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-[#E800BC]" />
+                    <span>{t.auth.register.success}</span>
                   </div>
                 )}
                 {error && (
-                  <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                    <span>{error}</span>
+                  <div className="flex items-center gap-2 p-3 rounded-full bg-[#CC00BC]/10 border border-[#CC00BC]/30 text-sm text-[#E800BC] shadow-sm">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0 text-[#E800BC]" />
+                    <span className="font-medium">{error}</span>
                   </div>
                 )}
-                <div className="space-y-2">
-                  <Label htmlFor="register-firstname" className="text-foreground/90">{t.auth.register.firstName}</Label>
-                  <Input
-                    id="register-firstname"
-                    type="text"
-                    placeholder={t.auth.register.firstNamePlaceholder}
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                    disabled={isSubmitting || success}
-                    className="input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0"
-                    autoComplete="given-name"
-                  />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="register-firstname" className="text-white/80">
+                      {t.auth.register.firstName}
+                    </Label>
+                    <Input
+                      id="register-firstname"
+                      type="text"
+                      placeholder={t.auth.register.firstNamePlaceholder}
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                      disabled={isSubmitting || success}
+                      className={inputClass}
+                      autoComplete="given-name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="register-lastname" className="text-white/80">
+                      {t.auth.register.lastName}
+                    </Label>
+                    <Input
+                      id="register-lastname"
+                      type="text"
+                      placeholder={t.auth.register.lastNamePlaceholder}
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                      disabled={isSubmitting || success}
+                      className={inputClass}
+                      autoComplete="family-name"
+                    />
+                  </div>
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="register-lastname" className="text-foreground/90">{t.auth.register.lastName}</Label>
-                  <Input
-                    id="register-lastname"
-                    type="text"
-                    placeholder={t.auth.register.lastNamePlaceholder}
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    required
-                    disabled={isSubmitting || success}
-                    className="input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0"
-                    autoComplete="family-name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-email" className="text-foreground/90">{t.auth.register.email}</Label>
+                  <Label htmlFor="register-email" className="text-white/80">
+                    {t.auth.register.email}
+                  </Label>
                   <Input
                     id="register-email"
                     type="email"
@@ -165,71 +171,112 @@ export default function RegisterPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     disabled={isSubmitting || success}
-                    className="input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0"
+                    className={inputClass}
                     autoComplete="email"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="register-password" className="text-foreground/90">{t.auth.register.password}</Label>
-                  <Input
-                    id="register-password"
-                    type="password"
-                    placeholder="********"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={8}
-                    disabled={isSubmitting || success}
-                    className="input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0"
-                    autoComplete="new-password"
-                  />
-                  <p className="text-xs text-muted-foreground">{t.auth.register.passwordHint}</p>
+                  <Label htmlFor="register-password" className="text-white/80">
+                    {t.auth.register.password}
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="register-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      disabled={isSubmitting || success}
+                      className={`${inputClass} pr-12`}
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      disabled={isSubmitting || success}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-white/50">{t.auth.register.passwordHint}</p>
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="register-confirm" className="text-foreground/90">{t.auth.register.confirmPassword}</Label>
-                  <Input
-                    id="register-confirm"
-                    type="password"
-                    placeholder="********"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    minLength={8}
-                    disabled={isSubmitting || success}
-                    className={`input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0 ${!passwordsMatch ? "border-destructive" : ""}`}
-                    autoComplete="new-password"
-                    aria-invalid={!passwordsMatch}
-                  />
+                  <Label htmlFor="register-confirm" className="text-white/80">
+                    {t.auth.register.confirmPassword}
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="register-confirm"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Confirm Password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      disabled={isSubmitting || success}
+                      className={`${inputClass} pr-12 ${!passwordsMatch ? "border-destructive" : ""}`}
+                      autoComplete="new-password"
+                      aria-invalid={!passwordsMatch}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((v) => !v)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition"
+                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                      disabled={isSubmitting || success}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
                   {!passwordsMatch && (
                     <p className="text-xs text-destructive">{t.auth.register.passwordMismatch}</p>
                   )}
                 </div>
-              </CardContent>
-              <CardFooter className="flex flex-col gap-4 pt-2">
+
                 <Button
                   type="submit"
-                  className="w-full h-10 glow-primary shadow-[0_0_20px_oklch(0.65_0.28_328_/_0.35)] hover:shadow-[0_0_28px_oklch(0.65_0.28_328_/_0.5)]"
-                  size="lg"
                   disabled={!passwordsMatch || isSubmitting || success}
+                  className="w-full h-11 rounded-full text-[16px] font-display bg-brand-gradient text-white tracking-wide hover:brightness-110"
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Registering...
+                      {t.auth.register.submitting}
                     </>
                   ) : (
                     t.auth.register.submit
                   )}
                 </Button>
-                <p className="text-sm text-muted-foreground text-center">
-                  {t.auth.register.hasAccount}{" "}
-                  <Link href="/login" className="text-primary font-medium hover:underline">
-                    {t.auth.register.loginLink}
-                  </Link>
-                </p>
-              </CardFooter>
-            </form>
-          </Card>
+
+                <div className="pt-3 border-t border-white/10 text-center">
+                  <p className="text-sm text-white/40">
+                    {t.auth.register.hasAccount}{" "}
+                    <Link href="/login" className="text-[#CC00BC] hover:text-[#E800BC] transition font-medium">
+                      {t.auth.register.loginLink}
+                    </Link>
+                  </p>
+                </div>
+              </form>
+            </div>
+
+            {/* Right: car image */}
+            <div className="col-span-1 mx-auto hidden lg:flex justify-end items-center">
+              <Image
+                src="/images/hymo-login.png"
+                alt="HYMO car"
+                width={1200}
+                height={700}
+                priority
+                className="w-full h-auto object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.65)]"
+              />
+            </div>
+          </div>
         </div>
       </section>
     </main>

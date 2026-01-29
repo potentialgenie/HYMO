@@ -313,6 +313,34 @@
   border-color: oklch(0.65 0.28 328 / 0.5);
 }
 
+/* Dark input theme: match UI (bg #1B1B1B, white text) and autofill */
+:root {
+  --input-dark-bg: #1B1B1B;
+  --input-dark-text: #ffffff;
+  --input-dark-placeholder: rgba(255, 255, 255, 0.5);
+}
+
+.input-dark {
+  color: var(--input-dark-text);
+  caret-color: var(--input-dark-text);
+}
+
+.input-dark::placeholder {
+  color: var(--input-dark-placeholder);
+}
+
+/* Autofill: same look as dark inputs (background + font color) */
+.input-dark:-webkit-autofill,
+.input-dark:-webkit-autofill:hover,
+.input-dark:-webkit-autofill:focus,
+.input-dark:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--input-dark-text);
+  caret-color: var(--input-dark-text);
+  -webkit-box-shadow: 0 0 0 1000px var(--input-dark-bg) inset;
+  box-shadow: 0 0 0 1000px var(--input-dark-bg) inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
 /* Corner ribbon fold (for "BEST" on popular pricing card) */
 .best-ribbon::before {
   content: '';

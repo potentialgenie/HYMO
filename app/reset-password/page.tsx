@@ -5,38 +5,33 @@ import Image from "next/image"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { LanguageSelect } from "@/components/language-select"
+import { Navbar } from "@/components/navbar"
 import { useLanguage } from "@/lib/language-context"
-import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react"
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { t } = useLanguage()
   const [email, setEmail] = useState("")
-  const [token, setToken] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isCheckingParams, setIsCheckingParams] = useState(true)
 
+  const rp = t.auth.resetPassword
   const passwordsMatch = !confirmPassword || password === confirmPassword
 
-  // Extract token from URL params
+  const tokenParam = useMemo(() => searchParams.get("token") || "", [searchParams])
+
   useEffect(() => {
-    const tokenParam = searchParams.get("token") || ""
-    
-    setToken(tokenParam)
-    
-    // Small delay to ensure search params are loaded
-    const timer = setTimeout(() => {
-      setIsCheckingParams(false)
-    }, 100)
+    const timer = setTimeout(() => setIsCheckingParams(false), 100)
     return () => clearTimeout(timer)
   }, [searchParams])
 
@@ -44,14 +39,14 @@ function ResetPasswordContent() {
     e.preventDefault()
     if (password !== confirmPassword) return
     if (!email) {
-      setError(t.auth.resetPassword.missingEmail || "Email is required.")
+      setError(rp.missingEmail)
       return
     }
-    if (!token) {
-      setError(t.auth.resetPassword.missingToken || "Reset token is missing. Please use the link from your email.")
+    if (!tokenParam) {
+      setError(rp.missingToken)
       return
     }
-    
+
     setIsSubmitting(true)
     setError(null)
     setSuccess(false)
@@ -65,7 +60,7 @@ function ResetPasswordContent() {
         },
         body: JSON.stringify({
           email,
-          token,
+          token: tokenParam,
           password,
           password_confirmation: confirmPassword,
         }),
@@ -81,169 +76,203 @@ function ResetPasswordContent() {
           (typeof data === "object" && data && "message" in data && typeof data.message === "string" && data.message) ||
           (typeof data === "object" && data && "error" in data && typeof data.error === "string" && data.error) ||
           (typeof data === "string" && data) ||
-          t.auth.resetPassword.error || "Failed to reset password. Please try again."
+          rp.error
         throw new Error(errorMessage)
       }
 
-      // Success
       setSuccess(true)
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        router.push("/login")
-      }, 2000)
+      setTimeout(() => router.push("/login"), 2000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t.auth.resetPassword.error || "Failed to reset password. Please try again.")
+      setError(err instanceof Error ? err.message : rp.error)
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  const inputClass =
+    "input-dark h-11 rounded-full bg-[#1B1B1B] border-white/10 text-white placeholder:text-white/50 focus-visible:ring-0 focus-visible:border-primary/50"
+
   return (
-    <main className="min-h-screen bg-[#1A191E]">
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-20 px-4 sm:px-6 md:px-12 lg:px-24 pt-0 backdrop-blur-md bg-transparent">
-        <Link href="/" className="flex-shrink-0">
-          <img src="/images/hymo-logo.png" alt="HYMO" className="h-8 w-auto" />
-        </Link>
-        <LanguageSelect />
-      </header>
-      <div className="absolute inset-0" aria-hidden="true">
-        <Image
-          src="/images/hero-bg.jpg"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center rotate-y-180"
+    <main className="min-h-screen flex flex-col bg-[#1A191E] relative overflow-hidden">
+      {/* background glow */}
+      <div className="pointer-events-none absolute inset-0">
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/4 -translate-y-1/2 pointer-events-none"
+          style={{
+            width: "640px",
+            height: "640px",
+            borderRadius: "50%",
+            background: "radial-gradient(circle at 60% 54%, #E800BC 0%, rgba(232,0,188,0.30) 60%, rgba(0,0,0,0) 100%)",
+            filter: "blur(200px)",
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-background/30 to-background/20" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1A191E]/10 via-[#1A191E]/40 to-[#1A191E]" />
       </div>
-      <section className="relative pt-24 pb-24 px-4 sm:px-6 md:px-12 lg:px-24 min-h-screen flex items-center justify-end overflow-hidden">
-        <div className="absolute inset-0 bg-circuit opacity-[0.4]" aria-hidden />
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] via-transparent to-transparent" aria-hidden />
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[420px] rounded-full bg-primary/10 blur-[100px] pointer-events-none" aria-hidden />
-        <div className="relative z-10 w-full max-w-md">
-          <Card className="login-glass-card relative border-0 bg-transparent shadow-none overflow-hidden rounded-2xl backdrop-blur-sm">
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/80 to-transparent shadow-[0_0_12px_oklch(0.65_0.28_328_/_0.6)]" />
-            <CardHeader className="text-center pb-2 items-center">
-              <div className="flex flex-row items-center justify-center mt-12">
-                <Image src="/images/hymo-logo1.png" alt="HYMO" width={100} height={100} className="h-16 w-auto" />
-              </div>
-              <CardTitle className="font-display text-3xl uppercase mt-2 text-brand-gradient">
-                {t.auth.resetPassword.title}
-              </CardTitle>
-              <CardDescription className="text-muted-foreground/90">{t.auth.resetPassword.subtitle}</CardDescription>
-            </CardHeader>
-            <form onSubmit={handleSubmit}>
-              <CardContent className="space-y-4 pb-2">
+
+      <Navbar />
+
+      <section className="relative z-10 flex-1 flex items-center">
+        <div className="w-full px-6 sm:px-10 lg:px-24 py-16 pt-28">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-10">
+            {/* Left: form */}
+            <div className="col-span-1 mx-auto w-full max-w-md">
+              <h1 className="text-white font-display text-4xl sm:text-5xl tracking-tight text-center">
+                {rp.title}
+              </h1>
+              <p className="mt-3 text-white/55 text-sm sm:text-base text-center">
+                {rp.subtitle}
+              </p>
+
+              <form onSubmit={handleSubmit} className="mt-10 space-y-5">
                 {isCheckingParams && (
-                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-center gap-2 text-sm text-white/55">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Loading...</span>
+                    <span>{rp.checking}</span>
                   </div>
                 )}
-                {success && (
-                  <div className="flex items-center gap-2 p-3 rounded-md bg-green-500/10 border border-green-500/20 text-sm text-green-400">
-                    <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-                    <span>{t.auth.resetPassword.success}</span>
-                  </div>
-                )}
-                {error && (
-                  <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                    <span>{error}</span>
-                  </div>
-                )}
-                {!isCheckingParams && !success && (
+
+                {!isCheckingParams && (
                   <>
-                    {!token && (
-                      <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                        <span>{t.auth.resetPassword.missingToken || "Reset token is missing. Please use the link from your email."}</span>
+                    {success && (
+                      <div className="flex items-center gap-2 p-3 rounded-full bg-green-500/10 border border-green-500/20 text-sm text-green-400">
+                        <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                        <span>{rp.success}</span>
                       </div>
                     )}
-                    {token && (
+                    {error && (
+                      <div className="flex items-center gap-2 p-3 rounded-full bg-[#CC00BC]/10 border border-[#CC00BC]/30 text-sm text-[#E800BC] shadow-sm">
+                        <AlertCircle className="h-4 w-4 flex-shrink-0 text-[#E800BC]" />
+                        <span className="font-medium">{error}</span>
+                      </div>
+                    )}
+                    {!tokenParam && !success && (
+                      <div className="flex items-center gap-2 p-3 rounded-full bg-[#CC00BC]/10 border border-[#CC00BC]/30 text-sm text-[#E800BC] shadow-sm">
+                        <AlertCircle className="h-4 w-4 flex-shrink-0 text-[#E800BC]" />
+                        <span>{rp.missingToken}</span>
+                      </div>
+                    )}
+
+                    {tokenParam && !success && (
                       <>
                         <div className="space-y-2">
-                          <Label htmlFor="reset-email" className="text-foreground/90">{t.auth.resetPassword.email}</Label>
+                          <Label htmlFor="reset-email" className="text-white/80">
+                            {rp.email}
+                          </Label>
                           <Input
                             id="reset-email"
                             type="email"
-                            placeholder={t.auth.resetPassword.emailPlaceholder}
+                            placeholder={rp.emailPlaceholder}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
                             disabled={isSubmitting}
-                            className="input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0"
+                            className={inputClass}
                             autoComplete="email"
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="reset-password" className="text-foreground/90">{t.auth.resetPassword.password}</Label>
-                          <Input
-                            id="reset-password"
-                            type="password"
-                            placeholder="********"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            minLength={8}
-                            disabled={isSubmitting}
-                            className="input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0"
-                            autoComplete="new-password"
-                          />
-                          <p className="text-xs text-muted-foreground">{t.auth.resetPassword.passwordHint}</p>
+                          <Label htmlFor="reset-password" className="text-white/80">
+                            {rp.password}
+                          </Label>
+                          <div className="relative">
+                            <Input
+                              id="reset-password"
+                              type={showPassword ? "text" : "password"}
+                              placeholder="********"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              required
+                              minLength={8}
+                              disabled={isSubmitting}
+                              className={`${inputClass} pr-12`}
+                              autoComplete="new-password"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword((v) => !v)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition"
+                              aria-label={showPassword ? "Hide password" : "Show password"}
+                              disabled={isSubmitting}
+                            >
+                              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
+                          </div>
+                          <p className="text-xs text-white/50">{rp.passwordHint}</p>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="reset-confirm" className="text-foreground/90">{t.auth.resetPassword.confirmPassword}</Label>
-                          <Input
-                            id="reset-confirm"
-                            type="password"
-                            placeholder="********"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            required
-                            minLength={8}
-                            disabled={isSubmitting}
-                            className={`input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0 ${!passwordsMatch ? "border-destructive" : ""}`}
-                            autoComplete="new-password"
-                            aria-invalid={!passwordsMatch}
-                          />
+                          <Label htmlFor="reset-confirm" className="text-white/80">
+                            {rp.confirmPassword}
+                          </Label>
+                          <div className="relative">
+                            <Input
+                              id="reset-confirm"
+                              type={showConfirmPassword ? "text" : "password"}
+                              placeholder="********"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              required
+                              minLength={8}
+                              disabled={isSubmitting}
+                              className={`${inputClass} pr-12 ${!passwordsMatch ? "border-destructive" : ""}`}
+                              autoComplete="new-password"
+                              aria-invalid={!passwordsMatch}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword((v) => !v)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition"
+                              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                              disabled={isSubmitting}
+                            >
+                              {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
+                          </div>
                           {!passwordsMatch && (
-                            <p className="text-xs text-destructive">{t.auth.resetPassword.passwordMismatch}</p>
+                            <p className="text-xs text-destructive">{rp.passwordMismatch}</p>
                           )}
                         </div>
+                        <Button
+                          type="submit"
+                          disabled={!passwordsMatch || isSubmitting || !email || !tokenParam}
+                          className="w-full h-11 rounded-full text-[16px] font-display bg-brand-gradient text-white tracking-wide hover:brightness-110"
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              {rp.submitting}
+                            </>
+                          ) : (
+                            rp.submit
+                          )}
+                        </Button>
                       </>
                     )}
                   </>
                 )}
-              </CardContent>
-              <CardFooter className="flex flex-col gap-4 pt-2">
-                {!success && (
-                  <Button
-                    type="submit"
-                    className="w-full h-10 glow-primary shadow-[0_0_20px_oklch(0.65_0.28_328_/_0.35)] hover:shadow-[0_0_28px_oklch(0.65_0.28_328_/_0.5)]"
-                    size="lg"
-                    disabled={!passwordsMatch || isSubmitting || !email || !token}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {t.auth.resetPassword.submitting}
-                      </>
-                    ) : (
-                      t.auth.resetPassword.submit
-                    )}
-                  </Button>
-                )}
-                <p className="text-sm text-muted-foreground text-center">
-                  {t.auth.resetPassword.rememberPassword}{" "}
-                  <Link href="/login" className="text-primary font-medium hover:underline">
-                    {t.auth.resetPassword.loginLink}
-                  </Link>
-                </p>
-              </CardFooter>
-            </form>
-          </Card>
+
+                <div className="pt-3 border-t border-white/10 text-center">
+                  <p className="text-sm text-white/40">
+                    {rp.rememberPassword}{" "}
+                    <Link href="/login" className="text-[#CC00BC] hover:text-[#E800BC] transition font-medium">
+                      {rp.loginLink}
+                    </Link>
+                  </p>
+                </div>
+              </form>
+            </div>
+
+            {/* Right: car image */}
+            <div className="col-span-1 mx-auto hidden lg:flex justify-end items-center">
+              <Image
+                src="/images/hymo-login.png"
+                alt="HYMO car"
+                width={1200}
+                height={700}
+                priority
+                className="w-full h-auto object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.65)]"
+              />
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -252,35 +281,52 @@ function ResetPasswordContent() {
 
 function LoadingFallback() {
   const { t } = useLanguage()
+  const rp = t.auth.resetPassword
+
   return (
-    <main className="min-h-screen bg-[#1A191E]">
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-20 px-4 sm:px-6 md:px-12 lg:px-24 pt-0 backdrop-blur-md bg-transparent">
-        <Link href="/" className="flex-shrink-0">
-          <img src="/images/hymo-logo.png" alt="HYMO" className="h-8 w-auto" />
-        </Link>
-        <LanguageSelect />
-      </header>
-      <div className="absolute inset-0" aria-hidden="true">
-        <Image
-          src="/images/hero-bg-2.png"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center rotate-y-180"
+    <main className="min-h-screen flex flex-col bg-[#1A191E] relative overflow-hidden">
+      {/* background glow */}
+      <div className="pointer-events-none absolute inset-0">
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/4 -translate-y-1/2 pointer-events-none"
+          style={{
+            width: "640px",
+            height: "640px",
+            borderRadius: "50%",
+            background: "radial-gradient(circle at 60% 54%, #E800BC 0%, rgba(232,0,188,0.30) 60%, rgba(0,0,0,0) 100%)",
+            filter: "blur(200px)",
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-background/30 to-background/20" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1A191E]/10 via-[#1A191E]/40 to-[#1A191E]" />
       </div>
-      <section className="relative pt-24 pb-24 px-4 sm:px-6 md:px-12 lg:px-24 min-h-screen flex items-center justify-end overflow-hidden">
-        <div className="relative z-10 w-full max-w-md">
-          <Card className="login-glass-card relative border-0 bg-transparent shadow-none overflow-hidden rounded-2xl backdrop-blur-sm">
-            <CardContent className="space-y-4 pb-8">
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+      <Navbar />
+      <section className="relative z-10 flex-1 flex items-center">
+        <div className="w-full px-6 sm:px-10 lg:px-24 py-16 pt-28">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-10">
+            <div className="col-span-1 mx-auto w-full max-w-md">
+              <h1 className="text-white font-display text-4xl sm:text-5xl tracking-tight text-center">
+                {rp.title}
+              </h1>
+              <p className="mt-3 text-white/55 text-sm sm:text-base text-center">
+                {rp.subtitle}
+              </p>
+              <div className="mt-10 flex items-center justify-center gap-2 text-sm text-white/55">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Loading...</span>
+                <span>{rp.checking}</span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            {/* Right: car image */}
+            <div className="col-span-1 mx-auto hidden lg:flex justify-end items-center">
+              <Image
+                src="/images/hymo-login.png"
+                alt="HYMO car"
+                width={1200}
+                height={700}
+                priority
+                className="w-full h-auto object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.65)]"
+              />
+            </div>
+          </div>
         </div>
       </section>
     </main>

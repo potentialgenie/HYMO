@@ -5,19 +5,19 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useLanguage } from "@/lib/language-context"
 import { Navbar } from "@/components/navbar"
+import { useLanguage } from "@/lib/language-context"
 import { storeAuthData, type LoginResponse } from "@/lib/auth"
-import { Loader2, AlertCircle } from "lucide-react"
+import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react"
 
 export default function LoginPage() {
   const { t } = useLanguage()
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -70,83 +70,103 @@ export default function LoginPage() {
     }
   }
 
+  const inputClass =
+    "input-dark h-11 rounded-full bg-[#1B1B1B] border-white/10 text-white placeholder:text-white/50 focus-visible:ring-0 focus-visible:border-primary/50"
+
   return (
-    <main className="min-h-screen bg-[#1A191E]">
-      <Navbar />
-      <div className="absolute inset-0" aria-hidden="true">
-        <Image
-          src="/images/hero-bg.jpg"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center"
+    <main className="min-h-screen flex flex-col bg-[#1A191E] relative overflow-hidden">
+      {/* background glow */}
+      <div className="pointer-events-none absolute inset-0">
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/4 -translate-y-1/2 pointer-events-none"
+          style={{
+            width: "640px",
+            height: "640px",
+            borderRadius: "50%",
+            background: "radial-gradient(circle at 60% 54%, #E800BC 0%, rgba(232,0,188,0.30) 60%, rgba(0,0,0,0) 100%)",
+            filter: "blur(200px)",
+          }}
         />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1A191E]/10 via-[#1A191E]/40 to-[#1A191E]" />
       </div>
-      <section className="relative pt-24 pb-24 px-4 sm:px-6 md:px-12 lg:px-24 min-h-screen flex items-center justify-center lg:justify-end overflow-hidden">
-        <div className="absolute inset-0 bg-circuit opacity-[0.4]" aria-hidden />
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] via-transparent to-transparent" aria-hidden />
-        <div className="relative z-10 w-full max-w-md">
-          <Card className="login-glass-card relative border-0 bg-transparent shadow-none overflow-hidden rounded-2xl backdrop-blur-sm">
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/80 to-transparent shadow-[0_0_12px_oklch(0.65_0.28_328_/_0.6)]" />
-            <CardHeader className="text-center pb-2 items-center">
-              <div className="flex flex-row items-center justify-center mt-12">
-                <Image src="/images/hymo-logo1.png" alt="HYMO" width={100} height={100} className="h-16 w-auto" />
-              </div>
-              <CardTitle className="font-display text-3xl uppercase mt-2 text-brand-gradient">
+
+      <Navbar />
+
+      <section className="relative z-10 flex-1 flex items-center">
+        <div className="w-full px-6 sm:px-10 lg:px-24 py-16 pt-28">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-10">
+            {/* Left: form */}
+            <div className="col-span-1 mx-auto w-full max-w-md">
+              <h1 className="text-white font-display text-4xl sm:text-5xl tracking-tight text-center">
                 {t.auth.login.title}
-              </CardTitle>
-              <CardDescription className="text-muted-foreground/90">{t.auth.login.subtitle}</CardDescription>
-            </CardHeader>
-            <form onSubmit={handleSubmit}>
-              <CardContent className="space-y-4 pb-2">
+              </h1>
+              <p className="mt-3 text-white/55 text-sm sm:text-base text-center">
+                {t.auth.login.subtitle}
+              </p>
+
+              <form onSubmit={handleSubmit} className="mt-10 space-y-5">
                 {error && (
-                  <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                    <span>{error}</span>
+                  <div className="flex items-center gap-2 p-3 rounded-full bg-[#CC00BC]/10 border border-[#CC00BC]/30 text-sm text-[#E800BC] shadow-sm">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0 text-[#E800BC]" />
+                    <span className="font-medium">{error}</span>
                   </div>
                 )}
+
                 <div className="space-y-2">
-                  <Label htmlFor="login-email" className="text-foreground/90">{t.auth.login.email}</Label>
+                  <Label htmlFor="login-email" className="text-white/80">
+                    {t.auth.login.email}
+                  </Label>
                   <Input
                     id="login-email"
                     type="email"
-                    placeholder={t.auth.login.emailPlaceholder}
+                    placeholder="Email Address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     disabled={isSubmitting}
-                    className="input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0"
+                    className={inputClass}
                     autoComplete="email"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="login-password" className="text-foreground/90">{t.auth.login.password}</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="********"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={isSubmitting}
-                    className="input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0"
-                    autoComplete="current-password"
-                  />
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Use your account email</span>
-                    <Link href="/forgot-password" className="text-primary hover:underline">
-                      {t.auth.login.forgotPassword || "Forgot password?"}
+                  <Label htmlFor="login-password" className="text-white/80">
+                    {t.auth.login.password}
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="login-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={isSubmitting}
+                      className={`${inputClass} pr-12`}
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      disabled={isSubmitting}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Link href="/forgot-password" className="text-sm text-white/40 hover:text-[#E800BC] transition">
+                      {t.auth.login.forgotPassword || "Forgot Password?"}
                     </Link>
                   </div>
                 </div>
-              </CardContent>
-              <CardFooter className="flex flex-col gap-4 pt-2">
+
                 <Button
                   type="submit"
-                  className="w-full h-10 glow-primary shadow-[0_0_20px_oklch(0.65_0.28_328_/_0.35)] hover:shadow-[0_0_28px_oklch(0.65_0.28_328_/_0.5)]"
-                  size="lg"
                   disabled={isSubmitting}
+                  className="w-full h-11 rounded-full text-[16px] font-display bg-brand-gradient text-white tracking-wide hover:brightness-110"
                 >
                   {isSubmitting ? (
                     <>
@@ -157,15 +177,30 @@ export default function LoginPage() {
                     t.auth.login.submit
                   )}
                 </Button>
-                <p className="text-sm text-muted-foreground text-center">
-                  {t.auth.login.noAccount}{" "}
-                  <Link href="/register" className="text-primary font-medium hover:underline">
-                    {t.auth.login.registerLink}
-                  </Link>
-                </p>
-              </CardFooter>
-            </form>
-          </Card>
+
+                <div className="pt-3 border-t border-white/10 text-center">
+                  <p className="text-sm text-white/40">
+                    {t.auth.login.noAccount}{" "}
+                    <Link href="/register" className="text-[#CC00BC] hover:text-[#E800BC] transition font-medium">
+                      {t.auth.login.registerLink}
+                    </Link>
+                  </p>
+                </div>
+              </form>
+            </div>
+
+            {/* Right: car image */}
+            <div className="col-span-1 mx-auto hidden lg:flex justify-end items-center">
+                <Image
+                  src="/images/hymo-login.png"
+                  alt="HYMO car"
+                  width={1200}
+                  height={700}
+                  priority
+                  className="w-full h-auto object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.65)]"
+                />
+            </div>
+          </div>
         </div>
       </section>
     </main>
