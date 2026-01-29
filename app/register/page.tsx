@@ -3,27 +3,80 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LanguageSelect } from "@/components/language-select"
 import { useLanguage } from "@/lib/language-context"
+import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
 
 export default function RegisterPage() {
   const { t } = useLanguage()
-  const [name, setName] = useState("")
+  const router = useRouter()
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (password !== confirmPassword) return
-    // TODO: wire to auth API
-  }
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
   const passwordsMatch = !confirmPassword || password === confirmPassword
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (password !== confirmPassword) return
+    
+    setIsSubmitting(true)
+    setError(null)
+    setSuccess(false)
+
+    try {
+      const response = await fetch("https://www.hymosetups.com/api/v1/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: firstName,
+          lastname: lastName,
+          email,
+          password,
+          password_confirmation: confirmPassword,
+        }),
+      })
+
+      const contentType = response.headers.get("content-type") || ""
+      const data = contentType.includes("application/json")
+        ? await response.json().catch(() => null)
+        : await response.text().catch(() => "")
+
+      if (!response.ok) {
+        // Handle validation errors or other API errors
+        const errorMessage =
+          (typeof data === "object" && data && "message" in data && typeof data.message === "string" && data.message) ||
+          (typeof data === "object" && data && "error" in data && typeof data.error === "string" && data.error) ||
+          (typeof data === "string" && data) ||
+          "Registration failed. Please try again."
+        throw new Error(errorMessage)
+      }
+
+      // Success - show success message
+      setSuccess(true)
+      // Redirect to verify-email page with email parameter
+      setTimeout(() => {
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`)
+      }, 2000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
     <main className="min-h-screen bg-[#1A191E]">
@@ -35,7 +88,7 @@ export default function RegisterPage() {
       </header>
       <div className="absolute inset-0" aria-hidden="true">
         <Image
-          src="/images/hero-bg-2.png"
+          src="/images/hero-bg.jpg"
           alt=""
           fill
           priority
@@ -62,17 +115,44 @@ export default function RegisterPage() {
             </CardHeader>
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4 pb-2">
+                {success && (
+                  <div className="flex items-center gap-2 p-3 rounded-md bg-green-500/10 border border-green-500/20 text-sm text-green-400">
+                    <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                    <span>Registration successful! Please check your email to verify your account.</span>
+                  </div>
+                )}
+                {error && (
+                  <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
                 <div className="space-y-2">
-                  <Label htmlFor="register-name" className="text-foreground/90">{t.auth.register.name}</Label>
+                  <Label htmlFor="register-firstname" className="text-foreground/90">{t.auth.register.firstName}</Label>
                   <Input
-                    id="register-name"
+                    id="register-firstname"
                     type="text"
-                    placeholder={t.auth.register.namePlaceholder}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    placeholder={t.auth.register.firstNamePlaceholder}
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
                     required
+                    disabled={isSubmitting || success}
                     className="input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0"
-                    autoComplete="name"
+                    autoComplete="given-name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="register-lastname" className="text-foreground/90">{t.auth.register.lastName}</Label>
+                  <Input
+                    id="register-lastname"
+                    type="text"
+                    placeholder={t.auth.register.lastNamePlaceholder}
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    disabled={isSubmitting || success}
+                    className="input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0"
+                    autoComplete="family-name"
                   />
                 </div>
                 <div className="space-y-2">
@@ -84,6 +164,7 @@ export default function RegisterPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={isSubmitting || success}
                     className="input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0"
                     autoComplete="email"
                   />
@@ -98,6 +179,7 @@ export default function RegisterPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={8}
+                    disabled={isSubmitting || success}
                     className="input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0"
                     autoComplete="new-password"
                   />
@@ -113,6 +195,7 @@ export default function RegisterPage() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     minLength={8}
+                    disabled={isSubmitting || success}
                     className={`input-neon bg-white/[0.06] border-white/20 placeholder:text-muted-foreground/70 h-10 focus-visible:border-primary/50 focus-visible:ring-0 ${!passwordsMatch ? "border-destructive" : ""}`}
                     autoComplete="new-password"
                     aria-invalid={!passwordsMatch}
@@ -127,9 +210,16 @@ export default function RegisterPage() {
                   type="submit"
                   className="w-full h-10 glow-primary shadow-[0_0_20px_oklch(0.65_0.28_328_/_0.35)] hover:shadow-[0_0_28px_oklch(0.65_0.28_328_/_0.5)]"
                   size="lg"
-                  disabled={!passwordsMatch}
+                  disabled={!passwordsMatch || isSubmitting || success}
                 >
-                  {t.auth.register.submit}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Registering...
+                    </>
+                  ) : (
+                    t.auth.register.submit
+                  )}
                 </Button>
                 <p className="text-sm text-muted-foreground text-center">
                   {t.auth.register.hasAccount}{" "}

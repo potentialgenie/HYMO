@@ -2,26 +2,32 @@
 
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Menu, X, ChevronDown, Globe } from "lucide-react"
 import { useLanguage } from "@/lib/language-context"
 import type { Language } from "@/lib/translations"
 import { Button } from "@/components/ui/button"
+import { clearAuthData, getUser, hasSession, isAuthenticated, isTokenExpired, refreshAccessToken } from "@/lib/auth"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [setupsDropdownOpen, setSetupsDropdownOpen] = useState(false)
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false)
+  const [accountDropdownOpen, setAccountDropdownOpen] = useState(false)
   const [mobileSetupsOpen, setMobileSetupsOpen] = useState(false)
   const [mobileLanguageOpen, setMobileLanguageOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [activeAnchor, setActiveAnchor] = useState("")
+  const [isAuthed, setIsAuthed] = useState(false)
+  const [userName, setUserName] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const languageDropdownRef = useRef<HTMLDivElement>(null)
+  const accountDropdownRef = useRef<HTMLDivElement>(null)
 
   const { language, setLanguage, t } = useLanguage()
   const pathname = usePathname()
+  const router = useRouter()
 
   const isActive = (href: string, prefix?: boolean) => {
     if (prefix) return pathname.startsWith(href)
@@ -43,10 +49,59 @@ export function Navbar() {
       if (languageDropdownRef.current && !languageDropdownRef.current.contains(event.target as Node)) {
         setLanguageDropdownOpen(false)
       }
+      if (accountDropdownRef.current && !accountDropdownRef.current.contains(event.target as Node)) {
+        setAccountDropdownOpen(false)
+      }
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const refreshAuth = async () => {
+      // If access token is expired but we still have a refresh token, try refreshing once
+      if (!isAuthenticated() && hasSession() && isTokenExpired()) {
+        try {
+          await refreshAccessToken()
+        } catch {
+          clearAuthData()
+        }
+      }
+
+      if (cancelled) return
+      const authed = isAuthenticated()
+      setIsAuthed(authed)
+      const u = getUser()
+      setUserName(u ? `${u.name}${u.lastname ? ` ${u.lastname}` : ""}` : null)
+    }
+
+    void refreshAuth()
+    const onStorage = () => void refreshAuth()
+    window.addEventListener("storage", onStorage)
+    return () => {
+      cancelled = true
+      window.removeEventListener("storage", onStorage)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Re-check auth state on route change
+    const authed = isAuthenticated()
+    setIsAuthed(authed)
+    const u = getUser()
+    setUserName(u ? `${u.name}${u.lastname ? ` ${u.lastname}` : ""}` : null)
+  }, [pathname])
+
+  const handleLogout = () => {
+    clearAuthData()
+    setIsAuthed(false)
+    setUserName(null)
+    setAccountDropdownOpen(false)
+    setIsOpen(false)
+    router.push("/")
+  }
 
   useEffect(() => {
     function handleScroll() {
@@ -228,15 +283,43 @@ export function Navbar() {
               )}
             </div>
 
-            <Button
-              asChild
-              size="sm"
-              className="px-5 py-2.5 rounded-md font-medium text-sm tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A191E]"
-            >
-              <Link href="/login" onClick={(event) => handleNavLinkClick(event, "/login")}>
-                {t.nav.login}
-              </Link>
-            </Button>
+            {/* Auth Button / Account Dropdown */}
+            {!isAuthed ? (
+              <Button
+                asChild
+                size="sm"
+                className="px-5 py-2.5 rounded-md font-medium text-sm tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A191E]"
+              >
+                <Link href="/login" onClick={(event) => handleNavLinkClick(event, "/login")}>
+                  {t.nav.login}
+                </Link>
+              </Button>
+            ) : (
+              <div className="relative" ref={accountDropdownRef}>
+                <button
+                  onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
+                  className="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-white/5 border border-white/10 text-white hover:text-primary hover:border-primary/30 transition-all duration-200"
+                >
+                  <span className="text-sm font-medium max-w-[160px] truncate">
+                    {userName || "Account"}
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 transition-transform ${accountDropdownOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+
+                {accountDropdownOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-44 bg-[#1A191E]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.4)] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-5 py-3.5 text-sm tracking-wide transition-all duration-200 hover:bg-primary/10 hover:pl-6 text-white hover:text-primary"
+                    >
+                      {t.nav.logout}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -352,18 +435,24 @@ export function Navbar() {
                 )}
               </div>
               <Button
-                asChild
                 size="sm"
                 className="w-full px-5 py-3 rounded-md font-medium text-sm tracking-wide transition-all duration-200 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A191E]"
               >
-                <Link
-                  href="/login"
-                  onClick={(event) =>
-                    handleNavLinkClick(event, "/login", { closeMenu: true })
-                  }
-                >
-                  {t.nav.login}
-                </Link>
+                {!isAuthed ? (
+                  <Link
+                    href="/login"
+                    onClick={(event) =>
+                      handleNavLinkClick(event, "/login", { closeMenu: true })
+                    }
+                    className="w-full"
+                  >
+                    {t.nav.login}
+                  </Link>
+                ) : (
+                  <button onClick={handleLogout} className="w-full text-left">
+                    {t.nav.logout}
+                  </button>
+                )}
               </Button>
             </div>
           </div>
