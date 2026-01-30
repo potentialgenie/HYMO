@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Navbar } from "@/components/navbar"
+import { apiUrl } from "@/lib/api"
 import { useLanguage } from "@/lib/language-context"
 import { Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react"
 
@@ -36,7 +37,7 @@ export default function RegisterPage() {
     setSuccess(false)
 
     try {
-      const response = await fetch("https://www.hymosetups.com/api/v1/signup", {
+      const response = await fetch(apiUrl("/api/v1/signup"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

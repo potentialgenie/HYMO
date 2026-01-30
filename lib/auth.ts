@@ -2,6 +2,8 @@
  * Authentication utility functions for managing access tokens and refresh tokens
  */
 
+import { apiUrl } from "@/lib/api"
+
 export interface LoginResponse {
   status: boolean
   message: string
@@ -129,7 +131,7 @@ export function isAuthenticated(): boolean {
 
 /**
  * Refresh access token using refresh_token.
- * POST https://www.hymosetups.com/api/v1/refresh
+ * POST /api/v1/refresh (see apiUrl)
  * body: { refresh_token }
  */
 export async function refreshAccessToken(): Promise<RefreshResponse> {
@@ -145,7 +147,7 @@ export async function refreshAccessToken(): Promise<RefreshResponse> {
   if (refreshInFlight) return refreshInFlight
 
   refreshInFlight = (async () => {
-    const res = await fetch("https://www.hymosetups.com/api/v1/refresh", {
+    const res = await fetch(apiUrl("/api/v1/refresh"), {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({ refresh_token: refreshToken }),
@@ -242,27 +244,25 @@ export function clearAuthData(): void {
 }
 
 /**
- * Logout: call API with email (body) and Bearer refresh_token, then clear localStorage.
- * POST https://www.hymosetups.com/api/v1/logout
+ * Logout: call API with Bearer access_token, then clear localStorage.
+ * POST /api/v1/logout (see apiUrl)
  * Always clears local auth data even if the API call fails.
  */
 export async function logout(): Promise<void> {
   if (typeof window === "undefined") return
 
-  const refreshToken = getRefreshToken()
-  const user = getUser()
-  const email = user?.email
+  const accessToken = getAccessToken()
 
   try {
-    if (refreshToken && email) {
-      await fetch("https://www.hymosetups.com/api/v1/logout", {
+    if (accessToken) {
+      await fetch(apiUrl("/api/v1/logout"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `Bearer ${refreshToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({}),
       })
     }
   } finally {

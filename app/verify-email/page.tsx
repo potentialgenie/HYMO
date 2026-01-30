@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Navbar } from "@/components/navbar"
+import { apiUrl } from "@/lib/api"
 import { useLanguage } from "@/lib/language-context"
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
 
@@ -54,7 +55,7 @@ function EmailVerifyContent() {
     setResendError(null)
     setResendSuccess(false)
     try {
-      const response = await fetch("https://www.hymosetups.com/api/v1/email/resend", {
+      const response = await fetch(apiUrl("/api/v1/email/resend"), {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ email }),
@@ -90,7 +91,7 @@ function EmailVerifyContent() {
       setStatus("verifying")
       setErrorMessage(null)
       try {
-        const res = await fetch("https://www.hymosetups.com/api/v1/email/verify", {
+        const res = await fetch(apiUrl("/api/v1/email/verify"), {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
           body: JSON.stringify({

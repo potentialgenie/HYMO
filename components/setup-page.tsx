@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import Image from "next/image"
+import { apiUrl } from "@/lib/api"
 
 interface FilterOption {
   value: string
@@ -863,7 +864,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
     setSearchLoading(true)
     console.log("=== SEARCH REQUEST BODY ===", requestBody)
     try {
-      const response = await fetch("https://www.hymosetups.com/api/v1/setups/search", {
+      const response = await fetch(apiUrl("/api/v1/setups/search"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
@@ -943,7 +944,7 @@ export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: 
       version: selectedVersion,
       game,
     })
-    fetch("https://www.hymosetups.com/api/v1/setups/filters", {
+    fetch(apiUrl("/api/v1/setups/filters"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody),

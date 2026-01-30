@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Navbar } from "@/components/navbar"
 import { useLanguage } from "@/lib/language-context"
+import { apiUrl } from "@/lib/api"
 import { storeAuthData, type LoginResponse } from "@/lib/auth"
 import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react"
 
@@ -28,7 +29,7 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const response = await fetch("https://www.hymosetups.com/api/v1/login", {
+      const response = await fetch(apiUrl("/api/v1/login"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -95,7 +96,16 @@ export default function LoginPage() {
       <section className="relative z-10 flex-1 flex items-center">
         <div className="w-full px-6 sm:px-10 lg:px-24 py-16 pt-28">
           <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-10">
-            {/* Left: form */}
+            <div className="col-span-1 mx-auto hidden lg:flex justify-end items-center">
+              <Image
+                src="/images/hymo-login.png"
+                alt="HYMO car"
+                width={1200}
+                height={700}
+                priority
+                className="w-full h-auto object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.65)]"
+              />
+            </div>
             <div className="col-span-1 mx-auto w-full max-w-md">
               <h1 className="text-white font-display text-4xl sm:text-5xl tracking-tight text-center">
                 {t.auth.login.title}
@@ -124,8 +134,9 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     disabled={isSubmitting}
-                    className={inputClass}
+                    className={`${inputClass} text-white`}
                     autoComplete="email"
+                    style={{ color: "#fff" }}
                   />
                 </div>
 
@@ -187,18 +198,6 @@ export default function LoginPage() {
                   </p>
                 </div>
               </form>
-            </div>
-
-            {/* Right: car image */}
-            <div className="col-span-1 mx-auto hidden lg:flex justify-end items-center">
-                <Image
-                  src="/images/hymo-login.png"
-                  alt="HYMO car"
-                  width={1200}
-                  height={700}
-                  priority
-                  className="w-full h-auto object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.65)]"
-                />
             </div>
           </div>
         </div>

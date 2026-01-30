@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Menu, X, ChevronDown, Globe } from "lucide-react"
+import { Menu, X, ChevronDown, Globe, Loader2 } from "lucide-react"
 import { useLanguage } from "@/lib/language-context"
 import type { Language } from "@/lib/translations"
 import { Button } from "@/components/ui/button"
@@ -21,6 +21,7 @@ export function Navbar() {
   const [activeAnchor, setActiveAnchor] = useState("")
   const [isAuthed, setIsAuthed] = useState(false)
   const [userName, setUserName] = useState<string | null>(null)
+  const [logoutLoading, setLogoutLoading] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const languageDropdownRef = useRef<HTMLDivElement>(null)
   const accountDropdownRef = useRef<HTMLDivElement>(null)
@@ -95,12 +96,18 @@ export function Navbar() {
   }, [pathname])
 
   const handleLogout = async () => {
-    await logout()
-    setIsAuthed(false)
-    setUserName(null)
-    setAccountDropdownOpen(false)
-    setIsOpen(false)
-    router.push("/")
+    if (logoutLoading) return
+    setLogoutLoading(true)
+    try {
+      await logout()
+      setIsAuthed(false)
+      setUserName(null)
+      setAccountDropdownOpen(false)
+      setIsOpen(false)
+      router.push("/")
+    } finally {
+      setLogoutLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -312,9 +319,17 @@ export function Navbar() {
                   <div className="absolute top-full right-0 mt-2 w-44 bg-[#1A191E]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.4)] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left px-5 py-3.5 text-sm tracking-wide transition-all duration-200 hover:bg-primary/10 hover:pl-6 text-white hover:text-primary"
+                      disabled={logoutLoading}
+                      className="w-full flex items-center gap-2 text-left px-5 py-3.5 text-sm tracking-wide transition-all duration-200 hover:bg-primary/10 hover:pl-6 text-white hover:text-primary disabled:opacity-70 disabled:cursor-not-allowed"
                     >
-                      {t.nav.logout}
+                      {logoutLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                          {t.nav.logout}
+                        </>
+                      ) : (
+                        t.nav.logout
+                      )}
                     </button>
                   </div>
                 )}
@@ -449,8 +464,19 @@ export function Navbar() {
                     {t.nav.login}
                   </Link>
                 ) : (
-                  <button onClick={handleLogout} className="w-full text-left">
-                    {t.nav.logout}
+                  <button
+                    onClick={handleLogout}
+                    disabled={logoutLoading}
+                    className="w-full flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {logoutLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                        {t.nav.logout}
+                      </>
+                    ) : (
+                      t.nav.logout
+                    )}
                   </button>
                 )}
               </Button>

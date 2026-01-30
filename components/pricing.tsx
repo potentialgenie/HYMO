@@ -1,12 +1,15 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
+import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { AnimateSection } from "@/components/animate-section"
 import { Check, Loader2, X } from "lucide-react"
+import { apiUrl } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { isAuthenticated } from "@/lib/auth"
 import { CrownSvg } from "./svg/CrownSvg"
 import { EliteSvg } from "./svg/EliteSvg"
 import { RacingCarSvg } from "./svg/RacingCarSvg"
@@ -71,6 +74,7 @@ function buildSubscriptionPlans(data: PlanFromApi[]) {
       icon: <CrownSvg color="#E127E2" />,
       monthly: proMonthly
         ? {
+            id: proMonthly.id,
             price: `${proMonthly.currency_symbol}${proMonthly.price}`,
             stripe_price_id: proMonthly.stripe_price_id,
             description: proMonthly?.description || null,
@@ -78,6 +82,7 @@ function buildSubscriptionPlans(data: PlanFromApi[]) {
         : null,
       yearly: proYearly
         ? {
+            id: proYearly.id,
             discount: `-${proYearly.discount}%`,
             effectiveMonthly: `${proYearly.currency_symbol}${(parseFloat(proYearly.price) / 12).toFixed(2)}`,
             total: `${proYearly.currency_symbol}${proYearly.price}`,
@@ -94,6 +99,7 @@ function buildSubscriptionPlans(data: PlanFromApi[]) {
       description: eliteMonthly?.description || eliteYearly?.description || null,
       monthly: eliteMonthly
         ? {
+            id: eliteMonthly.id,
             price: `${eliteMonthly.currency_symbol}${eliteMonthly.price}`,
             stripe_price_id: eliteMonthly.stripe_price_id,
             description: eliteMonthly?.description || null,
@@ -101,6 +107,7 @@ function buildSubscriptionPlans(data: PlanFromApi[]) {
         : null,
       yearly: eliteYearly
         ? {
+            id: eliteYearly.id,
             discount: `-${eliteYearly.discount}%`,
             effectiveMonthly: `${eliteYearly.currency_symbol}${(parseFloat(eliteYearly.price) / 12).toFixed(2)}`,
             total: `${eliteYearly.currency_symbol}${eliteYearly.price}`,
@@ -118,6 +125,7 @@ function buildPermanentPlan(data: PlanFromApi[]) {
   const p = data.find((x) => x.interval === "permanent")
   if (!p) return null
   return {
+    id: p.id,
     name: p.name,
     description: p.description || null,
     price: `${p.currency_symbol}${p.price}`,
@@ -127,17 +135,28 @@ function buildPermanentPlan(data: PlanFromApi[]) {
   }
 }
 
+const getStartedClass =
+  "flex cursor-pointer h-12 px-16 rounded-md text-sm font-semibold tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110 inline-flex items-center justify-center"
+
 export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly")
   const [plansData, setPlansData] = useState<PlanFromApi[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isAuthed, setIsAuthed] = useState(false)
+
+  useEffect(() => {
+    const refresh = () => setIsAuthed(isAuthenticated())
+    refresh()
+    window.addEventListener("storage", refresh)
+    return () => window.removeEventListener("storage", refresh)
+  }, [])
 
   const fetchPlans = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch("https://www.hymosetups.com/api/v1/plans")
+      const res = await fetch(apiUrl("/api/v1/plans"))
       const json: ApiResponse = await res.json()
       if (!res.ok || !json.status || !Array.isArray(json.data)) {
         throw new Error(json.message || "Failed to load plans")
@@ -287,13 +306,21 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                     ))}
                   </CardContent>
                   <CardFooter className="pt-2 pb-8 flex items-center justify-center">
-                    <Button
-                      className="flex rounded-md cursor-pointer h-12 px-16 transition-all duration-200 bg-brand-gradient text-white hover:brightness-110"
-                      size="lg"
-                      data-stripe-price-id={permanentPlan.stripe_price_id}
-                    >
-                      Get Started
-                    </Button>
+                    {!isAuthed ? (
+                      <Link
+                        href="/login"
+                        className={cn(getStartedClass, "rounded-md h-12 px-16")}
+                      >
+                        Get Started
+                      </Link>
+                    ) : (
+                      <Link
+                        href={`/pricing/car-access/${permanentPlan.id}`}
+                        className={cn(getStartedClass, "rounded-md h-12 px-16")}
+                      >
+                        Get Started
+                      </Link>
+                    )}
                   </CardFooter>
                 </Card>
               )
@@ -422,16 +449,53 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                       ))}
                     </CardContent>
                     <CardFooter className="pt-2 pb-6 flex items-center justify-center">
-                      <Button
-                        className="flex cursor-pointer h-12 px-16 rounded-md text-sm font-semibold tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110"
-                        size="lg"
-                        data-stripe-price-id={
-                          (billingPeriod === "monthly" ? monthly : yearly)
-                            ?.stripe_price_id
-                        }
-                      >
-                        Get Started
-                      </Button>
+                      {!isAuthed ? (
+                        <Link
+                          href="/login"
+                          className={cn(getStartedClass, "rounded-md h-12 px-16")}
+                        >
+                          Get Started
+                        </Link>
+                      ) : key === "pro" ? (
+                        (() => {
+                          const plan = billingPeriod === "monthly" ? monthly : yearly
+                          const planId = plan?.id
+                          if (!planId) return null
+                          return (
+                            <Link
+                              href={`/pricing/game-access/${planId}`}
+                              className={cn(getStartedClass, "rounded-md h-12 px-16")}
+                            >
+                              Get Started
+                            </Link>
+                          )
+                        })()
+                      ) : key === "elite" ? (
+                        (() => {
+                          const plan = billingPeriod === "monthly" ? monthly : yearly
+                          const planId = plan?.id
+                          if (!planId) return null
+                          return (
+                            <Link
+                              href={`/pricing/free-trial-access/${planId}`}
+                              className={cn(getStartedClass, "rounded-md h-12 px-16")}
+                            >
+                              Get Started
+                            </Link>
+                          )
+                        })()
+                      ) : (
+                        <Button
+                          className="flex cursor-pointer h-12 px-16 rounded-md text-sm font-semibold tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110"
+                          size="lg"
+                          data-stripe-price-id={
+                            (billingPeriod === "monthly" ? monthly : yearly)
+                              ?.stripe_price_id
+                          }
+                        >
+                          Get Started
+                        </Button>
+                      )}
                     </CardFooter>
                   </Card>
                 )
