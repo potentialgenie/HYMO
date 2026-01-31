@@ -34,7 +34,7 @@ export function Hero() {
         {/* Dark overlay for better text readability */}
         {/* <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-background/30 to-background/20" /> */}
         {/* Seamless gradient transition to next section */}
-        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-b from-transparent via-[#1A191E]/80 to-[#1A191E]" />
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-b from-transparent via-[#151515]/80 to-[#151515]" />
       </div>
 
       {/* Right-aligned content block */}
@@ -75,7 +75,7 @@ export function Hero() {
           >
             <Button
               size="lg"
-              className="uppercase text-sm font-semibold px-8 py-6 rounded-md bg-brand-gradient text-white transition-all duration-200 hover:brightness-110"
+              className="rounded-full uppercase text-sm font-semibold px-8 py-6 bg-brand-gradient text-white transition-all duration-200 hover:brightness-110"
               asChild
             >
               <Link href="/pricing">Buy Now</Link>
@@ -83,7 +83,7 @@ export function Hero() {
             <Button
               variant="outline"
               size="lg"
-              className="uppercase text-sm font-semibold px-8 py-6 rounded-md bg-transparent border border-white text-white hover:bg-white/10 hover:text-white transition-all duration-200"
+              className="rounded-full uppercase text-sm font-semibold px-8 py-6 bg-transparent border border-white text-white hover:bg-white/10 hover:text-white transition-all duration-200"
               asChild
             >
               <Link href="/#contact">Book Now</Link>

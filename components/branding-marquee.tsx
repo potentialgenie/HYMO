@@ -12,8 +12,8 @@ export function BrandingMarquee() {
   return (
     <section className="pt-8 pb-6">
       <div className="relative overflow-hidden border-white/10 bg-[#120f17]/70 px-6 py-4">
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-[linear-gradient(90deg,#1a191e_0%,rgba(26,25,30,0)_100%)]" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-[linear-gradient(270deg,#1a191e_0%,rgba(26,25,30,0)_100%)]" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-[linear-gradient(90deg,#151515_0%,rgba(21,21,21,0)_100%)]" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-[linear-gradient(270deg,#151515_0%,rgba(21,21,21,0)_100%)]" />
 
         <div className="marquee-track items-center gap-12">
           {trackLogos.map((logo, index) => (

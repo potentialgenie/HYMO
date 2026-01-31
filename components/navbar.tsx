@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Menu, X, ChevronDown, Globe, Loader2 } from "lucide-react"
+import { Menu, X, ChevronDown, Globe, Loader2, User, LayoutDashboard, LogOut } from "lucide-react"
 import { useLanguage } from "@/lib/language-context"
 import type { Language } from "@/lib/translations"
 import { Button } from "@/components/ui/button"
@@ -75,15 +75,72 @@ export function Navbar() {
       const authed = isAuthenticated()
       setIsAuthed(authed)
       const u = getUser()
-      setUserName(u ? `${u.name}${u.lastname ? ` ${u.lastname}` : ""}` : null)
+      setUserName(u ? u.name : null)
+    }
+
+    const checkAndUpdateAuth = async () => {
+      if (cancelled) return
+      
+      // Check if token is expired
+      if (isTokenExpired()) {
+        // Try to refresh the token if we have a refresh token
+        if (hasSession()) {
+          try {
+            await refreshAccessToken()
+            if (!cancelled) {
+              setIsAuthed(isAuthenticated())
+              const u = getUser()
+              setUserName(u ? u.name : null)
+            }
+          } catch {
+            // Refresh failed, clear auth and update UI
+            clearAuthData()
+            if (!cancelled) {
+              setIsAuthed(false)
+              setUserName(null)
+              setAccountDropdownOpen(false)
+            }
+          }
+        } else {
+          // No session data, clear auth
+          clearAuthData()
+          if (!cancelled) {
+            setIsAuthed(false)
+            setUserName(null)
+            setAccountDropdownOpen(false)
+          }
+        }
+      }
     }
 
     void refreshAuth()
+    
     const onStorage = () => void refreshAuth()
     window.addEventListener("storage", onStorage)
+
+    // Check when tab becomes visible again (user returns to the tab)
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void checkAndUpdateAuth()
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange)
+
+    // Check when window regains focus
+    const onFocus = () => void checkAndUpdateAuth()
+    window.addEventListener("focus", onFocus)
+
+    // Periodic check for session expiration (every 30 seconds)
+    const checkSession = setInterval(() => {
+      void checkAndUpdateAuth()
+    }, 30000)
+
     return () => {
       cancelled = true
       window.removeEventListener("storage", onStorage)
+      document.removeEventListener("visibilitychange", onVisibilityChange)
+      window.removeEventListener("focus", onFocus)
+      clearInterval(checkSession)
     }
   }, [])
 
@@ -92,7 +149,7 @@ export function Navbar() {
     const authed = isAuthenticated()
     setIsAuthed(authed)
     const u = getUser()
-    setUserName(u ? `${u.name}${u.lastname ? ` ${u.lastname}` : ""}` : null)
+    setUserName(u ? u.name : null)
   }, [pathname])
 
   const handleLogout = async () => {
@@ -149,29 +206,12 @@ export function Navbar() {
   ]
 
   const currentLanguage = languages.find((l) => l.code === language)
-  const handleNavLinkClick = (
-    event: React.MouseEvent<HTMLAnchorElement>,
-    href: string,
-    options?: { closeMenu?: boolean; closeSetups?: boolean; setAnchor?: string }
-  ) => {
-    event.preventDefault()
-    if (options?.closeMenu) setIsOpen(false)
-    if (options?.closeSetups) setSetupsDropdownOpen(false)
-    if (typeof options?.setAnchor === "string") {
-      setActiveAnchor(options.setAnchor)
-    } else {
-      setActiveAnchor("")
-    }
-    if (typeof window !== "undefined") {
-      window.location.href = href
-    }
-  }
 
   return (
     <motion.nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
         isScrolled
-          ? "bg-[#1A191E]/50 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.25)] border-white/10"
+          ? "bg-[#151515]/50 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.25)] border-white/10"
           : "bg-transparent backdrop-blur-0"
       }`}
       initial={{ opacity: 0, y: -16 }}
@@ -181,11 +221,7 @@ export function Navbar() {
       <div className="px-4 sm:px-6 lg:px-24">
         <div className="flex items-center justify-between h-22">
           {/* Logo */}
-          <Link
-            href="/"
-            className="flex-shrink-0"
-            onClick={(event) => handleNavLinkClick(event, "/")}
-          >
+          <Link href="/" className="flex-shrink-0">
             <img
               src="/images/hymo-logo1.png"
               alt="HYMO"
@@ -195,11 +231,7 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <Link
-              href="/pricing"
-              className={linkCls("/pricing")}
-              onClick={(event) => handleNavLinkClick(event, "/pricing")}
-            >
+            <Link href="/pricing" className={linkCls("/pricing")}>
               {t.nav.pricing}
             </Link>
             
@@ -210,21 +242,18 @@ export function Navbar() {
                   setSetupsDropdownOpen(!setupsDropdownOpen)
                   setActiveAnchor("")
                 }}
-                className={`inline-flex items-center h-8 gap-1 ${linkCls("/setups", true)}`}
+                className={`inline-flex cursor-pointer items-center h-8 gap-1 ${linkCls("/setups", true)}`}
               >
                 {t.nav.setups}
                 <ChevronDown className={`h-4 w-4 mt-px transition-transform ${setupsDropdownOpen ? "rotate-180" : ""}`} />
               </button>
               
               {setupsDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-72 bg-[#1A191E]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.4)] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
+                <div className="absolute top-full left-0 mt-2 w-72 bg-[#151515]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.4)] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
                   {setupsLinks.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
-                      onClick={(event) =>
-                        handleNavLinkClick(event, link.href, { closeSetups: true })
-                      }
                       className={`block px-5 py-3.5 text-sm tracking-wide transition-all duration-200 hover:bg-primary/10 hover:pl-6 ${
                         pathname === link.href
                           ? "text-primary font-semibold bg-primary/5 border-l-2 border-primary"
@@ -238,20 +267,10 @@ export function Navbar() {
               )}
             </div>
 
-            <Link
-              href="/team"
-              className={linkCls("/team")}
-              onClick={(event) => handleNavLinkClick(event, "/team")}
-            >
+            <Link href="/team" className={linkCls("/team")}>
               {t.nav.team}
             </Link>
-            <Link
-              href="/#contact"
-              className={linkCls("/#contact")}
-              onClick={(event) =>
-                handleNavLinkClick(event, "/#contact", { setAnchor: "contact" })
-              }
-            >
+            <Link href="/#contact" className={linkCls("/#contact")}>
               {t.nav.contact}
             </Link>
 
@@ -268,7 +287,7 @@ export function Navbar() {
               </button>
               
               {languageDropdownOpen && (
-                <div className="absolute top-full right-0 mt-2 w-44 bg-[#1A191E]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.4)] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
+                <div className="absolute top-full right-0 mt-2 w-44 bg-[#151515]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.4)] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
                   {languages.map((lang) => (
                     <button
                       key={lang.code}
@@ -295,9 +314,9 @@ export function Navbar() {
               <Button
                 asChild
                 size="sm"
-                className="px-5 py-2.5 rounded-md font-medium text-sm tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A191E]"
+                className="px-5 py-2.5 rounded-full font-medium text-sm tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#151515] shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)]"
               >
-                <Link href="/login" onClick={(event) => handleNavLinkClick(event, "/login")}>
+                <Link href="/login">
                   {t.nav.login}
                 </Link>
               </Button>
@@ -305,8 +324,11 @@ export function Navbar() {
               <div className="relative" ref={accountDropdownRef}>
                 <button
                   onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
-                  className="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-white/5 border border-white/10 text-white hover:text-primary hover:border-primary/30 transition-all duration-200"
+                  className="inline-flex items-center gap-3 h-10 px-4 rounded-full bg-white/5 border border-white/10 text-white/90 hover:text-white hover:border-white/20 shadow-[0_8px_18px_rgba(0,0,0,0.35)] transition-all duration-200"
                 >
+                  <div className="flex items-center justify-center w-7 h-7 rounded-full bg-[#C85BFF] text-white text-xs font-semibold shrink-0">
+                    {userName ? userName.charAt(0).toUpperCase() : <User className="h-4 w-4" />}
+                  </div>
                   <span className="text-sm font-medium max-w-[160px] truncate">
                     {userName || "Account"}
                   </span>
@@ -316,21 +338,64 @@ export function Navbar() {
                 </button>
 
                 {accountDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-44 bg-[#1A191E]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.4)] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
-                    <button
-                      onClick={handleLogout}
-                      disabled={logoutLoading}
-                      className="w-full flex items-center gap-2 text-left px-5 py-3.5 text-sm tracking-wide transition-all duration-200 hover:bg-primary/10 hover:pl-6 text-white hover:text-primary disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                      {logoutLoading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                          {t.nav.logout}
-                        </>
-                      ) : (
-                        t.nav.logout
-                      )}
-                    </button>
+                  <div className="absolute top-full right-0 mt-2 w-full origin-top bg-[#1E1E1E]/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] overflow-hidden animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                    {/* User Info Header */}
+                    <div className="flex items-center gap-3 p-3 bg-white/5 border-b border-white/10">
+                      <div className="flex items-center justify-center w-7 h-7 rounded-full bg-[#C85BFF] text-white text-xs font-semibold shrink-0">
+                        {userName ? userName.charAt(0).toUpperCase() : <User className="h-4 w-4" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white/90 truncate">
+                          {userName || "Account"}
+                        </p>
+                      </div>
+                      <ChevronDown className="h-4 w-4 text-white/50 shrink-0" />
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-2">
+                      <Link
+                        href="/profile"
+                        onClick={() => setAccountDropdownOpen(false)}
+                        className={`mx-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm tracking-wide transition-all duration-200 ${
+                          pathname === "/profile"
+                            ? "bg-white/10 text-white"
+                            : "text-white/90 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        <User className="h-4 w-4 shrink-0" />
+                        <span>Profile</span>
+                      </Link>
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setAccountDropdownOpen(false)}
+                        className={`mx-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm tracking-wide transition-all duration-200 ${
+                          pathname === "/dashboard"
+                            ? "bg-white/10 text-white"
+                            : "text-white/90 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        <LayoutDashboard className="h-4 w-4 shrink-0" />
+                        <span>Dashboard</span>
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        disabled={logoutLoading}
+                        className="mx-2 w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm tracking-wide transition-all duration-200 text-white/90 hover:bg-white/10 hover:text-white disabled:opacity-70 disabled:cursor-not-allowed"
+                      >
+                        {logoutLoading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                            <span>Signing out...</span>
+                          </>
+                        ) : (
+                          <>
+                            <LogOut className="h-4 w-4 shrink-0" />
+                            <span>Sign out</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -353,9 +418,7 @@ export function Navbar() {
             <div className="flex flex-col gap-4">
               <Link
                 href="/pricing"
-                onClick={(event) =>
-                  handleNavLinkClick(event, "/pricing", { closeMenu: true })
-                }
+                onClick={() => setIsOpen(false)}
                 className={linkCls("/pricing")}
               >
                 {t.nav.pricing}
@@ -376,9 +439,9 @@ export function Navbar() {
                       <Link
                         key={link.href}
                         href={link.href}
-                        onClick={(event) => {
+                        onClick={() => {
                           setMobileSetupsOpen(false)
-                          handleNavLinkClick(event, link.href, { closeMenu: true })
+                          setIsOpen(false)
                         }}
                         className={`text-sm font-display tracking-wide transition-all duration-200 py-2 px-3 rounded-md ${
                           pathname === link.href
@@ -395,21 +458,14 @@ export function Navbar() {
 
               <Link
                 href="/team"
-                onClick={(event) =>
-                  handleNavLinkClick(event, "/team", { closeMenu: true })
-                }
+                onClick={() => setIsOpen(false)}
                 className={linkCls("/team")}
               >
                 {t.nav.team}
               </Link>
               <Link
                 href="/#contact"
-                onClick={(event) =>
-                  handleNavLinkClick(event, "/#contact", {
-                    closeMenu: true,
-                    setAnchor: "contact",
-                  })
-                }
+                onClick={() => setIsOpen(false)}
                 className={linkCls("/#contact")}
               >
                 {t.nav.contact}
@@ -451,14 +507,12 @@ export function Navbar() {
               </div>
               <Button
                 size="sm"
-                className="w-full px-5 py-3 rounded-md font-medium text-sm tracking-wide transition-all duration-200 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A191E]"
+                className="w-full px-5 py-3 rounded-full font-medium text-sm tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#151515]"
               >
                 {!isAuthed ? (
                   <Link
                     href="/login"
-                    onClick={(event) =>
-                      handleNavLinkClick(event, "/login", { closeMenu: true })
-                    }
+                    onClick={() => setIsOpen(false)}
                     className="w-full"
                   >
                     {t.nav.login}

@@ -266,7 +266,7 @@ export default function CarAccessPage() {
 
   if (!planId) {
     return (
-      <div className="min-h-screen bg-[#1A191E]">
+      <div className="min-h-screen bg-[#151515]">
         <Navbar />
         <main className="pt-24 pb-20 px-4 sm:px-6 lg:px-24">
           <p className="text-white/80">Invalid plan.</p>
@@ -280,7 +280,7 @@ export default function CarAccessPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1A191E]">
+    <div className="min-h-screen bg-[#151515]">
       <Navbar />
 
       <main className="relative pt-24 pb-20 px-4 sm:px-6 lg:px-24">
@@ -332,7 +332,7 @@ export default function CarAccessPage() {
                       onValueChange={setGame}
                       disabled={gamesLoading || games.length === 0}
                     >
-                      <SelectTrigger className="w-full h-11 bg-[#1B1B1B] border-white/10 text-white data-[placeholder]:text-white/50 disabled:opacity-50">
+                      <SelectTrigger className="w-full h-11 bg-[#151515] border-white/10 text-white data-[placeholder]:text-white/50 disabled:opacity-50">
                         <SelectValue
                           placeholder={
                             gamesLoading
@@ -365,7 +365,7 @@ export default function CarAccessPage() {
                       onValueChange={setCarClass}
                       disabled={!game || classesLoading || classes.length === 0}
                     >
-                      <SelectTrigger className="w-full h-11 bg-[#1B1B1B] border-white/10 text-white data-[placeholder]:text-white/50 disabled:opacity-50">
+                      <SelectTrigger className="w-full h-11 bg-[#151515] border-white/10 text-white data-[placeholder]:text-white/50 disabled:opacity-50">
                         <SelectValue
                           placeholder={
                             !game
@@ -400,7 +400,7 @@ export default function CarAccessPage() {
                       onValueChange={setCar}
                       disabled={!game || !carClass || carsLoading || cars.length === 0}
                     >
-                      <SelectTrigger className="w-full h-11 bg-[#1B1B1B] border-white/10 text-white data-[placeholder]:text-white/50 disabled:opacity-50">
+                      <SelectTrigger className="w-full h-11 bg-[#151515] border-white/10 text-white data-[placeholder]:text-white/50 disabled:opacity-50">
                         <SelectValue
                           placeholder={
                             !carClass
@@ -444,7 +444,7 @@ export default function CarAccessPage() {
                   </p>
                   {searchedCar ? (
                     <>
-                      <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-[#1B1B1B] mb-4">
+                      <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-[#151515] mb-4">
                         <Image
                           src={carImageSrc(searchedCar)}
                           alt={searchedCar.name}
@@ -476,7 +476,7 @@ export default function CarAccessPage() {
                     </>
                   ) : (
                     <>
-                      <div className="flex-1 flex items-center justify-center min-h-[200px] rounded-lg bg-[#1B1B1B] border border-white/5 mb-4">
+                      <div className="flex-1 flex items-center justify-center min-h-[200px] rounded-lg bg-[#151515] border border-white/5 mb-4">
                         <p className="text-white/50 text-sm text-center px-4">
                           Select game, class, and car, then click Search.
                         </p>

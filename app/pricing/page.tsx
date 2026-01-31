@@ -26,7 +26,7 @@ export default function PricingPage() {
       <Navbar/>
 
       {/* Main Content */}
-      <main className="relative pt-24 pb-20 px-4 sm:px-6 lg:px-24 bg-[#1A191E]">
+      <main className="relative pt-24 pb-20 px-4 sm:px-6 lg:px-24 bg-[#151515]">
         <div className="relative z-10">
           {/* Page Header */}
           <motion.div

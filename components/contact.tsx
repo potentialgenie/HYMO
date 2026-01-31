@@ -112,7 +112,7 @@ export function Contact() {
   return (
     <AnimateSection id="contact" className="relative py-24 px-16 sm:px-30 lg:px-46 overflow-hidden">
       {/* Seamless gradient transition from pricing/FAQ */}
-      <div className="absolute top-0 left-0 right-0 h-80 bg-[linear-gradient(180deg,#1a191e_0%,rgba(31,19,41,0.8)_35%,rgba(31,19,41,0.35)_70%,rgba(31,19,41,0)_100%)] z-10" />
+      <div className="absolute top-0 left-0 right-0 h-80 bg-[linear-gradient(180deg,#151515_0%,rgba(31,19,41,0.8)_35%,rgba(31,19,41,0.35)_70%,rgba(31,19,41,0)_100%)] z-10" />
       {/* Background image */}
       <div className="absolute inset-0" aria-hidden="true">
         <Image
@@ -124,16 +124,16 @@ export function Contact() {
           loading="lazy"
         />
         {/* Enhanced seamless gradient overlay - blends with page background */}
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,#1a191e_0%,rgba(31,19,41,0.55)_45%,rgba(26,25,30,0.65)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,#151515_0%,rgba(31,19,41,0.55)_45%,rgba(21,21,21,0.65)_100%)]" />
       </div>
 
       <div className="relative z-10">
         <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
           {/* Left side - Text content */}
           <div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl mb-6 font-display">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl mb-6 font-display text-white tracking-tight">
               Got a question?{" "}
-              <span>{"We're here to help."}</span>
+              <span className="text-brand-gradient">{"We're here to help."}</span>
             </h2>
             <p className="text-white/80 text-lg mb-8">
               Whether you need support with your setups, have questions about our plans, 
@@ -142,7 +142,7 @@ export function Contact() {
             
             {/* Contact info */}
             <div className="space-y-4">
-              <div className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+              <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 transition-colors hover:border-primary/20">
                 <div className="w-11 h-11 rounded-full border border-white/20 bg-white/10 flex items-center justify-center">
                   <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -150,12 +150,12 @@ export function Contact() {
                 </div>
                 <div className="space-y-0.5">
                   <p className="text-xs uppercase tracking-wider text-white/60">Email us</p>
-                  <a href="mailto:support@hymosetups.com" className="text-white font-medium hover:underline">
+                  <a href="mailto:support@hymosetups.com" className="text-white font-medium hover:text-[#E800BC] transition-colors">
                     support@hymosetups.com
                   </a>
                 </div>
               </div>
-              <div className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+              <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 transition-colors hover:border-primary/20">
                 <div className="w-11 h-11 rounded-full border border-white/20 bg-white/10 flex items-center justify-center">
                   <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -170,18 +170,18 @@ export function Contact() {
           </div>
 
           {/* Right side - Contact form */}
-          <div className="relative overflow-hidden rounded-md border border-white/15 bg-card/60 p-6 shadow-2xl shadow-black/25 backdrop-blur-xl sm:p-8 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_0_32px_oklch(0.65_0.28_328_/_0.1)]">
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 sm:p-8 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_0_32px_rgba(232,0,188,0.15)]">
             <div>
-              <h3 className="text-2xl font-semibold tracking-tight">Contact Us</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">
+              <h3 className="text-2xl font-display font-semibold tracking-tight text-white">Contact Us</h3>
+              <p className="mt-1.5 text-sm text-white/60">
                 Fill out the form below and {"we'll"} get back to you soon.
               </p>
             </div>
             <form onSubmit={handleSubmit} className="mt-8 space-y-6">
               {/* Success Message */}
               {isSuccess && (
-                <div className="rounded-md bg-green-500/10 border border-green-500/30 p-4 flex items-center gap-3 animate-in fade-in-0 slide-in-from-top-2">
-                  <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+                <div className="rounded-full bg-green-500/10 border border-green-500/30 p-4 flex items-center gap-3 animate-in fade-in-0 slide-in-from-top-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" />
                   <p className="text-sm text-green-400 font-medium">
                     Message sent successfully! We'll get back to you soon.
                   </p>
@@ -189,7 +189,7 @@ export function Contact() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium text-foreground/90">
+                <Label htmlFor="name" className="text-sm font-medium text-white/80">
                   Your Name
                 </Label>
                 <Input
@@ -201,19 +201,19 @@ export function Contact() {
                   onBlur={handleBlur}
                   aria-invalid={errors.name ? "true" : "false"}
                   aria-describedby={errors.name ? "name-error" : undefined}
-                  className={`h-12 rounded-md border-white/20 bg-white/5 px-4 placeholder:text-white/40 transition-colors hover:border-white/30 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/25 ${
-                    errors.name ? "border-red-500/50 focus-visible:border-red-500 focus-visible:ring-red-500/25" : ""
+                  className={`input-dark h-12 rounded-full bg-[#151515] border-white/10 text-white px-4 placeholder:text-white/50 transition-colors focus-visible:ring-0 focus-visible:border-primary/50 ${
+                    errors.name ? "border-[#CC00BC]/50 focus-visible:border-[#CC00BC]" : ""
                   }`}
                 />
                 {errors.name && (
-                  <p id="name-error" className="text-xs text-red-400 flex items-center gap-1.5 mt-1 animate-in fade-in-0 slide-in-from-top-1">
+                  <p id="name-error" className="text-xs text-[#E800BC] flex items-center gap-1.5 mt-1 animate-in fade-in-0 slide-in-from-top-1">
                     <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                     {errors.name}
                   </p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-foreground/90">
+                <Label htmlFor="email" className="text-sm font-medium text-white/80">
                   Email Address
                 </Label>
                 <Input
@@ -226,19 +226,19 @@ export function Contact() {
                   onBlur={handleBlur}
                   aria-invalid={errors.email ? "true" : "false"}
                   aria-describedby={errors.email ? "email-error" : undefined}
-                  className={`h-12 rounded-md border-white/20 bg-white/5 px-4 placeholder:text-white/40 transition-colors hover:border-white/30 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/25 ${
-                    errors.email ? "border-red-500/50 focus-visible:border-red-500 focus-visible:ring-red-500/25" : ""
+                  className={`input-dark h-12 rounded-full bg-[#151515] border-white/10 text-white px-4 placeholder:text-white/50 transition-colors focus-visible:ring-0 focus-visible:border-primary/50 ${
+                    errors.email ? "border-[#CC00BC]/50 focus-visible:border-[#CC00BC]" : ""
                   }`}
                 />
                 {errors.email && (
-                  <p id="email-error" className="text-xs text-red-400 flex items-center gap-1.5 mt-1 animate-in fade-in-0 slide-in-from-top-1">
+                  <p id="email-error" className="text-xs text-[#E800BC] flex items-center gap-1.5 mt-1 animate-in fade-in-0 slide-in-from-top-1">
                     <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                     {errors.email}
                   </p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="message" className="text-sm font-medium text-foreground/90">
+                <Label htmlFor="message" className="text-sm font-medium text-white/80">
                   Your Message
                 </Label>
                 <Textarea
@@ -251,12 +251,12 @@ export function Contact() {
                   onBlur={handleBlur}
                   aria-invalid={errors.message ? "true" : "false"}
                   aria-describedby={errors.message ? "message-error" : undefined}
-                  className={`min-h-[128px] resize-none rounded-md border-white/20 bg-white/5 px-4 py-3 placeholder:text-white/40 transition-colors hover:border-white/30 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/25 ${
-                    errors.message ? "border-red-500/50 focus-visible:border-red-500 focus-visible:ring-red-500/25" : ""
+                  className={`input-dark min-h-[128px] resize-none rounded-2xl bg-[#151515] border-white/10 text-white px-4 py-3 placeholder:text-white/50 transition-colors focus-visible:ring-0 focus-visible:border-primary/50 ${
+                    errors.message ? "border-[#CC00BC]/50 focus-visible:border-[#CC00BC]" : ""
                   }`}
                 />
                 {errors.message && (
-                  <p id="message-error" className="text-xs text-red-400 flex items-center gap-1.5 mt-1 animate-in fade-in-0 slide-in-from-top-1">
+                  <p id="message-error" className="text-xs text-[#E800BC] flex items-center gap-1.5 mt-1 animate-in fade-in-0 slide-in-from-top-1">
                     <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                     {errors.message}
                   </p>
@@ -266,7 +266,7 @@ export function Contact() {
                 type="submit"
                 size="lg"
                 disabled={isSubmitting}
-                className="h-12 w-full cursor-pointer rounded-md font-semibold transition-colors duration-200 bg-brand-gradient hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-12 w-full cursor-pointer rounded-full font-display font-semibold tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>

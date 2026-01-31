@@ -158,7 +158,7 @@ export default function GameAccessPage() {
 
   if (!planId) {
     return (
-      <div className="min-h-screen bg-[#1A191E]">
+      <div className="min-h-screen bg-[#151515]">
         <Navbar />
         <main className="pt-24 pb-20 px-4 sm:px-6 lg:px-24">
           <p className="text-white/80">Invalid plan.</p>
@@ -172,7 +172,7 @@ export default function GameAccessPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1A191E]">
+    <div className="min-h-screen bg-[#151515]">
       <Navbar />
 
       <main className="relative pt-24 pb-20 px-4 sm:px-6 lg:px-24">
@@ -229,7 +229,7 @@ export default function GameAccessPage() {
                   >
                     <SelectTrigger
                       id="game-select"
-                      className="w-full h-12 bg-[#1B1B1B] border-white/10 text-white data-[placeholder]:text-white/50 disabled:opacity-50"
+                      className="w-full h-12 bg-[#151515] border-white/10 text-white data-[placeholder]:text-white/50 disabled:opacity-50"
                     >
                       <SelectValue
                         placeholder={

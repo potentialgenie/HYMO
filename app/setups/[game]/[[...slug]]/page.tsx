@@ -39,9 +39,9 @@ export default async function SetupsGameSlugPage({
     notFound()
   }
   return (
-    <div className="bg-[#1A191E]">
+    <div className="bg-[#151515]">
       <Navbar />
-      <Suspense fallback={<div className="min-h-screen bg-[#1A191E]" />}>
+      <Suspense fallback={<div className="min-h-screen bg-[#151515]" />}>
         <SetupPage
           game={gameKey}
           title={config.title}

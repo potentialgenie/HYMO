@@ -8,7 +8,7 @@ import { defaultViewport, defaultTransition } from "@/components/animate-section
 export function Footer() {
   return (
     <motion.footer
-      className="relative py-16 px-4 sm:px-6 lg:px-24 overflow-hidden bg-background"
+      className="relative py-16 px-16 sm:px-30 lg:px-46 w-full overflow-hidden bg-background"
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={defaultViewport}
@@ -37,7 +37,7 @@ export function Footer() {
           </div>
 
           {/* Legal Links */}
-          <div>
+          <div className="col-span-1">
             <h4 className="font-display font-bold mb-4 text-lg text-white">Legal</h4>
             <ul className="space-y-3">
               <li>
@@ -64,7 +64,7 @@ export function Footer() {
           </div>
 
           {/* Company Links */}
-          <div>
+          <div className="col-span-1">
             <h4 className="font-display font-bold mb-4 text-lg text-white">Company</h4>
             <ul className="space-y-3">
               <li>
@@ -86,7 +86,7 @@ export function Footer() {
           </div>
 
           {/* Social Links */}
-          <div>
+          <div className="col-span-1">
             <h4 className="font-display font-bold mb-4 text-lg text-white">Follow Us</h4>
             <div className="flex items-center gap-4">
               {/* Discord */}

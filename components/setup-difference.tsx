@@ -3,7 +3,7 @@ import Image from "next/image"
 export function SetupDifference() {
   return (
     <section className="mt-8 relative overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(228,0,188,0.2)_0%,rgba(31,19,41,0.2)_40%,rgba(26,25,30,0)_70%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(228,0,188,0.22)_0%,rgba(31,19,41,0.1)_30%,rgba(21,21,21,0.75)_70%)]"/>
       <div className="relative overflow-hidden py-25 w-full">
         <div className="relative z-10 flex flex-col items-start gap-10 lg:flex-row lg:items-center lg:gap-12 w-full">
           <div className="max-w-xl flex flex-col gap-55">

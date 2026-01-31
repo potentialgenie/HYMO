@@ -110,7 +110,7 @@
   left: 8px;
   padding: 8px 14px;
   border-radius: 999px;
-  background: #1A191E;
+  background: #151515;
   color: #fff;
   font-size: 0.875rem;
   z-index: 1000;
@@ -252,7 +252,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: inherit;
+  /* border-radius: inherit; */
   padding: 1px;
   background: linear-gradient(135deg, oklch(0.65 0.28 328 / 0.55) 0%, transparent 45%, transparent 55%, oklch(0.65 0.28 328 / 0.45) 100%);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -313,9 +313,9 @@
   border-color: oklch(0.65 0.28 328 / 0.5);
 }
 
-/* Dark input theme: match UI (bg #1B1B1B, white text) and autofill */
+/* Dark input theme: match UI (bg #151515, white text) and autofill */
 :root {
-  --input-dark-bg: #1B1B1B;
+  --input-dark-bg: #151515;
   --input-dark-text: #ffffff;
   --input-dark-placeholder: rgba(255, 255, 255, 0.5);
 }
@@ -339,7 +339,32 @@
   caret-color: var(--input-dark-text) !important;
   -webkit-box-shadow: 0 0 0 1000px var(--input-dark-bg) inset !important;
   box-shadow: 0 0 0 1000px var(--input-dark-bg) inset !important;
+  background-color: var(--input-dark-bg) !important;
+  background-clip: content-box !important;
   transition: background-color 9999s ease-in-out 0s, color 9999s ease-in-out 0s;
+  /* border-radius: inherit !important; */
+}
+
+/* Firefox autofill support */
+.input-dark:-moz-autofill,
+.input-dark:-moz-autofill:hover,
+.input-dark:-moz-autofill:focus {
+  background-color: var(--input-dark-bg) !important;
+  color: var(--input-dark-text) !important;
+  /* border-radius: inherit !important; */
+}
+
+/* Global autofill styles for all inputs with dark backgrounds */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0 1000px #151515 inset !important;
+  box-shadow: 0 0 0 1000px #151515 inset !important;
+  background-color: #151515 !important;
+  transition: background-color 9999s ease-in-out 0s, color 9999s ease-in-out 0s;
+  /* border-radius: inherit !important; */
 }
 
 /* Corner ribbon fold (for "BEST" on popular pricing card) */

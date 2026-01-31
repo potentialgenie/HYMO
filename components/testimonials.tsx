@@ -34,8 +34,13 @@ const testimonials = [
 
 export function Testimonials() {
   return (
-    <section className="py-16">
-      <div className="max-w-8xl mx-auto">
+    <section className="relative py-20 overflow-hidden">
+      {/* Thin angled gradient stripe - background only */}
+      <div
+        className="absolute left-1/2 top-7/13 z-0 h-55 w-[72%] -translate-x-1/2 -translate-y-1/2 -rotate-18 bg-[linear-gradient(90deg,#151515_0%,#7000BF_20%,#E800BC_50%,#151515_100%)]"
+        aria-hidden
+      />
+      <div className="relative z-10 max-w-8xl mx-auto">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
             <h3 className="text-3xl sm:text-4xl md:text-5xl font-display text-white">
@@ -47,15 +52,12 @@ export function Testimonials() {
           </div>
         </div>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-3 xl:grid-cols-4">
+        <div className="mt-10 grid gap-2 md:grid-cols-3 xl:grid-cols-4">
           {testimonials.map((testimonial) => (
             <article
               key={testimonial.name}
-              className={`relative overflow-hidden rounded-2xl border border-white/10 p-6 flex h-full flex-col text-left ${
-                testimonial.featured
-                  ? "bg-[linear-gradient(160deg,#3b0a50_0%,#6d0aa0_45%,#3b0a50_100%)]"
-                  : "bg-[linear-gradient(160deg,#1f1329_0%,#241027_45%,#1a191e_100%)]"
-              }`}
+              className="relative overflow-hidden rounded-2xl border border-white/10 p-6 flex h-[400px] flex-col text-left"
+              style={{ background: "rgba(19, 17, 18, 0.3)", backdropFilter: "blur(50px)" }}
             >
               <div className="flex items-start justify-between">
                 <Image
@@ -68,7 +70,7 @@ export function Testimonials() {
               </div>
 
               <div className="mt-6 min-h-[120px]">
-                <p className="text-sm sm:text-base text-white/75 leading-relaxed">
+                <p className="text-sm sm:text-xl text-white/75 leading-relaxed">
                   “{testimonial.quote}”
                 </p>
               </div>

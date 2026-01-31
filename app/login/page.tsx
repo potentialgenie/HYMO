@@ -72,23 +72,23 @@ export default function LoginPage() {
   }
 
   const inputClass =
-    "input-dark h-11 rounded-full bg-[#1B1B1B] border-white/10 text-white placeholder:text-white/50 focus-visible:ring-0 focus-visible:border-primary/50"
+    "input-dark h-11 rounded-full bg-[#151515] border-white/10 text-white placeholder:text-white/50 focus-visible:ring-0 focus-visible:border-primary/50"
 
   return (
-    <main className="min-h-screen flex flex-col bg-[#1A191E] relative overflow-hidden">
+    <main className="min-h-screen flex flex-col bg-[#151515] relative overflow-hidden">
       {/* background glow */}
       <div className="pointer-events-none absolute inset-0">
         <div
-          className="absolute left-1/2 top-1/2 -translate-x-1/4 -translate-y-1/2 pointer-events-none"
+          className="absolute left-2/5 top-3/5 -translate-x-1/4 -translate-y-1/2 pointer-events-none"
           style={{
             width: "640px",
             height: "640px",
             borderRadius: "50%",
-            background: "radial-gradient(circle at 60% 54%, #E800BC 0%, rgba(232,0,188,0.30) 60%, rgba(0,0,0,0) 100%)",
+            background: "radial-gradient(circle at 30% 50%, #E800BC 0%, rgba(232,0,188,0.30) 100%, rgba(0,0,0,0) 100%)",
             filter: "blur(200px)",
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1A191E]/10 via-[#1A191E]/40 to-[#1A191E]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#151515]/10 via-[#151515]/40 to-[#151515]" />
       </div>
 
       <Navbar />

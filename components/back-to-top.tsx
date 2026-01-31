@@ -22,7 +22,7 @@ export function BackToTop() {
       type="button"
       aria-label="Back to top"
       onClick={handleClick}
-      className={`fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full border border-[#E400BC]/70 bg-[#1a191e]/80 text-white shadow-[0_0_24px_rgba(228,0,188,0.35)] backdrop-blur-md transition-all duration-300 hover:shadow-[0_0_32px_rgba(228,0,188,0.55)] ${
+      className={`fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full border border-[#E400BC]/70 bg-[#151515]/80 text-white shadow-[0_0_24px_rgba(228,0,188,0.35)] backdrop-blur-md transition-all duration-300 hover:shadow-[0_0_32px_rgba(228,0,188,0.55)] ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"
       }`}
     >

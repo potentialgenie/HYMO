@@ -214,7 +214,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
               key={period}
               onClick={() => setBillingPeriod(period)}
               className={cn(
-                "relative z-10 px-5 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
+                "relative z-10 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 billingPeriod === period
                   ? "text-primary-foreground bg-brand-gradient"
@@ -224,7 +224,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
               {billingPeriod === period && (
                 <motion.span
                   layoutId="pricing-pill"
-                  className="absolute inset-0 rounded-md bg-brand-gradient shadow-lg shadow-primary/25"
+                  className="absolute inset-0 rounded-full bg-brand-gradient shadow-lg shadow-primary/25"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
                   aria-hidden
                 />
@@ -309,14 +309,14 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                     {!isAuthed ? (
                       <Link
                         href="/login"
-                        className={cn(getStartedClass, "rounded-md h-12 px-16")}
+                        className={cn(getStartedClass, "rounded-full h-12 px-16")}
                       >
                         Get Started
                       </Link>
                     ) : (
                       <Link
                         href={`/pricing/car-access/${permanentPlan.id}`}
-                        className={cn(getStartedClass, "rounded-md h-12 px-16")}
+                        className={cn(getStartedClass, "rounded-full h-12 px-16")}
                       >
                         Get Started
                       </Link>
@@ -452,7 +452,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                       {!isAuthed ? (
                         <Link
                           href="/login"
-                          className={cn(getStartedClass, "rounded-md h-12 px-16")}
+                          className={cn(getStartedClass, "rounded-full h-12 px-16")}
                         >
                           Get Started
                         </Link>
@@ -464,7 +464,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                           return (
                             <Link
                               href={`/pricing/game-access/${planId}`}
-                              className={cn(getStartedClass, "rounded-md h-12 px-16")}
+                              className={cn(getStartedClass, "rounded-full h-12 px-16")}
                             >
                               Get Started
                             </Link>
@@ -478,7 +478,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                           return (
                             <Link
                               href={`/pricing/free-trial-access/${planId}`}
-                              className={cn(getStartedClass, "rounded-md h-12 px-16")}
+                              className={cn(getStartedClass, "rounded-full h-12 px-16")}
                             >
                               Get Started
                             </Link>
@@ -486,7 +486,7 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                         })()
                       ) : (
                         <Button
-                          className="flex cursor-pointer h-12 px-16 rounded-md text-sm font-semibold tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110"
+                          className="flex cursor-pointer h-12 px-16 rounded-full text-sm font-semibold tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110"
                           size="lg"
                           data-stripe-price-id={
                             (billingPeriod === "monthly" ? monthly : yearly)

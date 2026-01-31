@@ -12,8 +12,8 @@ import { BackToTop } from "@/components/back-to-top"
 
 export default function Home() {
   return (
-    <main className="min-h-screen relative bg-[#1a191e]">
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(228,0,188,0.18)_0%,rgba(31,19,41,0.25)_35%,rgba(26,25,30,0)_70%)] [mask-image:linear-gradient(180deg,transparent_0%,#000_20%,#000_80%,transparent_100%)]" />
+    <main className="min-h-screen relative bg-[#151515]">
+      {/* <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(228,0,188,0.18)_0%,rgba(31,19,41,0.25)_35%,rgba(21,21,21,0)_70%)] [mask-image:linear-gradient(180deg,transparent_0%,#000_20%,#000_80%,transparent_100%)]" /> */}
       <div className="relative z-10">
         <Navbar />
         <Hero />

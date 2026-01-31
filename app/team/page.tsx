@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Navbar } from "@/components/navbar"
+import { Footer } from "@/components/footer"
 import { cn } from "@/lib/utils"
 
 const management = [
@@ -104,7 +105,7 @@ export default function TeamPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#1A191E]">
+    <main className="min-h-screen bg-[#151515]">
       {/* Header */}
       <Navbar />
 
@@ -196,9 +197,9 @@ export default function TeamPage() {
             <button
               onClick={() => handlePlatformClick("all")}
               className={cn(
-                "transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-[#1A191E] rounded-md",
+                "transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-[#151515] rounded-md",
                 selectedPlatform === "all"
-                  ? "scale-105 ring-2 ring-offset-2 ring-offset-[#1A191E] ring-primary/60"
+                  ? "scale-105 ring-2 ring-offset-2 ring-offset-[#151515] ring-primary/60"
                   : "hover:scale-105"
               )}
               aria-label="Show all team members"
@@ -218,9 +219,9 @@ export default function TeamPage() {
             <button
               onClick={() => handlePlatformClick("iRacing")}
               className={cn(
-                "transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-[#1A191E] rounded-md",
+                "transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-[#151515] rounded-md",
                 selectedPlatform === "iRacing"
-                  ? "scale-105 ring-2 ring-offset-2 ring-offset-[#1A191E] ring-blue-500/60"
+                  ? "scale-105 ring-2 ring-offset-2 ring-offset-[#151515] ring-blue-500/60"
                   : "hover:scale-105"
               )}
               aria-label="Filter by iRacing"
@@ -239,9 +240,9 @@ export default function TeamPage() {
             <button
               onClick={() => handlePlatformClick("ACC")}
               className={cn(
-                "transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 focus:ring-offset-[#1A191E] rounded-md",
+                "transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 focus:ring-offset-[#151515] rounded-md",
                 selectedPlatform === "ACC"
-                  ? "scale-105 ring-2 ring-offset-2 ring-offset-[#1A191E] ring-green-500/60"
+                  ? "scale-105 ring-2 ring-offset-2 ring-offset-[#151515] ring-green-500/60"
                   : "hover:scale-105"
               )}
               aria-label="Filter by Assetto Corsa Competizione"
@@ -260,9 +261,9 @@ export default function TeamPage() {
             <button
               onClick={() => handlePlatformClick("LMU")}
               className={cn(
-                "transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 focus:ring-offset-[#1A191E] rounded-md",
+                "transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 focus:ring-offset-[#151515] rounded-md",
                 selectedPlatform === "LMU"
-                  ? "scale-105 ring-2 ring-offset-2 ring-offset-[#1A191E] ring-orange-500/60"
+                  ? "scale-105 ring-2 ring-offset-2 ring-offset-[#151515] ring-orange-500/60"
                   : "hover:scale-105"
               )}
               aria-label="Filter by Le Mans Ultimate"
@@ -347,30 +348,14 @@ export default function TeamPage() {
           <Button 
             asChild 
             size="lg" 
-            className="shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-200 hover:scale-105"
+            className="rounded-full uppercase text-sm font-semibold px-8 py-6 bg-brand-gradient text-white hover:brightness-110 shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-200 hover:scale-105"
           >
             <Link href="/#contact">Contact Us</Link>
           </Button>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border py-8 px-6 sm:px-12 lg:px-24">
-        <div className="container mx-auto max-w-6xl">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <Image
-              src="/images/hymo-logo.png"
-              alt="HYMO"
-              width={140}
-              height={46}
-              className="h-9 w-auto"
-            />
-            <p className="text-sm text-muted-foreground font-sans">
-              Copyright © 2025 HymoSetups | All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </main>
   )
 }

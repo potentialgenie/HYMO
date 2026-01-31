@@ -117,7 +117,7 @@ export default function FreeTrialAccessPage() {
 
   if (!planId) {
     return (
-      <div className="min-h-screen bg-[#1A191E]">
+      <div className="min-h-screen bg-[#151515]">
         <Navbar />
         <main className="pt-24 pb-20 px-4 sm:px-6 lg:px-24">
           <p className="text-white/80">Invalid plan.</p>
@@ -131,7 +131,7 @@ export default function FreeTrialAccessPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1A191E]">
+    <div className="min-h-screen bg-[#151515]">
       <Navbar />
 
       <main className="relative pt-24 pb-20 px-4 sm:px-6 lg:px-24">

@@ -173,7 +173,7 @@ export function Setups() {
   })
 
   return (
-    <section id="setups" className="relative py-24">
+    <section id="setups" className="relative py-20">
       <div className="relative z-10 w-full">
         {/* Section Header - Centered */}
         <motion.div
@@ -198,13 +198,21 @@ export function Setups() {
               key={game.id}
               onClick={() => setActiveGame(game.id)}
               className={cn(
-                "relative z-10 px-5 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
+                "relative z-10 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 activeGame === game.id
                   ? "text-primary-foreground bg-brand-gradient"
                   : "text-white hover:text-foreground bg-[#242529]"
               )}
             >
+              {activeGame === game.id && (
+                <motion.span
+                  layoutId="setups-pill"
+                  className="absolute inset-0 rounded-full bg-brand-gradient shadow-lg shadow-primary/25"
+                  transition={{ type: "spring", bounce: 0.1, duration: 0.5 }}
+                  aria-hidden
+                />
+              )}
               <span className="relative">{game.name}</span>
             </button>
           ))}
@@ -354,7 +362,7 @@ export function Setups() {
         <div className="text-center mt-8">
           <Button 
             size="lg" 
-            className="group bg-[#2a2b2f] text-white hover:bg-[#34353a] transition-colors duration-200"
+            className="group rounded-full bg-[#2a2b2f] text-white hover:bg-[#34353a] transition-colors duration-200"
           >
             View All Setups
             <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
