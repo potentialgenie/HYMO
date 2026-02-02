@@ -203,12 +203,12 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
         {showHeader && (
           <div className="text-center mb-5">
             <h2 className="text-3xl sm:text-4xl md:text-5xl mb-4 font-display text-white">
-              Choose Your Plan
+              Simple Pricing for <span className="text-brand-gradient">Serious Racers</span>
             </h2>
           </div>
         )}
 
-        <div className="relative flex flex-wrap items-center justify-center gap-1 rounded-md bg-muted/50 backdrop-blur-sm w-fit mx-auto mb-8">
+        <div className="relative flex flex-wrap items-center justify-center gap-1 rounded-md backdrop-blur-sm w-fit mx-auto mb-8">
           {periodTabs.map((period) => (
             <button
               key={period}

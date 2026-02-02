@@ -105,17 +105,20 @@ export default function TeamPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#151515]">
-      {/* Header */}
+    <main className="min-h-screen bg-[#151515] relative overflow-hidden pt-20 px-16 sm:px-30 lg:px-46">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_5%,rgba(228,0,188,0.32)_0%,rgba(31,19,41,0.3)_20%,rgba(21,21,21,0)_100%)]"/>
+
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-6 sm:px-12 lg:px-24 overflow-hidden">
-        <div className="relative z-10">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-display tracking-tight mb-4 text-white">
-            Meet the <span className="text-white">Team</span>
+      <section className="relative b-20 px-6 sm:px-12 lg:px-24 overflow-hidden">
+        <div className="relative z-10 text-center">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-display tracking-tight mb-4 text-white">
+            The People Behind
+            <br />
+            <span className="text-brand-gradient">Our Setups</span>
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl font-sans">
+          
+          <p className="text-lg text-white/80 max-w-2xl font-sans mx-auto">
             The passionate sim racers and engineers behind HYMO. Our team of champions and professionals
             work tirelessly to bring you the best racing setups in the world.
           </p>
@@ -123,38 +126,48 @@ export default function TeamPage() {
       </section>
 
       {/* Management Section */}
-      <section className="py-16 px-6 sm:px-12 lg:px-24">
+      <section className="py-16">
         <div>
-          <div className="flex items-center gap-4 mb-2">
+          <div className="flex items-center justify-center gap-4 mb-2">
             <h2 className="text-2xl md:text-3xl font-bold font-display text-white">
               Management & Founders
             </h2>
-            <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
           </div>
+          <div className="section-slash w-[50%] mx-auto mb-6" />
           <div className="w-24 mb-10" />
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-8 gap-8">
+            <div className="col-span-1"></div>
             {management.map((member) => (
               <Card
                 key={member.name}
-                className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#16151a] py-0 shadow-lg shadow-black/20 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] hover:shadow-primary/10"
+                className="group relative overflow-hidden col-span-2 aspect-square rounded-2xl border border-white/[0.06] bg-[#16151a] shadow-lg shadow-black/20 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] hover:shadow-primary/10 flex flex-col justify-end"
               >
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-60" />
-                <CardContent className="p-8">
-                  <div className="flex flex-row gap-6 items-center">
-                    <div className="relative mb-5">
-                      <div className="w-28 h-28 rounded-2xl overflow-hidden ring-2 ring-white/15 ring-offset-2 ring-offset-[#16151a] transition-all duration-300 group-hover:ring-primary/40">
-                        <Image src={member.avatar} alt={member.name} width={112} height={112} className="h-full w-full object-cover" />
-                      </div>
-                    </div>
-                    <div className="flex flex-col">
-                      <h3 className="font-sans text-2xl font-semibold tracking-tight mb-2">{member.name}</h3>
-                      <p className="text-lg font-medium text-primary/90 mb-4 font-sans">{member.role}</p>
-                    </div>
+                {/* Top gradient bar */}
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-60 z-10" />
+                
+                {/* Image and overlay */}
+                <div className="absolute inset-0 w-full h-full z-0">
+                  <Image
+                    src={member.avatar}
+                    alt={member.name}
+                    fill
+                    className="object-cover w-full h-full"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#16151a]/80 via-[#16151a]/50 to-transparent" />
+                </div>
+
+                {/* Bottom blurred overlay for name/role */}
+                <div className="absolute left-0 right-0 bottom-0 z-20 p-4">
+                  <div className="w-full rounded-xl bg-black/30 backdrop-blur-xs px-5 py-3 flex flex-col gap-1 border border-white/10">
+                    <h3 className="font-sans text-xl font-bold italic tracking-tight text-white">
+                      {member.name}
+                    </h3>
+                    <p className="text-sm text-white/80 font-sans">{member.role}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground/90 italic leading-relaxed font-sans">&quot;{member.description}&quot;</p>
-                </CardContent>
+                </div>
               </Card>
             ))}
+            <div className="col-span-1"></div>
           </div>
         </div>
       </section>
@@ -162,176 +175,222 @@ export default function TeamPage() {
       {/* Drivers Section */}
       <section id="drivers-section" className="py-16 px-6 sm:px-12 lg:px-24">
         <div>
-          <div className="flex items-center gap-4 mb-2">
+          <div className="flex items-center justify-center gap-4 mb-2">
             <h2 className="text-2xl md:text-3xl font-bold font-display text-white">
               Drivers & Engineers
             </h2>
-            <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
           </div>
-          <div className="section-slash w-24 mb-6" />
-          <div className="mb-6">
-            <p className="text-muted-foreground max-w-xl mb-4 font-sans">
-              Our team of professional sim racers and setup engineers across multiple platforms.
-            </p>
-            <div className="flex items-center gap-2 text-sm font-sans">
-              <span className="text-muted-foreground/70">
-                Showing
-              </span>
-              <span className="text-primary font-semibold">
-                {filteredDrivers.length} {filteredDrivers.length === 1 ? 'member' : 'members'}
-              </span>
-              {selectedPlatform !== "all" && (
-                <>
-                  <span className="text-muted-foreground/70">for</span>
-                  <span className="text-foreground font-medium capitalize">
-                    {selectedPlatform === "ACC" ? "Assetto Corsa Competizione" : selectedPlatform}
-                  </span>
-                </>
-              )}
+          <div className="section-slash w-[50%] mx-auto mb-6" />
+          {/* Filter bar - centered platform filters */}
+          <div className="p-4 mb-10">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+                <span className="text-[10px] uppercase tracking-wider text-white/50 font-semibold font-sans mr-1">
+                  Filter by Platform
+                </span>
+                <button
+                  onClick={() => handlePlatformClick("all")}
+                  className={cn(
+                    "h-9 px-4 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200",
+                    selectedPlatform === "all"
+                      ? "bg-brand-gradient text-white"
+                      : "bg-[#252525] border border-white/10 text-white/70 hover:border-[#E800BC]/40 hover:text-white"
+                  )}
+                  aria-label="Show all team members"
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => handlePlatformClick("iRacing")}
+                  className={cn(
+                    "h-9 px-4 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200",
+                    selectedPlatform === "iRacing"
+                      ? "bg-brand-gradient text-white"
+                      : "bg-[#252525] border border-white/10 text-blue-400/90 hover:border-blue-500/40"
+                  )}
+                  aria-label="Filter by iRacing"
+                >
+                  iRacing
+                </button>
+                <button
+                  onClick={() => handlePlatformClick("ACC")}
+                  className={cn(
+                    "h-9 px-4 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200",
+                    selectedPlatform === "ACC"
+                      ? "bg-brand-gradient text-white"
+                      : "bg-[#252525] border border-white/10 text-green-400/90 hover:border-green-500/40"
+                  )}
+                  aria-label="Filter by Assetto Corsa Competizione"
+                >
+                  Assetto Corsa Competizione
+                </button>
+                <button
+                  onClick={() => handlePlatformClick("LMU")}
+                  className={cn(
+                    "h-9 px-4 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200",
+                    selectedPlatform === "LMU"
+                      ? "bg-brand-gradient text-white"
+                      : "bg-[#252525] border border-white/10 text-orange-400/90 hover:border-orange-500/40"
+                  )}
+                  aria-label="Filter by Le Mans Ultimate"
+                >
+                  Le Mans Ultimate
+                </button>
             </div>
           </div>
 
-          {/* Platform legend - clickable filters */}
-          <div className="flex flex-wrap items-center gap-3 mb-10">
-            <span className="text-xs uppercase tracking-wider text-muted-foreground/70 font-semibold font-sans">Filter by Platform:</span>
-            <button
-              onClick={() => handlePlatformClick("all")}
-              className={cn(
-                "transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-[#151515] rounded-md",
-                selectedPlatform === "all"
-                  ? "scale-105 ring-2 ring-offset-2 ring-offset-[#151515] ring-primary/60"
-                  : "hover:scale-105"
-              )}
-              aria-label="Show all team members"
-            >
-              <Badge 
-                variant="outline" 
-                className={cn(
-                  "text-[11px] font-medium transition-all duration-300 px-3 py-1.5",
-                  selectedPlatform === "all"
-                    ? "bg-primary/30 border-primary/60 text-primary shadow-lg shadow-primary/20"
-                    : "bg-muted/30 border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                )}
-              >
-                All
-              </Badge>
-            </button>
-            <button
-              onClick={() => handlePlatformClick("iRacing")}
-              className={cn(
-                "transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-[#151515] rounded-md",
-                selectedPlatform === "iRacing"
-                  ? "scale-105 ring-2 ring-offset-2 ring-offset-[#151515] ring-blue-500/60"
-                  : "hover:scale-105"
-              )}
-              aria-label="Filter by iRacing"
-            >
-              <Badge 
-                variant="outline" 
-                className={cn(
-                  "text-[11px] font-medium transition-all duration-300 px-3 py-1.5",
-                  getGameColor("iRacing"),
-                  selectedPlatform === "iRacing" && "bg-blue-500/30 border-blue-500/60 shadow-lg shadow-blue-500/20"
-                )}
-              >
-                iRacing
-              </Badge>
-            </button>
-            <button
-              onClick={() => handlePlatformClick("ACC")}
-              className={cn(
-                "transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:ring-offset-2 focus:ring-offset-[#151515] rounded-md",
-                selectedPlatform === "ACC"
-                  ? "scale-105 ring-2 ring-offset-2 ring-offset-[#151515] ring-green-500/60"
-                  : "hover:scale-105"
-              )}
-              aria-label="Filter by Assetto Corsa Competizione"
-            >
-              <Badge 
-                variant="outline" 
-                className={cn(
-                  "text-[11px] font-medium transition-all duration-300 px-3 py-1.5",
-                  getGameColor("ACC"),
-                  selectedPlatform === "ACC" && "bg-green-500/30 border-green-500/60 shadow-lg shadow-green-500/20"
-                )}
-              >
-                Assetto Corsa Competizione
-              </Badge>
-            </button>
-            <button
-              onClick={() => handlePlatformClick("LMU")}
-              className={cn(
-                "transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 focus:ring-offset-[#151515] rounded-md",
-                selectedPlatform === "LMU"
-                  ? "scale-105 ring-2 ring-offset-2 ring-offset-[#151515] ring-orange-500/60"
-                  : "hover:scale-105"
-              )}
-              aria-label="Filter by Le Mans Ultimate"
-            >
-              <Badge 
-                variant="outline" 
-                className={cn(
-                  "text-[11px] font-medium transition-all duration-300 px-3 py-1.5",
-                  getGameColor("LMU"),
-                  selectedPlatform === "LMU" && "bg-orange-500/30 border-orange-500/60 shadow-lg shadow-orange-500/20"
-                )}
-              >
-                Le Mans Ultimate
-              </Badge>
-            </button>
-          </div>
+          {/* Pagination logic */}
+          {(() => {
+            // Pagination logic
+            const DRIVERS_PER_PAGE = 8;
+            const [driverPage, setDriverPage] = typeof window !== "undefined" && useState ? useState(1) : [1, () => {}]; // SSR fallback
+            const totalPages = Math.ceil(filteredDrivers.length / DRIVERS_PER_PAGE);
 
-          {filteredDrivers.length === 0 ? (
-            <div className="text-center py-16 px-6">
-              <p className="text-muted-foreground text-lg mb-2">No team members found</p>
-              <p className="text-muted-foreground/70 text-sm mb-6">
-                Try selecting a different platform filter
-              </p>
-              <Button
-                onClick={() => handlePlatformClick("all")}
-                variant="outline"
-                size="sm"
-                className="mt-4"
-              >
-                Show All Members
-              </Button>
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {filteredDrivers.map((driver) => {
-                const accent = getGameAccent(driver.game)
-                return (
-                  <Card
-                    key={driver.name}
-                    className={cn(
-                      "group relative overflow-hidden rounded-xl border border-white/[0.06] border-l-4 bg-[#16151a] py-0 shadow-md shadow-black/10 transition-all duration-500 hover:border-white/10 hover:shadow-xl hover:shadow-black/20",
-                      "opacity-100 motion-safe:opacity-0"
-                    )}
-                    style={{
-                      animation: `fadeInUp 0.5s ease-out ${filteredDrivers.indexOf(driver) * 30}ms forwards`
-                    }}
+            function handleNextPage() {
+              setDriverPage((page: number) => Math.min(page + 1, totalPages));
+            }
+            function handlePrevPage() {
+              setDriverPage((page: number) => Math.max(page - 1, 1));
+            }
+            function handleSetPage(page: number) {
+              setDriverPage(() => Math.min(Math.max(page, 1), totalPages));
+            }
+
+            const paginatedDrivers = filteredDrivers.slice(
+              (driverPage - 1) * DRIVERS_PER_PAGE,
+              driverPage * DRIVERS_PER_PAGE
+            );
+
+            if (filteredDrivers.length === 0) {
+              return (
+                <div className="text-center py-16 px-6">
+                  <p className="text-muted-foreground text-lg mb-2">No team members found</p>
+                  <p className="text-muted-foreground/70 text-sm mb-6">
+                    Try selecting a different platform filter
+                  </p>
+                  <Button
+                    onClick={() => handlePlatformClick("all")}
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
                   >
-                    <CardContent className="p-5 flex flex-col">
-                      <div className="flex flex-row gap-6 items-center">
-                        <div className={`relative w-24 h-24 rounded-2xl overflow-hidden shrink-0 ring-2 ring-offset-2 ring-offset-[#16151a] ${accent.ring} transition-all duration-300 group-hover:ring-opacity-60`}>
-                          <Image src={driver.avatar} alt={driver.name} width={72} height={72} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                    Show All Members
+                  </Button>
+                </div>
+              );
+            }
+
+            return (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto">
+                  {paginatedDrivers.map((driver, idx) => {
+                    const accent = getGameAccent(driver.game);
+                    return (
+                      <Card
+                        key={driver.name}
+                        className={cn(
+                          "group relative overflow-hidden col-span-1 aspect-square rounded-lg border border-white/[0.06] bg-[#16151a] shadow-md shadow-black/15 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_8px_32px_-10px_rgba(0,0,0,0.4)] hover:shadow-primary/10 flex flex-col justify-end",
+                          "opacity-100 motion-safe:opacity-0"
+                        )}
+                        style={{
+                          animation: `fadeInUp 0.5s ease-out ${idx * 30}ms forwards`
+                        }}
+                      >
+                        {/* Top gradient bar */}
+                        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-50 z-10" />
+
+                        {/* Image and overlay */}
+                        <div className="absolute inset-0 w-full h-full z-0">
+                          <Image
+                            src={driver.avatar}
+                            alt={driver.name}
+                            fill
+                            className="object-cover w-full h-full"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#16151a]/90 via-[#16151a]/60 to-transparent" />
                         </div>
-                        <div className="flex flex-col min-w-0 flex-1">
-                          <h3 className="font-sans font-semibold text-[15px] tracking-tight mb-1.5 leading-tight truncate">{driver.name}</h3>
-                          <p className="text-[13px] text-muted-foreground line-clamp-2 leading-snug mb-4 font-sans">
-                            {driver.role}
-                          </p>
-                          <Badge variant="outline" className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 w-fit ${getGameColor(driver.game)}`}>
-                            {driver.game}
-                          </Badge>
+
+                        {/* Bottom blurred overlay for name/role */}
+                        <div className="absolute left-0 right-0 bottom-0 z-20 p-1 md:p-1.5 pb-1.5">
+                          <div className="w-full rounded-md bg-black/30 backdrop-blur-xs px-2 py-1 flex flex-col gap-0.5 border border-white/10">
+                            <h3 className="font-sans text-xs md:text-sm font-bold italic tracking-tight text-white truncate">
+                              {driver.name}
+                            </h3>
+                            <p className="text-[10px] md:text-[11px] text-white/80 font-sans line-clamp-2">{driver.role}</p>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "mt-0.5 w-fit px-1 py-0.5 text-[8px] uppercase tracking-wider font-semibold",
+                                getGameColor(driver.game)
+                              )}
+                            >
+                              {driver.game}
+                            </Badge>
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-          )}
+                      </Card>
+                    );
+                  })}
+                </div>
+                {/* Pagination Bar with member count */}
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-10">
+                  {totalPages > 1 && (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handlePrevPage}
+                        disabled={driverPage === 1}
+                        className="rounded-full px-2 py-1"
+                        aria-label="Previous page"
+                      >
+                        &larr;
+                      </Button>
+                      {Array.from({ length: totalPages }).map((_, idx) => (
+                        <button
+                          key={idx}
+                          className={cn(
+                            "w-8 h-8 flex items-center justify-center rounded-full mx-1 text-sm font-semibold transition",
+                            driverPage === idx + 1
+                              ? "bg-primary/60 text-white shadow"
+                              : "bg-white/10 text-white/50 hover:bg-primary/30 hover:text-primary"
+                          )}
+                          onClick={() => handleSetPage(idx + 1)}
+                          aria-current={driverPage === idx + 1 ? "page" : undefined}
+                          aria-label={`Go to page ${idx + 1}`}
+                        >
+                          {idx + 1}
+                        </button>
+                      ))}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleNextPage}
+                        disabled={driverPage === totalPages}
+                        className="rounded-full px-2 py-1"
+                        aria-label="Next page"
+                      >
+                        &rarr;
+                      </Button>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-sm font-sans">
+                    <span className="text-white/50">Showing</span>
+                    <span className="text-[#E800BC] font-semibold">
+                      {filteredDrivers.length} {filteredDrivers.length === 1 ? "member" : "members"}
+                    </span>
+                    {selectedPlatform !== "all" && (
+                      <>
+                        <span className="text-white/50">for</span>
+                        <span className="text-white/90 font-medium capitalize">
+                          {selectedPlatform === "ACC" ? "Assetto Corsa Competizione" : selectedPlatform}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </div>
       </section>
 
@@ -350,7 +409,7 @@ export default function TeamPage() {
             size="lg" 
             className="rounded-full uppercase text-sm font-semibold px-8 py-6 bg-brand-gradient text-white hover:brightness-110 shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-200 hover:scale-105"
           >
-            <Link href="/#contact">Contact Us</Link>
+            <Link href="/contact">Contact Us</Link>
           </Button>
         </div>
       </section>

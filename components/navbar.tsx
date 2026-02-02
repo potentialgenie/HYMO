@@ -32,7 +32,6 @@ export function Navbar() {
 
   const isActive = (href: string, prefix?: boolean) => {
     if (prefix) return pathname.startsWith(href)
-    if (href === "/#contact") return pathname === "/" && activeAnchor === "contact"
     return pathname === href
   }
   const linkCls = (href: string, prefix?: boolean) =>
@@ -270,7 +269,7 @@ export function Navbar() {
             <Link href="/team" className={linkCls("/team")}>
               {t.nav.team}
             </Link>
-            <Link href="/#contact" className={linkCls("/#contact")}>
+            <Link href="/contact" className={linkCls("/contact")}>
               {t.nav.contact}
             </Link>
 
@@ -464,9 +463,9 @@ export function Navbar() {
                 {t.nav.team}
               </Link>
               <Link
-                href="/#contact"
+                href="/contact"
                 onClick={() => setIsOpen(false)}
-                className={linkCls("/#contact")}
+                className={linkCls("/contact")}
               >
                 {t.nav.contact}
               </Link>
