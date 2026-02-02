@@ -8,7 +8,7 @@ import Link from "next/link"
 
 export function Contact() {
   return (
-    <section id="contact" className="relative pt-40 px-16 sm:px-30 lg:px-46 overflow-hidden">
+    <section id="contact" className="relative overflow-hidden">
       <motion.div
         className="relative overflow-hidden rounded-2xl"
         initial={{ opacity: 0, y: 12 }}

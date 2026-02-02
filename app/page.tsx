@@ -24,8 +24,8 @@ export default function Home() {
           <SetupDifference />
           <Testimonials />
           <Pricing />
+          <Contact />
         </div>
-        <Contact />
         <Footer />
         <BackToTop />
       </div>

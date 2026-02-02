@@ -2,13 +2,13 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { cn } from "@/lib/utils"
+import { Contact } from "@/components/contact"
 
 const management = [
   {
@@ -105,7 +105,7 @@ export default function TeamPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#151515] relative overflow-hidden pt-20 px-16 sm:px-30 lg:px-46">
+    <main className="min-h-screen bg-[#151515] relative overflow-hidden pt-20 ">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_5%,rgba(228,0,188,0.32)_0%,rgba(31,19,41,0.3)_20%,rgba(21,21,21,0)_100%)]"/>
 
       <Navbar />
@@ -173,7 +173,7 @@ export default function TeamPage() {
       </section>
 
       {/* Drivers Section */}
-      <section id="drivers-section" className="py-16 px-6 sm:px-12 lg:px-24">
+      <section id="drivers-section" className="py-20 px-6 sm:px-12 lg:px-24">
         <div>
           <div className="flex items-center justify-center gap-4 mb-2">
             <h2 className="text-2xl md:text-3xl font-bold font-display text-white">
@@ -393,27 +393,9 @@ export default function TeamPage() {
           })()}
         </div>
       </section>
-
-      {/* Join CTA */}
-      <section className="py-20 px-6 sm:px-12 lg:px-24">
-        <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold font-display mb-4 text-white">
-            Want to Join the Team?
-          </h2>
-          <p className="text-muted-foreground mb-8 max-w-xl mx-auto font-sans">
-            We&apos;re always looking for talented sim racers and engineers to join our growing team.
-            Get in touch if you think you have what it takes.
-          </p>
-          <Button 
-            asChild 
-            size="lg" 
-            className="rounded-full uppercase text-sm font-semibold px-8 py-6 bg-brand-gradient text-white hover:brightness-110 shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-200 hover:scale-105"
-          >
-            <Link href="/contact">Contact Us</Link>
-          </Button>
-        </div>
-      </section>
-
+      <div className="px-16 sm:px-30 lg:px-46">
+        <Contact />
+      </div>
       <Footer />
     </main>
   )

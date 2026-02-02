@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Pricing } from "@/components/pricing"
+import { Contact } from "@/components/contact"
 
 const features = [
   { name: "Access Scope", car: true, pro: true, elite: true },
@@ -27,8 +28,8 @@ export default function PricingPage() {
       <Navbar/>
 
       {/* Main Content */}
-      <section className="relative pb-20 px-6 sm:px-12 lg:px-24 overflow-hidden">
-        <div className="relative z-10">
+      <section className="relative px-16 sm:px-30 lg:px-46 overflow-hidden">
+        <div className="relative z-10 pb-20">
           {/* Page Header */}
           <motion.div
             className="text-center mb-14"
@@ -136,6 +137,7 @@ export default function PricingPage() {
             </div>
           </motion.section>
         </div>
+        <Contact />
       </section>
 
       <Footer/>
