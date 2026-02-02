@@ -321,14 +321,12 @@ export function Navbar() {
               </Button>
             ) : (
               <div className="relative" ref={accountDropdownRef}>
-                {/* Account Button (visible when dropdown is closed) */}
+                {/* Account Button (always visible, dropdown overlays on top) */}
                 <button
                   onClick={() => setAccountDropdownOpen(true)}
-                  className={`flex items-center gap-4 px-3 py-2 bg-black/30 backdrop-blur-md border border-white/10 text-white/90 hover:text-white transition-all duration-200 rounded-full ${
-                    accountDropdownOpen ? "invisible" : "visible"
-                  }`}
+                  className="flex items-center gap-3 px-1.5 py-1.5 bg-[#151515]/90 backdrop-blur-sm border border-white/10 text-white/90 hover:text-white transition-all duration-200 rounded-full"
                 >
-                  <div className="flex items-center justify-center w-10 h-10 rounded-[50px] border border-white/10 shrink-0 overflow-hidden">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 shrink-0 overflow-hidden">
                     <User className="h-6 w-6" />
                   </div>
                   <span className="text-sm font-medium max-w-[140px] truncate">
@@ -347,12 +345,12 @@ export function Navbar() {
                       transition={{
                         height: { duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }
                       }}
-                      className="absolute top-0 left-0 right-0 bg-black/30 backdrop-blur-md border border-white/10 rounded-[29px] overflow-hidden origin-top"
+                      className="absolute top-0 left-0 right-0 z-10 bg-[#151515]/90 backdrop-blur-md border border-white/10 hover:text-white rounded-[29px] overflow-hidden origin-top"
                     >
                       {/* Header row - looks like the button */}
                       <button
                         onClick={() => setAccountDropdownOpen(false)}
-                        className="w-full flex items-center gap-4 px-3 py-2 text-white/90 hover:text-white transition-all duration-200"
+                        className={`w-full flex items-center gap-3 px-1.5 py-1.5 text-white/90 hover:text-white transition-all duration-200`}
                       >
                         <div className="flex items-center justify-center w-10 h-10 rounded-[29px] border border-white/10 shrink-0 overflow-hidden">
                           <User className="h-6 w-6" />
