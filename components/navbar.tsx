@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, ChevronDown, Globe, Loader2, User, LayoutDashboard, LogOut } from "lucide-react"
 import { useLanguage } from "@/lib/language-context"
 import type { Language } from "@/lib/translations"
@@ -321,82 +321,108 @@ export function Navbar() {
               </Button>
             ) : (
               <div className="relative" ref={accountDropdownRef}>
+                {/* Account Button (visible when dropdown is closed) */}
                 <button
-                  onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
-                  className="inline-flex items-center gap-3 h-10 px-4 rounded-full bg-white/5 border border-white/10 text-white/90 hover:text-white hover:border-white/20 shadow-[0_8px_18px_rgba(0,0,0,0.35)] transition-all duration-200"
+                  onClick={() => setAccountDropdownOpen(true)}
+                  className={`flex items-center gap-4 px-3 py-2 bg-black/30 backdrop-blur-md border border-white/10 text-white/90 hover:text-white transition-all duration-200 rounded-full ${
+                    accountDropdownOpen ? "invisible" : "visible"
+                  }`}
                 >
-                  <div className="flex items-center justify-center w-7 h-7 rounded-full bg-[#C85BFF] text-white text-xs font-semibold shrink-0">
-                    {userName ? userName.charAt(0).toUpperCase() : <User className="h-4 w-4" />}
+                  <div className="flex items-center justify-center w-10 h-10 rounded-[50px] border border-white/10 shrink-0 overflow-hidden">
+                    <User className="h-6 w-6" />
                   </div>
-                  <span className="text-sm font-medium max-w-[160px] truncate">
+                  <span className="text-sm font-medium max-w-[140px] truncate">
                     {userName || "Account"}
                   </span>
-                  <ChevronDown
-                    className={`h-4 w-4 shrink-0 transition-transform ${accountDropdownOpen ? "rotate-180" : ""}`}
-                  />
+                  <ChevronDown className="h-4 w-4 shrink-0 text-white/70" />
                 </button>
 
-                {accountDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-full origin-top bg-[#1E1E1E]/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] overflow-hidden animate-in fade-in-0 slide-in-from-top-2 duration-200">
-                    {/* User Info Header */}
-                    <div className="flex items-center gap-3 p-3 bg-white/5 border-b border-white/10">
-                      <div className="flex items-center justify-center w-7 h-7 rounded-full bg-[#C85BFF] text-white text-xs font-semibold shrink-0">
-                        {userName ? userName.charAt(0).toUpperCase() : <User className="h-4 w-4" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white/90 truncate">
-                          {userName || "Account"}
-                        </p>
-                      </div>
-                      <ChevronDown className="h-4 w-4 text-white/50 shrink-0" />
-                    </div>
-
-                    {/* Menu Items */}
-                    <div className="py-2">
-                      <Link
-                        href="/profile"
-                        onClick={() => setAccountDropdownOpen(false)}
-                        className={`mx-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm tracking-wide transition-all duration-200 ${
-                          pathname === "/profile"
-                            ? "bg-white/10 text-white"
-                            : "text-white/90 hover:bg-white/10 hover:text-white"
-                        }`}
-                      >
-                        <User className="h-4 w-4 shrink-0" />
-                        <span>Profile</span>
-                      </Link>
-                      <Link
-                        href="/dashboard"
-                        onClick={() => setAccountDropdownOpen(false)}
-                        className={`mx-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm tracking-wide transition-all duration-200 ${
-                          pathname === "/dashboard"
-                            ? "bg-white/10 text-white"
-                            : "text-white/90 hover:bg-white/10 hover:text-white"
-                        }`}
-                      >
-                        <LayoutDashboard className="h-4 w-4 shrink-0" />
-                        <span>Dashboard</span>
-                      </Link>
+                {/* Expanded Dropdown - silk-like unfold animation */}
+                <AnimatePresence>
+                  {accountDropdownOpen && (
+                    <motion.div
+                      initial={{ height: 58, opacity: 1 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 58, opacity: 1 }}
+                      transition={{
+                        height: { duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }
+                      }}
+                      className="absolute top-0 left-0 right-0 bg-black/30 backdrop-blur-md border border-white/10 rounded-[29px] overflow-hidden origin-top"
+                    >
+                      {/* Header row - looks like the button */}
                       <button
-                        onClick={handleLogout}
-                        disabled={logoutLoading}
-                        className="mx-2 w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm tracking-wide transition-all duration-200 text-white/90 hover:bg-white/10 hover:text-white disabled:opacity-70 disabled:cursor-not-allowed"
+                        onClick={() => setAccountDropdownOpen(false)}
+                        className="w-full flex items-center gap-4 px-3 py-2 text-white/90 hover:text-white transition-all duration-200"
                       >
-                        {logoutLoading ? (
-                          <>
-                            <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                            <span>Signing out...</span>
-                          </>
-                        ) : (
-                          <>
-                            <LogOut className="h-4 w-4 shrink-0" />
-                            <span>Sign out</span>
-                          </>
-                        )}
+                        <div className="flex items-center justify-center w-10 h-10 rounded-[29px] border border-white/10 shrink-0 overflow-hidden">
+                          <User className="h-6 w-6" />
+                        </div>
+                        <span className="text-sm font-medium max-w-[140px] truncate">
+                          {userName || "Account"}
+                        </span>
+                        <motion.div
+                          initial={{ rotate: 0 }}
+                          animate={{ rotate: 180 }}
+                          exit={{ rotate: 0 }}
+                          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                        >
+                          <ChevronDown className="h-4 w-4 shrink-0 text-white/70" />
+                        </motion.div>
                       </button>
-                    </div>
-                  </div>
-                )}
+
+                      {/* Menu Items */}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="pb-2"
+                      >
+                        <Link
+                          href="/profile"
+                          onClick={() => setAccountDropdownOpen(false)}
+                          className={`mx-2 flex items-center gap-3 rounded-lg px-3 py-2 text-sm tracking-wide transition-all duration-200 ${
+                            pathname === "/profile"
+                              ? "bg-white/10 text-white"
+                              : "text-white/80 hover:bg-white/5 hover:text-white"
+                          }`}
+                        >
+                          <User className="h-4 w-4 shrink-0" />
+                          <span>Profile</span>
+                        </Link>
+                        <Link
+                          href="/dashboard"
+                          onClick={() => setAccountDropdownOpen(false)}
+                          className={`mx-2 flex items-center gap-3 rounded-lg px-3 py-2 text-sm tracking-wide transition-all duration-200 ${
+                            pathname === "/dashboard"
+                              ? "bg-white/10 text-white"
+                              : "text-white/80 hover:bg-white/5 hover:text-white"
+                          }`}
+                        >
+                          <LayoutDashboard className="h-4 w-4 shrink-0" />
+                          <span>Dashboard</span>
+                        </Link>
+                        <button
+                          onClick={handleLogout}
+                          disabled={logoutLoading}
+                          className="mx-2 w-[calc(100%-16px)] flex items-center gap-3 rounded-lg px-3 py-2 text-sm tracking-wide transition-all duration-200 text-white/80 hover:bg-white/5 hover:text-white disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                          {logoutLoading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                              <span>Signing out</span>
+                            </>
+                          ) : (
+                            <>
+                              <LogOut className="h-4 w-4 shrink-0" />
+                              <span>Sign out</span>
+                            </>
+                          )}
+                        </button>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
           </div>

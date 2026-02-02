@@ -8,7 +8,7 @@ import { defaultViewport, defaultTransition } from "@/components/animate-section
 export function Footer() {
   return (
     <motion.footer
-      className="relative py-16 px-16 sm:px-30 lg:px-46 w-full overflow-hidden bg-[#151515]"
+      className="relative pt-16 pb-8 px-16 sm:px-30 lg:px-46 w-full overflow-hidden bg-[#151515]"
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={defaultViewport}
