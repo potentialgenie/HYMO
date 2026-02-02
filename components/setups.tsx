@@ -192,7 +192,7 @@ export function Setups() {
         </motion.div>
 
        {/* Game Filter - Segmented pill with indicator - Centered */}
-        <div className="relative flex flex-wrap items-center justify-center gap-2 rounded-md bg-muted/50 backdrop-blur-sm w-fit mx-auto mb-12">
+        <div className="relative flex flex-wrap items-center justify-center gap-2 rounded-md w-fit mx-auto mb-12">
           {games.map((game) => (
             <button
               key={game.id}

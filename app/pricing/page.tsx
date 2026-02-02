@@ -29,7 +29,7 @@ export default function PricingPage() {
 
       {/* Main Content */}
       <section className="relative px-16 sm:px-30 lg:px-46 overflow-hidden">
-        <div className="relative z-10 pb-20">
+        <div className="relative z-10">
           {/* Page Header */}
           <motion.div
             className="text-center mb-14"
