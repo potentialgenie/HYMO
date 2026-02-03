@@ -9,7 +9,7 @@ import { AnimateSection } from "@/components/animate-section"
 import { Check, Loader2, X } from "lucide-react"
 import { apiUrl } from "@/lib/api"
 import { cn } from "@/lib/utils"
-import { isAuthenticated } from "@/lib/auth"
+import { apiFetch, isAuthenticated } from "@/lib/auth"
 import { CrownSvg } from "./svg/CrownSvg"
 import { EliteSvg } from "./svg/EliteSvg"
 import { RacingCarSvg } from "./svg/RacingCarSvg"
@@ -32,6 +32,19 @@ type ApiResponse = {
   status: boolean
   message?: string
   data: PlanFromApi[]
+}
+
+type SubscriptionFromApi = {
+  id: number
+  plan: { id: number; name: string; price: string; interval: string; currency: string }
+  stripe_status: string
+  is_active: boolean
+}
+
+type SubscriptionsApiResponse = {
+  status: boolean
+  message?: string
+  data: SubscriptionFromApi[]
 }
 
 // Feature lists (not provided by API) – keyed by plan type
@@ -138,12 +151,16 @@ function buildPermanentPlan(data: PlanFromApi[]) {
 const getStartedClass =
   "flex cursor-pointer h-12 px-16 rounded-md text-sm font-semibold tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110 inline-flex items-center justify-center"
 
+const selectedClass =
+  "flex h-12 px-16 rounded-full text-sm font-semibold tracking-wide inline-flex items-center justify-center bg-white/10 text-white/60 cursor-not-allowed pointer-events-none"
+
 export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly")
   const [plansData, setPlansData] = useState<PlanFromApi[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isAuthed, setIsAuthed] = useState(false)
+  const [activePlanIds, setActivePlanIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     const refresh = () => setIsAuthed(isAuthenticated())
@@ -151,6 +168,27 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
     window.addEventListener("storage", refresh)
     return () => window.removeEventListener("storage", refresh)
   }, [])
+
+  const fetchSubscriptions = useCallback(async () => {
+    if (!isAuthenticated()) return
+    try {
+      const res = await apiFetch(apiUrl("/api/v1/subscriptions"))
+      const json: SubscriptionsApiResponse = await res.json()
+      if (!res.ok || !json.status || !Array.isArray(json.data)) return
+      const ids = new Set(
+        json.data
+          .filter((s) => s.is_active && s.plan?.id)
+          .map((s) => s.plan.id)
+      )
+      setActivePlanIds(ids)
+    } catch {
+      // Silently fail - user may not have subscriptions
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isAuthed) fetchSubscriptions()
+  }, [isAuthed, fetchSubscriptions])
 
   const fetchPlans = useCallback(async () => {
     setLoading(true)
@@ -162,7 +200,6 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
         throw new Error(json.message || "Failed to load plans")
       }
       setPlansData(json.data)
-      console.log("json.data", json.data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to load plans")
     } finally {
@@ -313,6 +350,8 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                       >
                         Get Started
                       </Link>
+                    ) : activePlanIds.has(permanentPlan.id) ? (
+                      <span className={selectedClass}>Current Plan</span>
                     ) : (
                       <Link
                         href={`/pricing/car-access/${permanentPlan.id}`}
@@ -456,12 +495,15 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                         >
                           Get Started
                         </Link>
-                      ) : key === "pro" ? (
-                        (() => {
-                          const plan = billingPeriod === "monthly" ? monthly : yearly
-                          const planId = plan?.id
-                          if (!planId) return null
-                          return (
+                      ) : (() => {
+                        const plan = billingPeriod === "monthly" ? monthly : yearly
+                        const planId = plan?.id
+                        if (!planId) return null
+                        const isSelected = activePlanIds.has(planId)
+                        if (key === "pro") {
+                          return isSelected ? (
+                            <span className={selectedClass}>Current Plan</span>
+                          ) : (
                             <Link
                               href={`/pricing/game-access/${planId}`}
                               className={cn(getStartedClass, "rounded-full h-12 px-16")}
@@ -469,13 +511,11 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                               Get Started
                             </Link>
                           )
-                        })()
-                      ) : key === "elite" ? (
-                        (() => {
-                          const plan = billingPeriod === "monthly" ? monthly : yearly
-                          const planId = plan?.id
-                          if (!planId) return null
-                          return (
+                        }
+                        if (key === "elite") {
+                          return isSelected ? (
+                            <span className={selectedClass}>Current Plan</span>
+                          ) : (
                             <Link
                               href={`/pricing/free-trial-access/${planId}`}
                               className={cn(getStartedClass, "rounded-full h-12 px-16")}
@@ -483,19 +523,22 @@ export function Pricing({ showHeader = true }: { showHeader?: boolean }) {
                               Get Started
                             </Link>
                           )
-                        })()
-                      ) : (
-                        <Button
-                          className="flex cursor-pointer h-12 px-16 rounded-full text-sm font-semibold tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110"
-                          size="lg"
-                          data-stripe-price-id={
-                            (billingPeriod === "monthly" ? monthly : yearly)
-                              ?.stripe_price_id
-                          }
-                        >
-                          Get Started
-                        </Button>
-                      )}
+                        }
+                        return isSelected ? (
+                          <span className={selectedClass}>Current Plan</span>
+                        ) : (
+                          <Button
+                            className="flex cursor-pointer h-12 px-16 rounded-full text-sm font-semibold tracking-wide transition-all duration-200 bg-brand-gradient text-white hover:brightness-110"
+                            size="lg"
+                            data-stripe-price-id={
+                              (billingPeriod === "monthly" ? monthly : yearly)
+                                ?.stripe_price_id
+                            }
+                          >
+                            Get Started
+                          </Button>
+                        )
+                      })()}
                     </CardFooter>
                   </Card>
                 )

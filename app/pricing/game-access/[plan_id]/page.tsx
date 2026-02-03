@@ -16,8 +16,9 @@ import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { apiUrl } from "@/lib/api"
 import { isAuthenticated, apiFetch } from "@/lib/auth"
+import { hasActivePlanExceptPlan5 } from "@/lib/subscriptions"
 import { cn } from "@/lib/utils"
-import { Loader2, ArrowLeft } from "lucide-react"
+import { Loader2, ArrowLeft, CheckCircle2, CreditCard } from "lucide-react"
 
 type CategoryFromApi = {
   id: number
@@ -52,6 +53,13 @@ export default function GameAccessPage() {
   const [game, setGame] = useState<string>("")
   const [submitting, setSubmitting] = useState(false)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
+  const [modal, setModal] = useState<{
+    type: "success" | "error"
+    planName?: string
+    effectiveAt?: string
+    endDate?: string
+  } | null>(null)
+  const [manageCardLoading, setManageCardLoading] = useState(false)
 
   const fetchCategories = useCallback(async () => {
     setGamesLoading(true)
@@ -125,34 +133,101 @@ export default function GameAccessPage() {
     if (!game || !plan || !planId) return
     setSubmitting(true)
     setCheckoutError(null)
+    setModal(null)
     try {
-      const res = await apiFetch(apiUrl("/api/v1/checkout/create-session"), {
+      const hasActive = await hasActivePlanExceptPlan5()
+      const categoryId = Number(game)
+
+      if (hasActive) {
+        // Subscription change: monthly = 1, yearly = 3
+        const newPlanId = plan.interval === "monthly" ? 1 : 3
+        const res = await apiFetch(apiUrl("/api/v1/subscription/change"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ new_plan_id: newPlanId, category_id: categoryId }),
+        })
+        const json = (await res.json().catch(() => ({}))) as {
+          status?: boolean
+          success?: boolean
+          message?: string
+          data?: { effective_at?: string }
+          effective_at?: string
+        }
+        const ok = res.ok && (json.status === true || json.success === true)
+        const effectiveAt = json.data?.effective_at ?? json.effective_at
+        if (ok) {
+          setModal({
+            type: "success",
+            planName: plan.interval === "monthly" ? "Pro (Monthly)" : "Pro (Yearly)",
+            effectiveAt: effectiveAt ?? undefined,
+          })
+        } else {
+          setModal({ type: "error" })
+        }
+      } else {
+        // New subscription: create checkout session
+        const res = await apiFetch(apiUrl("/api/v1/checkout/create-session"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({
+            plan_id: Number(planId),
+            category_id: categoryId,
+          }),
+        })
+        const json = (await res.json().catch(() => ({}))) as {
+          status?: boolean
+          success?: boolean
+          message?: string
+          data?: { url?: string; end_date?: string; expires_at?: string }
+          url?: string
+          end_date?: string
+          expires_at?: string
+        }
+        const ok = res.ok && (json.status === true || json.success === true)
+        const url = json.data?.url ?? json.url
+        const endDate = json.data?.end_date ?? json.data?.expires_at ?? json.end_date ?? json.expires_at
+
+        if (ok && typeof url === "string" && url) {
+          window.location.href = url
+          return
+        }
+        if (ok && endDate) {
+          setModal({
+            type: "success",
+            endDate,
+          })
+        } else {
+          setModal({ type: "error" })
+        }
+      }
+    } catch {
+      setModal({ type: "error" })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleManageCard = async () => {
+    setManageCardLoading(true)
+    try {
+      const res = await apiFetch(apiUrl("/api/v1/billing-portal/session"), {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          plan_id: Number(planId),
-          category_id: Number(game),
-        }),
+        body: JSON.stringify({}),
       })
       const json = (await res.json().catch(() => ({}))) as {
         status?: boolean
-        success?: boolean
-        message?: string
         data?: { url?: string }
         url?: string
       }
-      const ok = res.ok && (json.status === true || json.success === true)
       const url = json.data?.url ?? json.url
-      if (ok && typeof url === "string" && url) {
+      if (typeof url === "string" && url) {
         window.location.href = url
-        return
       }
-      const msg = json.message ?? (res.ok ? "No checkout URL returned" : "Checkout failed")
-      setCheckoutError(msg)
-    } catch (e) {
-      setCheckoutError(e instanceof Error ? e.message : "Checkout failed")
+    } catch {
+      setModal(null)
     } finally {
-      setSubmitting(false)
+      setManageCardLoading(false)
     }
   }
 
@@ -273,6 +348,92 @@ export default function GameAccessPage() {
           </motion.div>
         </div>
       </main>
+
+      {/* Success / Error Modal */}
+      {modal && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            aria-hidden
+            onClick={() => setModal(null)}
+          />
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="subscribe-modal-title"
+          >
+            <div
+              className="w-full max-w-md rounded-2xl border border-white/10 bg-[#151515] shadow-2xl shadow-black/40 p-8"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {modal.type === "success" ? (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <div className="rounded-full bg-green-500/20 p-4 ring-2 ring-green-500/30">
+                      <CheckCircle2 className="h-14 w-14 text-green-400" />
+                    </div>
+                  </div>
+                  <h2 id="subscribe-modal-title" className="text-xl font-display font-semibold text-white text-center mb-2">
+                    Success
+                  </h2>
+                  <p className="text-white/70 text-sm text-center mb-6">
+                    {modal.effectiveAt
+                      ? `Your ${modal.planName ?? "Pro"} subscription is scheduled at ${new Date(modal.effectiveAt).toLocaleString()}`
+                      : modal.endDate
+                        ? `You can use this plan until ${modal.endDate}`
+                        : "Your subscription has been updated successfully."}
+                  </p>
+                  <Button
+                    onClick={() => setModal(null)}
+                    className="w-full h-12 rounded-full bg-brand-gradient text-white font-semibold hover:brightness-110"
+                  >
+                    OK
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <div className="rounded-full bg-red-500/20 p-4 ring-2 ring-red-500/30">
+                      <CreditCard className="h-14 w-14 text-red-400" />
+                    </div>
+                  </div>
+                  <h2 id="subscribe-modal-title" className="text-xl font-display font-semibold text-white text-center mb-2">
+                    Payment Issue
+                  </h2>
+                  <p className="text-white/70 text-sm text-center mb-6">
+                    You did not add the card or you do not have enough money. If you want to manage your card, please
+                    click below.
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      onClick={handleManageCard}
+                      disabled={manageCardLoading}
+                      className="w-full h-12 rounded-full bg-brand-gradient text-white font-semibold hover:brightness-110 disabled:opacity-50"
+                    >
+                      {manageCardLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Loading…
+                        </>
+                      ) : (
+                        "Manage Card"
+                      )}
+                    </Button>
+                    <Button
+                      onClick={() => setModal(null)}
+                      variant="outline"
+                      className="w-full h-12 rounded-full border-white/20 text-white/80 hover:bg-white/10"
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       <Footer />
     </div>

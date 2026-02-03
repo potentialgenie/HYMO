@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -62,13 +63,13 @@ const drivers = [
 function getGameColor(game: string) {
   switch (game) {
     case "iRacing":
-      return "bg-blue-500/20 text-blue-400 border-blue-500/30"
+      return "text-blue-400 border-blue-500/30"
     case "ACC":
-      return "bg-green-500/20 text-green-400 border-green-500/30"
+      return "text-green-400 border-green-500/30"
     case "LMU":
-      return "bg-orange-500/20 text-orange-400 border-orange-500/30"
+      return "text-orange-400 border-orange-500/30"
     default:
-      return "bg-primary/20 text-primary border-primary/30"
+      return "text-primary border-primary/30"
   }
 }
 
@@ -181,87 +182,40 @@ export default function TeamPage() {
             </h2>
           </div>
           <div className="section-slash w-[50%] mx-auto mb-6" />
-          {/* Filter bar - centered platform filters */}
-          <div className="p-4 mb-10">
-            <div className="flex flex-wrap items-center justify-center gap-2">
-                <span className="text-[10px] uppercase tracking-wider text-white/50 font-semibold font-sans mr-1">
-                  Filter by Platform
-                </span>
-                <button
-                  onClick={() => handlePlatformClick("all")}
-                  className={cn(
-                    "h-9 px-4 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200",
-                    selectedPlatform === "all"
-                      ? "bg-brand-gradient text-white"
-                      : "bg-[#252525] border border-white/10 text-white/70 hover:border-[#E800BC]/40 hover:text-white"
-                  )}
-                  aria-label="Show all team members"
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => handlePlatformClick("iRacing")}
-                  className={cn(
-                    "h-9 px-4 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200",
-                    selectedPlatform === "iRacing"
-                      ? "bg-brand-gradient text-white"
-                      : "bg-[#252525] border border-white/10 text-blue-400/90 hover:border-blue-500/40"
-                  )}
-                  aria-label="Filter by iRacing"
-                >
-                  iRacing
-                </button>
-                <button
-                  onClick={() => handlePlatformClick("ACC")}
-                  className={cn(
-                    "h-9 px-4 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200",
-                    selectedPlatform === "ACC"
-                      ? "bg-brand-gradient text-white"
-                      : "bg-[#252525] border border-white/10 text-green-400/90 hover:border-green-500/40"
-                  )}
-                  aria-label="Filter by Assetto Corsa Competizione"
-                >
-                  Assetto Corsa Competizione
-                </button>
-                <button
-                  onClick={() => handlePlatformClick("LMU")}
-                  className={cn(
-                    "h-9 px-4 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200",
-                    selectedPlatform === "LMU"
-                      ? "bg-brand-gradient text-white"
-                      : "bg-[#252525] border border-white/10 text-orange-400/90 hover:border-orange-500/40"
-                  )}
-                  aria-label="Filter by Le Mans Ultimate"
-                >
-                  Le Mans Ultimate
-                </button>
-            </div>
+          {/* Filter bar - matches pricing/setups pill style */}
+          <div className="relative flex flex-wrap items-center justify-center gap-1 rounded-md backdrop-blur-sm w-fit mx-auto mb-10">
+            {[
+              { id: "all", label: "All", ariaLabel: "Show all team members" },
+              { id: "iRacing", label: "iRacing", ariaLabel: "Filter by iRacing" },
+              { id: "ACC", label: "Assetto Corsa Competizione", ariaLabel: "Filter by Assetto Corsa Competizione" },
+              { id: "LMU", label: "Le Mans Ultimate", ariaLabel: "Filter by Le Mans Ultimate" },
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handlePlatformClick(item.id)}
+                className={cn(
+                  "relative z-10 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#151515]",
+                  selectedPlatform === item.id
+                    ? "text-primary-foreground bg-brand-gradient"
+                    : "text-white hover:text-foreground bg-[#242529]"
+                )}
+                aria-label={item.ariaLabel}
+              >
+                {selectedPlatform === item.id && (
+                  <motion.span
+                    layoutId="team-filter-pill"
+                    className="absolute inset-0 rounded-full bg-brand-gradient shadow-lg shadow-primary/25"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                    aria-hidden
+                  />
+                )}
+                <span className="relative">{item.label}</span>
+              </button>
+            ))}
           </div>
 
-          {/* Pagination logic */}
-          {(() => {
-            // Pagination logic
-            const DRIVERS_PER_PAGE = 8;
-            const [driverPage, setDriverPage] = typeof window !== "undefined" && useState ? useState(1) : [1, () => {}]; // SSR fallback
-            const totalPages = Math.ceil(filteredDrivers.length / DRIVERS_PER_PAGE);
-
-            function handleNextPage() {
-              setDriverPage((page: number) => Math.min(page + 1, totalPages));
-            }
-            function handlePrevPage() {
-              setDriverPage((page: number) => Math.max(page - 1, 1));
-            }
-            function handleSetPage(page: number) {
-              setDriverPage(() => Math.min(Math.max(page, 1), totalPages));
-            }
-
-            const paginatedDrivers = filteredDrivers.slice(
-              (driverPage - 1) * DRIVERS_PER_PAGE,
-              driverPage * DRIVERS_PER_PAGE
-            );
-
-            if (filteredDrivers.length === 0) {
-              return (
+          {filteredDrivers.length === 0 ? (
                 <div className="text-center py-16 px-6">
                   <p className="text-muted-foreground text-lg mb-2">No team members found</p>
                   <p className="text-muted-foreground/70 text-sm mb-6">
@@ -276,19 +230,16 @@ export default function TeamPage() {
                     Show All Members
                   </Button>
                 </div>
-              );
-            }
-
-            return (
+          ) : (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto">
-                  {paginatedDrivers.map((driver, idx) => {
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-5 max-w-6xl mx-auto">
+                  {filteredDrivers.map((driver, idx) => {
                     const accent = getGameAccent(driver.game);
                     return (
                       <Card
                         key={driver.name}
                         className={cn(
-                          "group relative overflow-hidden col-span-1 aspect-square rounded-lg border border-white/[0.06] bg-[#16151a] shadow-md shadow-black/15 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_8px_32px_-10px_rgba(0,0,0,0.4)] hover:shadow-primary/10 flex flex-col justify-end",
+                          "group relative overflow-hidden col-span-1 aspect-square rounded-xl border border-white/[0.06] bg-[#16151a] shadow-md shadow-black/15 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_8px_32px_-10px_rgba(0,0,0,0.4)] hover:shadow-primary/10 flex flex-col justify-end",
                           "opacity-100 motion-safe:opacity-0"
                         )}
                         style={{
@@ -296,8 +247,9 @@ export default function TeamPage() {
                         }}
                       >
                         {/* Top gradient bar */}
-                        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-50 z-10" />
-
+                        <div className="absolute top-3 left-3 z-10 w-fit py-1 px-2 rounded-full text-[12px] uppercase tracking-wider font-semibold shadow-md bg-black/80 backdrop-blur-xl">
+                          {driver.game}
+                        </div>
                         {/* Image and overlay */}
                         <div className="absolute inset-0 w-full h-full z-0">
                           <Image
@@ -310,69 +262,20 @@ export default function TeamPage() {
                         </div>
 
                         {/* Bottom blurred overlay for name/role */}
-                        <div className="absolute left-0 right-0 bottom-0 z-20 p-1 md:p-1.5 pb-1.5">
-                          <div className="w-full rounded-md bg-black/30 backdrop-blur-xs px-2 py-1 flex flex-col gap-0.5 border border-white/10">
-                            <h3 className="font-sans text-xs md:text-sm font-bold italic tracking-tight text-white truncate">
+                        <div className="absolute left-0 right-0 bottom-0 z-20 p-2 md:p-2.5 pb-2.5">
+                          <div className="w-full rounded-lg bg-[#2A2A2A]/30 backdrop-blur-xs px-3 py-2 flex flex-col gap-0.5 border border-white/10">
+                            <h3 className="font-display text-base md:text-lg tracking-tight text-white truncate text-center">
                               {driver.name}
                             </h3>
-                            <p className="text-[10px] md:text-[11px] text-white/80 font-sans line-clamp-2">{driver.role}</p>
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "mt-0.5 w-fit px-1 py-0.5 text-[8px] uppercase tracking-wider font-semibold",
-                                getGameColor(driver.game)
-                              )}
-                            >
-                              {driver.game}
-                            </Badge>
+                            <p className="text-xs md:text-sm text-white/40 font-sans line-clamp-2 text-center">{driver.role}</p>
                           </div>
                         </div>
                       </Card>
                     );
                   })}
                 </div>
-                {/* Pagination Bar with member count */}
-                <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-10">
-                  {totalPages > 1 && (
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handlePrevPage}
-                        disabled={driverPage === 1}
-                        className="rounded-full px-2 py-1"
-                        aria-label="Previous page"
-                      >
-                        &larr;
-                      </Button>
-                      {Array.from({ length: totalPages }).map((_, idx) => (
-                        <button
-                          key={idx}
-                          className={cn(
-                            "w-8 h-8 flex items-center justify-center rounded-full mx-1 text-sm font-semibold transition",
-                            driverPage === idx + 1
-                              ? "bg-primary/60 text-white shadow"
-                              : "bg-white/10 text-white/50 hover:bg-primary/30 hover:text-primary"
-                          )}
-                          onClick={() => handleSetPage(idx + 1)}
-                          aria-current={driverPage === idx + 1 ? "page" : undefined}
-                          aria-label={`Go to page ${idx + 1}`}
-                        >
-                          {idx + 1}
-                        </button>
-                      ))}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleNextPage}
-                        disabled={driverPage === totalPages}
-                        className="rounded-full px-2 py-1"
-                        aria-label="Next page"
-                      >
-                        &rarr;
-                      </Button>
-                    </div>
-                  )}
+                {/* Member count */}
+                <div className="flex justify-center items-center mt-10">
                   <div className="flex items-center gap-2 text-sm font-sans">
                     <span className="text-white/50">Showing</span>
                     <span className="text-[#E800BC] font-semibold">
@@ -389,8 +292,7 @@ export default function TeamPage() {
                   </div>
                 </div>
               </>
-            );
-          })()}
+          )}
         </div>
       </section>
       <div className="px-16 sm:px-30 lg:px-46">

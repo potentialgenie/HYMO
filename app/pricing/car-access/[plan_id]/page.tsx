@@ -16,7 +16,7 @@ import {
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { apiUrl, IMAGE_BASE } from "@/lib/api"
-import { isAuthenticated } from "@/lib/auth"
+import { apiFetch, isAuthenticated } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 import { Loader2, ArrowLeft } from "lucide-react"
 
@@ -92,6 +92,7 @@ export default function CarAccessPage() {
   const [car, setCar] = useState<string>("")
   const [searchedCar, setSearchedCar] = useState<CarOption | null>(null)
   const [unlockLoading, setUnlockLoading] = useState(false)
+  const [unlockError, setUnlockError] = useState<string | null>(null)
 
   const fetchPlan = useCallback(async () => {
     if (!planId) return
@@ -249,14 +250,36 @@ export default function CarAccessPage() {
   }
 
   const handleUnlock = async () => {
-    if (!plan || !searchedCar) return
+    if (!plan || !planId || !searchedCar || !game || !carClass) return
     setUnlockLoading(true)
+    setUnlockError(null)
     try {
-      console.log("Unlock car", {
-        planId,
-        car_id: searchedCar.id,
-        stripe_price_id: plan.stripe_price_id,
+      const res = await apiFetch(apiUrl("/api/v1/checkout/create-session"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          plan_id: Number(planId),
+          category_id: Number(game),
+          class_id: Number(carClass),
+          car_id: searchedCar.id,
+        }),
       })
+      const json = (await res.json().catch(() => ({}))) as {
+        status?: boolean
+        success?: boolean
+        message?: string
+        data?: { url?: string }
+        url?: string
+      }
+      const ok = res.ok && (json.status === true || json.success === true)
+      const url = json.data?.url ?? json.url
+      if (ok && typeof url === "string" && url) {
+        window.location.href = url
+        return
+      }
+      setUnlockError(json.message ?? "Checkout failed")
+    } catch (e) {
+      setUnlockError(e instanceof Error ? e.message : "Something went wrong")
     } finally {
       setUnlockLoading(false)
     }
@@ -456,6 +479,9 @@ export default function CarAccessPage() {
                       <p className="text-white/70 text-sm mb-6 flex-1">
                         Unlock lifetime access to all setups for this car, including future updates.
                       </p>
+                      {unlockError && (
+                        <p className="text-red-400 text-sm mb-4">{unlockError}</p>
+                      )}
                       <Button
                         onClick={handleUnlock}
                         disabled={unlockLoading}

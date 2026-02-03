@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { apiUrl } from "@/lib/api"
-import { isAuthenticated } from "@/lib/auth"
+import { apiFetch, isAuthenticated } from "@/lib/auth"
+import { hasActivePlanExceptPlan5 } from "@/lib/subscriptions"
 import { cn } from "@/lib/utils"
-import { Loader2, ArrowLeft } from "lucide-react"
+import { Loader2, ArrowLeft, CheckCircle2, CreditCard } from "lucide-react"
 
 type PlanFromApi = {
   id: number
@@ -32,9 +33,17 @@ export default function FreeTrialAccessPage() {
   const [plan, setPlan] = useState<PlanFromApi | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
   const [isAuthed, setIsAuthed] = useState(false)
   const [startTrialLoading, setStartTrialLoading] = useState(false)
   const [paymentLoading, setPaymentLoading] = useState(false)
+  const [modal, setModal] = useState<{
+    type: "free_trial_success" | "free_trial_error" | "payment_success" | "payment_error"
+    planName?: string
+    effectiveAt?: string
+    immediate?: boolean
+  } | null>(null)
+  const [manageCardLoading, setManageCardLoading] = useState(false)
 
   const fetchPlan = useCallback(async () => {
     if (!planId) return
@@ -83,32 +92,140 @@ export default function FreeTrialAccessPage() {
   }, [planId, fetchPlan])
 
   const handleStartTrial = async () => {
-    if (!plan || !isAuthed) return
+    if (!plan || !planId || !isAuthed) return
     setStartTrialLoading(true)
+    setActionError(null)
+    setModal(null)
     try {
-      // Placeholder: wire to free-trial subscribe API
-      console.log("Start 7-day free trial", { planId, stripe_price_id: plan.stripe_price_id })
+      const hasActive = await hasActivePlanExceptPlan5()
+      const planIdNum = Number(planId)
+      const body = { plan_id: planIdNum }
+
+      if (hasActive) {
+        const res = await apiFetch(apiUrl("/api/v1/subscription/change"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(body),
+        })
+        const json = await res.json().catch(() => ({}))
+        if (res.ok && (json.status === true || json.success === true)) {
+          setModal({ type: "free_trial_success" })
+        } else {
+          setModal({ type: "free_trial_error" })
+        }
+      } else {
+        const res = await apiFetch(apiUrl("/api/v1/trial/start"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(body),
+        })
+        const json = await res.json().catch(() => ({}))
+        if (res.ok && (json.status === true || json.success === true)) {
+          setModal({ type: "free_trial_success" })
+        } else {
+          setModal({ type: "free_trial_error" })
+        }
+      }
+    } catch {
+      setModal({ type: "free_trial_error" })
     } finally {
       setStartTrialLoading(false)
     }
   }
 
   const handleContinuePayment = async () => {
-    if (!plan) return
+    if (!plan || !planId) return
     if (!isAuthed) {
       router.push("/login")
       return
     }
     setPaymentLoading(true)
+    setActionError(null)
+    setModal(null)
     try {
-      // Placeholder: wire to Stripe checkout
-      console.log("Continue with payment", { planId, stripe_price_id: plan.stripe_price_id })
+      const hasActive = await hasActivePlanExceptPlan5()
+      const planIdNum = Number(planId)
+      const body = { plan_id: planIdNum }
+
+      if (hasActive) {
+        const res = await apiFetch(apiUrl("/api/v1/subscription/change"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ new_plan_id: body.plan_id }),
+        })
+        const json = (await res.json().catch(() => ({}))) as {
+          status?: boolean
+          success?: boolean
+          data?: { effective_at?: string }
+          effective_at?: string
+        }
+        const ok = res.ok && (json.status === true || json.success === true)
+        const effectiveAt = json.data?.effective_at ?? json.effective_at
+
+        if (ok) {
+          const planName = plan.interval === "monthly" ? "Elite (Monthly)" : "Elite (Yearly)"
+          setModal({
+            type: "payment_success",
+            planName,
+            effectiveAt: effectiveAt ?? undefined,
+            immediate: !effectiveAt,
+          })
+        } else {
+          setModal({ type: "payment_error" })
+        }
+      } else {
+        const res = await apiFetch(apiUrl("/api/v1/checkout/create-session"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(body),
+        })
+        const json = (await res.json().catch(() => ({}))) as {
+          status?: boolean
+          success?: boolean
+          message?: string
+          data?: { url?: string }
+          url?: string
+        }
+        const ok = res.ok && (json.status === true || json.success === true)
+        const url = json.data?.url ?? json.url
+        if (ok && typeof url === "string" && url) {
+          window.location.href = url
+          return
+        }
+        setModal({ type: "payment_error" })
+      }
+    } catch {
+      setModal({ type: "payment_error" })
     } finally {
       setPaymentLoading(false)
     }
   }
 
-  const continuePaymentDisabled = isAuthed && paymentLoading
+  const handleManageCard = async () => {
+    setManageCardLoading(true)
+    try {
+      const res = await apiFetch(apiUrl("/api/v1/billing-portal/session"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({}),
+      })
+      const json = (await res.json().catch(() => ({}))) as {
+        status?: boolean
+        data?: { url?: string }
+        url?: string
+      }
+      const url = json.data?.url ?? json.url
+      if (typeof url === "string" && url) {
+        window.location.href = url
+      }
+    } catch {
+      setModal(null)
+    } finally {
+      setManageCardLoading(false)
+    }
+  }
+
+  const continuePaymentDisabled = isAuthed && (paymentLoading || startTrialLoading)
 
   const intervalLabel = plan?.interval === "yearly" ? "Yearly" : "Monthly"
   const priceLabel = plan
@@ -186,10 +303,13 @@ export default function FreeTrialAccessPage() {
                   )}
                 </div>
 
+                {actionError && (
+                  <p className="text-red-400 text-sm mb-4">{actionError}</p>
+                )}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button
                     onClick={handleStartTrial}
-                    disabled={!isAuthed || startTrialLoading}
+                    disabled={!isAuthed || startTrialLoading || paymentLoading}
                     className={cn(
                       "flex-1 h-12 rounded-md text-sm font-semibold bg-brand-gradient text-white hover:brightness-110",
                       "disabled:opacity-50 disabled:pointer-events-none"
@@ -228,6 +348,137 @@ export default function FreeTrialAccessPage() {
           </motion.div>
         </div>
       </main>
+
+      {/* Modals */}
+      {modal && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            aria-hidden
+            onClick={() => setModal(null)}
+          />
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="elite-modal-title"
+          >
+            <div
+              className="w-full max-w-md rounded-2xl border border-white/10 bg-[#151515] shadow-2xl shadow-black/40 p-8"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {modal.type === "free_trial_success" ? (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <div className="rounded-full bg-green-500/20 p-4 ring-2 ring-green-500/30">
+                      <CheckCircle2 className="h-14 w-14 text-green-400" />
+                    </div>
+                  </div>
+                  <h2 id="elite-modal-title" className="text-xl font-display font-semibold text-white text-center mb-2">
+                    Success
+                  </h2>
+                  <p className="text-white/70 text-sm text-center mb-6">
+                    You can experience the FREETRIAL for one week from now.
+                  </p>
+                  <Button
+                    onClick={() => setModal(null)}
+                    className="w-full h-12 rounded-full bg-brand-gradient text-white font-semibold hover:brightness-110"
+                  >
+                    OK
+                  </Button>
+                </>
+              ) : modal.type === "free_trial_error" ? (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <div className="rounded-full bg-red-500/20 p-4 ring-2 ring-red-500/30">
+                      <CreditCard className="h-14 w-14 text-red-400" />
+                    </div>
+                  </div>
+                  <h2 id="elite-modal-title" className="text-xl font-display font-semibold text-white text-center mb-2">
+                    Add Card
+                  </h2>
+                  <p className="text-white/70 text-sm text-center mb-6">
+                    Please add your card.
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      onClick={handleManageCard}
+                      disabled={manageCardLoading}
+                      className="w-full h-12 rounded-full bg-brand-gradient text-white font-semibold hover:brightness-110 disabled:opacity-50"
+                    >
+                      {manageCardLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Loading…
+                        </>
+                      ) : (
+                        "Manage your Card"
+                      )}
+                    </Button>
+                    <Button
+                      onClick={() => setModal(null)}
+                      variant="outline"
+                      className="w-full h-12 rounded-full border-white/20 text-white/80 hover:bg-white/10"
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </>
+              ) : modal.type === "payment_success" ? (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <div className="rounded-full bg-green-500/20 p-4 ring-2 ring-green-500/30">
+                      <CheckCircle2 className="h-14 w-14 text-green-400" />
+                    </div>
+                  </div>
+                  <h2 id="elite-modal-title" className="text-xl font-display font-semibold text-white text-center mb-2">
+                    Success
+                  </h2>
+                  <p className="text-white/70 text-sm text-center mb-6">
+                    {modal.immediate
+                      ? `You can use ${modal.planName ?? "your plan"} from now.`
+                      : `Your ${modal.planName ?? "plan"} is scheduled at ${modal.effectiveAt}.`}
+                  </p>
+                  <Button
+                    onClick={() => setModal(null)}
+                    className="w-full h-12 rounded-full bg-brand-gradient text-white font-semibold hover:brightness-110"
+                  >
+                    OK
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <div className="rounded-full bg-red-500/20 p-4 ring-2 ring-red-500/30">
+                      <CreditCard className="h-14 w-14 text-red-400" />
+                    </div>
+                  </div>
+                  <h2 id="elite-modal-title" className="text-xl font-display font-semibold text-white text-center mb-2">
+                    Payment Issue
+                  </h2>
+                  <p className="text-white/70 text-sm text-center mb-6">
+                    You did not add the card or you do not have enough money. If you want to manage your card, please{" "}
+                    <button
+                      onClick={handleManageCard}
+                      disabled={manageCardLoading}
+                      className="text-[#E800BC] font-semibold hover:underline underline-offset-2 disabled:opacity-50"
+                    >
+                      {manageCardLoading ? "loading…" : "click here"}
+                    </button>
+                  </p>
+                  <Button
+                    onClick={() => setModal(null)}
+                    variant="outline"
+                    className="w-full h-12 rounded-full border-white/20 text-white/80 hover:bg-white/10"
+                  >
+                    Close
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       <Footer />
     </div>

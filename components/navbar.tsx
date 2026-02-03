@@ -374,7 +374,7 @@ export function Navbar() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.25 }}
-                        className="pb-2"
+                        className="pb-3 grid grid-cols-1 gap-1"
                       >
                         <Link
                           href="/profile"
