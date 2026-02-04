@@ -204,7 +204,7 @@ export function Navbar() {
         const links = [...json.data]
           .sort((a: { id: number }, b: { id: number }) => a.id - b.id)
           .map((cat: { id: number; name: string; slug: string }) => ({
-            href: `/setups/${cat.slug}`,
+            href: `/setups/${cat.slug.toLowerCase()}`,
             label: cat.name,
           }))
         setSetupsLinks(links)
