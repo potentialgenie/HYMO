@@ -55,37 +55,6 @@ export type CategoryFromApi = {
   image_url?: string
 }
 
-// Mock setup data for display
-const mockSetups = [
-  {
-    id: 1,
-    game: "iRacing",
-    car: "Acura NSX GT3 ECO 22",
-    track: "Autodromo Nazionale Monza",
-    season: "iRacing Season 2 Week 1 2026",
-    series: "IMSA",
-    lapTime: "01:16.706",
-  },
-  {
-    id: 2,
-    game: "iRacing",
-    car: "Acura NSX GT3 ECO 22",
-    track: "Autodromo Nazionale Monza",
-    season: "iRacing Season 2 Week 1 2026",
-    series: "IMSA",
-    lapTime: "01:16.706",
-  },
-  {
-    id: 3,
-    game: "iRacing",
-    car: "Acura NSX GT3 ECO 22",
-    track: "Autodromo Nazionale Monza",
-    season: "iRacing Season 2 Week 1 2026",
-    series: "IMSA",
-    lapTime: "01:16.706",
-  },
-]
-
 const ITEMS_PER_PAGE = 10
 
 type FilterKey =
