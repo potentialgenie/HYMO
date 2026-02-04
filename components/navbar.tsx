@@ -9,6 +9,7 @@ import { useLanguage } from "@/lib/language-context"
 import type { Language } from "@/lib/translations"
 import { Button } from "@/components/ui/button"
 import { clearAuthData, getUser, hasSession, isAuthenticated, isTokenExpired, logout, refreshAccessToken } from "@/lib/auth"
+import { apiUrl } from "@/lib/api"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -22,6 +23,7 @@ export function Navbar() {
   const [isAuthed, setIsAuthed] = useState(false)
   const [userName, setUserName] = useState<string | null>(null)
   const [logoutLoading, setLogoutLoading] = useState(false)
+  const [setupsLinks, setSetupsLinks] = useState<{ href: string; label: string }[]>([])
   const dropdownRef = useRef<HTMLDivElement>(null)
   const languageDropdownRef = useRef<HTMLDivElement>(null)
   const accountDropdownRef = useRef<HTMLDivElement>(null)
@@ -193,11 +195,25 @@ export function Navbar() {
     }
   }, [pathname])
 
-  const setupsLinks = [
-    { href: "/setups/iracing", label: "iRacing" },
-    { href: "/setups/acc", label: "Assetto Corsa Competizione" },
-    { href: "/setups/lmu", label: "Le Mans Ultimate" },
-  ]
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch(apiUrl("/api/v1/products/categories"))
+        const json = await res.json()
+        if (!json.success || !Array.isArray(json.data)) return
+        const links = [...json.data]
+          .sort((a: { id: number }, b: { id: number }) => a.id - b.id)
+          .map((cat: { id: number; name: string; slug: string }) => ({
+            href: `/setups/${cat.slug}`,
+            label: cat.name,
+          }))
+        setSetupsLinks(links)
+      } catch {
+        // API error – setupsLinks stays empty
+      }
+    }
+    void fetchCategories()
+  }, [])
 
   const languages: { code: Language; label: string; flag: string }[] = [
     { code: "en", label: "English", flag: "/images/flags/gb.svg" },
@@ -253,6 +269,7 @@ export function Navbar() {
                     <Link
                       key={link.href}
                       href={link.href}
+                      onClick={() => setSetupsDropdownOpen(false)}
                       className={`block px-5 py-3.5 text-sm tracking-wide transition-all duration-200 hover:bg-primary/10 hover:pl-6 ${
                         pathname === link.href
                           ? "text-primary font-semibold bg-primary/5 border-l-2 border-primary"

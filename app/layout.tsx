@@ -3,6 +3,8 @@ import type { Metadata } from 'next'
 import { Archivo } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { LanguageProvider } from '@/lib/language-context'
+import { Navbar } from '@/components/navbar'
+import { Footer } from '@/components/footer'
 import './globals.css'
 
 const archivo = Archivo({ 
@@ -47,9 +49,11 @@ export default function RootLayout({
           Skip to content
         </a>
         <LanguageProvider>
+          <Navbar />
           <div id="main-content">
             {children}
           </div>
+          <Footer />
         </LanguageProvider>
         <Analytics />
       </body>

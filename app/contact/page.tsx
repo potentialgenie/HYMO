@@ -1,8 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -103,8 +101,6 @@ export default function ContactPage() {
     <main className="min-h-screen flex flex-col bg-[#151515] relative overflow-hidden pt-20">
       {/* Purple gradient from top */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(228,0,188,0.32)_0%,rgba(31,19,41,0.3)_40%,rgba(21,21,21,0)_60%)]"/>
-
-      <Navbar />
 
       <section className="relative pb-20 px-6 sm:px-12 lg:px-24 overflow-hidden">
         <div className="w-full max-w-2xl mx-auto">
@@ -216,8 +212,6 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
-
-      <Footer />
     </main>
   )
 }

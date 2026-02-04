@@ -13,8 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
 import { apiUrl, IMAGE_BASE } from "@/lib/api"
 import { apiFetch, isAuthenticated } from "@/lib/auth"
 import { cn } from "@/lib/utils"
@@ -290,21 +288,18 @@ export default function CarAccessPage() {
   if (!planId) {
     return (
       <div className="min-h-screen bg-[#151515]">
-        <Navbar />
         <main className="pt-24 pb-20 px-4 sm:px-6 lg:px-24">
           <p className="text-white/80">Invalid plan.</p>
           <Link href="/pricing" className="text-primary hover:underline mt-4 inline-block">
             Back to Pricing
           </Link>
         </main>
-        <Footer />
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-[#151515]">
-      <Navbar />
 
       <main className="relative pt-24 pb-20 px-4 sm:px-6 lg:px-24">
         <div className="max-w-4xl mx-auto">
@@ -525,7 +520,6 @@ export default function CarAccessPage() {
         </div>
       </main>
 
-      <Footer />
     </div>
   )
 }

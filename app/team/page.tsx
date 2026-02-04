@@ -6,8 +6,6 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
 import { cn } from "@/lib/utils"
 import { Contact } from "@/components/contact"
 
@@ -108,8 +106,6 @@ export default function TeamPage() {
   return (
     <main className="min-h-screen bg-[#151515] relative overflow-hidden pt-20 ">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_5%,rgba(228,0,188,0.32)_0%,rgba(31,19,41,0.3)_20%,rgba(21,21,21,0)_100%)]"/>
-
-      <Navbar />
 
       <section className="relative b-20 px-6 sm:px-12 lg:px-24 overflow-hidden">
         <div className="relative z-10 text-center">
@@ -298,7 +294,6 @@ export default function TeamPage() {
       <div className="px-16 sm:px-30 lg:px-46">
         <Contact />
       </div>
-      <Footer />
     </main>
   )
 }

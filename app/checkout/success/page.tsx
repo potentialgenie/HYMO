@@ -3,8 +3,6 @@
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
 import { CheckCircle2, XCircle, LayoutDashboard, Loader2 } from "lucide-react"
 import { apiFetch } from "@/lib/auth"
 import { apiUrl } from "@/lib/api"
@@ -61,8 +59,6 @@ function CheckoutSuccessContent() {
 
   return (
     <div className="min-h-screen bg-[#151515]">
-      <Navbar />
-
       <main className="relative pt-24 pb-20 px-4 sm:px-6 lg:px-24">
         {/* Backdrop */}
         <div
@@ -156,8 +152,6 @@ function CheckoutSuccessContent() {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   )
 }
@@ -165,11 +159,9 @@ function CheckoutSuccessContent() {
 function CheckoutSuccessFallback() {
   return (
     <div className="min-h-screen bg-[#151515]">
-      <Navbar />
       <main className="relative pt-24 pb-20 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#E800BC]" />
       </main>
-      <Footer />
     </div>
   )
 }

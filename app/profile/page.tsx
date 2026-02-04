@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Navbar } from "@/components/navbar"
 import { isAuthenticated } from "@/lib/auth"
 import { Loader2, User, Shield } from "lucide-react"
 import { SettingsTab } from "./settings-tab"
@@ -33,8 +32,6 @@ export default function ProfilePage() {
 
   return (
     <main className="min-h-screen flex flex-col bg-[#151515] relative overflow-hidden">
-      <Navbar />
-
       <section className="relative z-10 flex-1 px-6 sm:px-10 lg:px-24 py-16 pt-32">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-white font-display text-3xl sm:text-4xl tracking-tight">

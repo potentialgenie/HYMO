@@ -1,25 +1,7 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react"
+import { useState, useEffect, useRef } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import {
-  Search,
-  Filter,
-  Download,
-  ChevronsLeft,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsRight,
-  ThermometerSun,
-  Droplet,
-  Wind,
-  Thermometer,
-  Cloud,
-  Clock,
-  type LucideIcon,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -27,2054 +9,1373 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import Image from "next/image"
+import { Button } from "@/components/ui/button"
+import { Trash2, Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Thermometer, Droplets, Wind, Cloud, Clock, Play } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { apiUrl } from "@/lib/api"
 
-interface FilterOption {
-  value: string
-  label: string
+type FilterOption = { id: number; name: string }
+
+function normalizeFilterOptions(raw: unknown): FilterOption[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((item) => {
+      if (!item || typeof item !== "object") return null
+      const o = item as Record<string, unknown>
+      const id = typeof o.id === "number" ? o.id : typeof o.id === "string" ? parseInt(o.id, 10) : NaN
+      const name = [o.name, o.label, o.variation].find((x) => typeof x === "string") as string | undefined
+      if (Number.isNaN(id) || !name) return null
+      return { id, name }
+    })
+    .filter((x): x is FilterOption => x !== null)
 }
 
-interface FiltersState {
-  classes: FilterOption[]
-  cars: FilterOption[]
-  tracks: FilterOption[]
-  seasons: FilterOption[]
-  weeks: FilterOption[]
-  variations: FilterOption[]
-  series: FilterOption[]
-  years: FilterOption[]
-  versions: FilterOption[]
+/** API returns weeks as [1, 2, 3, ...] - convert to FilterOption[] */
+function normalizeWeeks(raw: unknown): FilterOption[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .filter((x) => typeof x === "number" || (typeof x === "string" && !Number.isNaN(parseInt(x, 10))))
+    .map((x) => ({ id: typeof x === "number" ? x : parseInt(x as string, 10), name: String(x) }))
 }
 
-interface SetupPageProps {
-  game: "iracing" | "acc" | "lmu"
-  title: string
-  logo: string
-  heroImage: string
+/** API returns years as [2026, 2025, ...] - convert to FilterOption[] */
+function normalizeYears(raw: unknown): FilterOption[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .filter((x) => typeof x === "number" || (typeof x === "string" && !Number.isNaN(parseInt(x, 10))))
+    .map((x) => ({ id: typeof x === "number" ? x : parseInt(x as string, 10), name: String(x) }))
+}
+
+export type CategoryFromApi = {
+  id: number
+  name: string
+  slug: string
+  description?: string
+  image?: string
+  image_url?: string
+}
+
+// Mock setup data for display
+const mockSetups = [
+  {
+    id: 1,
+    game: "iRacing",
+    car: "Acura NSX GT3 ECO 22",
+    track: "Autodromo Nazionale Monza",
+    season: "iRacing Season 2 Week 1 2026",
+    series: "IMSA",
+    lapTime: "01:16.706",
+  },
+  {
+    id: 2,
+    game: "iRacing",
+    car: "Acura NSX GT3 ECO 22",
+    track: "Autodromo Nazionale Monza",
+    season: "iRacing Season 2 Week 1 2026",
+    series: "IMSA",
+    lapTime: "01:16.706",
+  },
+  {
+    id: 3,
+    game: "iRacing",
+    car: "Acura NSX GT3 ECO 22",
+    track: "Autodromo Nazionale Monza",
+    season: "iRacing Season 2 Week 1 2026",
+    series: "IMSA",
+    lapTime: "01:16.706",
+  },
+]
+
+const ITEMS_PER_PAGE = 10
+
+type FilterKey =
+  | "class"
+  | "car"
+  | "track"
+  | "season"
+  | "week"
+  | "variation"
+  | "series"
+  | "year"
+  | "version"
+
+const FIXED_ORDER_IRACING: FilterKey[] = [
+  "class",
+  "car",
+  "track",
+  "season",
+  "week",
+  "variation",
+  "series",
+  "year",
+]
+
+const FIXED_ORDER_ACC_LMU: FilterKey[] = ["class", "car", "track", "version"]
+
+const ACC_LMU_SLUGS = ["assetto-corsa-competizione", "le-mans-ultimate"]
+
+export function SetupPage({
+  categoryId,
+  categorySlug = "",
+  setups = [],
+}: {
   categoryId: number
-  setups: {
-    id: string
-    game: string
-    car: string
-    track: string
-    season: string
-    week?: string // Optional week for iRacing
-    series: string
-    version?: string
-    year?: string
-    videoUrl?: string
-    trackGuideUrl?: string
-    lapTime?: string
-    weather?: SetupWeather
-  }[]
-}
+  categorySlug?: string
+  categories?: CategoryFromApi[]
+  setups?: Array<Record<string, unknown>>
+}) {
+  const isAccOrLmu = ACC_LMU_SLUGS.includes(categorySlug.toLowerCase())
+  const FIXED_ORDER = isAccOrLmu ? FIXED_ORDER_ACC_LMU : FIXED_ORDER_IRACING
 
-interface SetupWeather {
-  airTemp?: number | string
-  humidity?: number | string
-  windSpeed?: number | string
-  windDirection?: string
-  trackTemp?: number | string
-  sky?: string
-  time?: string
-  date?: string
-}
+  const [selectedClass, setSelectedClass] = useState<string>("")
+  const [selectedCar, setSelectedCar] = useState<string>("")
+  const [selectedTrack, setSelectedTrack] = useState<string>("")
+  const [selectedSeason, setSelectedSeason] = useState<string>("")
+  const [selectedWeek, setSelectedWeek] = useState<string>("")
+  const [selectedTrackVariation, setSelectedTrackVariation] = useState<string>("")
+  const [selectedSeries, setSelectedSeries] = useState<string>("")
+  const [selectedYear, setSelectedYear] = useState<string>("")
+  const [selectedVersion, setSelectedVersion] = useState<string>("")
+  const [showMoreFilters, setShowMoreFilters] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
 
-interface UrlFiltersState {
-  class: string
-  car: string
-  track: string
-  variation: string
-  variationId: string
-  season: string
-  week: string
-  series: string
-  year: string
-  version: string
-}
-
-const parseNumberValue = (value: unknown): number | undefined => {
-  if (value === null || value === undefined) return undefined
-  if (typeof value === "number") return Number.isFinite(value) ? value : undefined
-  if (typeof value === "string") {
-    const parsed = Number(value)
-    return Number.isFinite(parsed) ? parsed : undefined
-  }
-  return undefined
-}
-
-const parseStringValue = (value: unknown): string | undefined => {
-  if (typeof value !== "string") return undefined
-  const trimmed = value.trim()
-  return trimmed ? trimmed : undefined
-}
-
-const normalizeWeather = (value: unknown): SetupWeather | undefined => {
-  if (!value || typeof value !== "object") return undefined
-  const record = value as Record<string, unknown>
-  const normalized: SetupWeather = {
-    airTemp:
-      parseNumberValue(record.air_temp) ??
-      parseNumberValue(record.airTemp) ??
-      parseNumberValue(record.temp) ??
-      parseNumberValue(record.airTemperature),
-    humidity:
-      parseNumberValue(record.hume) ??
-      parseNumberValue(record.humidity) ??
-      parseNumberValue(record.humid),
-    windSpeed:
-      parseNumberValue(record.mph) ??
-      parseNumberValue(record.wind_speed) ??
-      parseNumberValue(record.windSpeed) ??
-      parseNumberValue(record.wind),
-    windDirection:
-      parseStringValue(record.wind_dir) ??
-      parseStringValue(record.windDirection) ??
-      parseStringValue(record.wind_dir_label) ??
-      parseStringValue(record.windDir) ??
-      parseStringValue(record.wind_direction),
-    trackTemp:
-      parseNumberValue(record.trac) ??
-      parseNumberValue(record.track_temp) ??
-      parseNumberValue(record.trackTemp) ??
-      parseNumberValue(record.track_temperature),
-    sky:
-      parseStringValue(record.sky) ??
-      parseStringValue(record.sky_condition) ??
-      parseStringValue(record.conditions) ??
-      parseStringValue(record.skyConditions),
-    time:
-      parseStringValue(record.wdatetime) ??
-      parseStringValue(record.wdate_time) ??
-      parseStringValue(record.time) ??
-      parseStringValue(record.datetime) ??
-      parseStringValue(record.date_time),
-    date: parseStringValue(record.wdate) ?? parseStringValue(record.date),
-  }
-  const hasValue = Object.values(normalized).some(
-    (entry) => entry !== undefined && entry !== null && String(entry).trim() !== ""
-  )
-  return hasValue ? normalized : undefined
-}
-
-const formatTemperature = (value?: number | string) => {
-  if (value === undefined || value === null) return ""
-  const text = String(value).trim()
-  if (!text) return ""
-  if (/[CF]\b/i.test(text)) return text
-  return `${text} F`
-}
-
-const formatHumidity = (value?: number | string) => {
-  if (value === undefined || value === null) return ""
-  const text = String(value).trim()
-  if (!text) return ""
-  const withPercent = text.includes("%") ? text : `${text}%`
-  return /rh\b/i.test(withPercent) ? withPercent : `${withPercent} RH`
-}
-
-const formatWind = (speed?: number | string, direction?: string) => {
-  if (speed === undefined || speed === null) return ""
-  const text = String(speed).trim()
-  if (!text) return ""
-  const withUnit = /mph\b/i.test(text) ? text : `${text} MPH`
-  return direction ? `${withUnit} ${direction}` : withUnit
-}
-
-const parseWeatherDate = (value: string): Date | null => {
-  const candidate = value.includes(" ") && !value.includes("T") ? value.replace(" ", "T") : value
-  const parsed = new Date(candidate)
-  return Number.isNaN(parsed.getTime()) ? null : parsed
-}
-
-const formatWeatherDateTime = (value?: string) => {
-  if (!value) return { timeLabel: "", dateLabel: "" }
-  const parsed = parseWeatherDate(value)
-  if (!parsed) {
-    return { timeLabel: value, dateLabel: "" }
-  }
-  return {
-    timeLabel: parsed.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-    dateLabel: parsed.toLocaleDateString("en-US", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }),
-  }
-}
-
-export function SetupPage({ game, title, logo, heroImage, categoryId, setups }: SetupPageProps) {
-  const searchParams = useSearchParams()
+  const [classes, setClasses] = useState<FilterOption[]>([])
+  const [cars, setCars] = useState<FilterOption[]>([])
+  const [tracks, setTracks] = useState<FilterOption[]>([])
+  const [seasons, setSeasons] = useState<FilterOption[]>([])
+  const [weeks, setWeeks] = useState<FilterOption[]>([])
+  const [trackVariations, setTrackVariations] = useState<FilterOption[]>([])
+  const [series, setSeries] = useState<FilterOption[]>([])
+  const [years, setYears] = useState<FilterOption[]>([])
+  const [versions, setVersions] = useState<FilterOption[]>([])
+  const [filtersLoading, setFiltersLoading] = useState(false)
+  const skipNextFetchRef = useRef(false)
+  const requestAnchorIndexRef = useRef<number | null>(null)
+  const [selectionOrder, setSelectionOrder] = useState<FilterKey[]>([])
+  const [extraSelectionOrder, setExtraSelectionOrder] = useState<FilterKey[]>([])
+  const [searchResults, setSearchResults] = useState<Array<Record<string, unknown>>>(setups)
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
+  const [selectedSetup, setSelectedSetup] = useState<Record<string, unknown> | null>(null)
   const router = useRouter()
   const pathname = usePathname()
-  const hasHydratedUrlRef = useRef(false)
-  const [searchLoading, setSearchLoading] = useState(false)
-  const [tableSetups, setTableSetups] = useState(setups)
-  const pathFilters = useMemo(() => {
-    const safeDecode = (value: string) => {
-      try {
-        return decodeURIComponent(value)
-      } catch {
-        return value
-      }
-    }
-    const segments = pathname.split("/").filter(Boolean)
-    const setupsIndex = segments.indexOf("setups")
-    const gameSegment = setupsIndex >= 0 ? segments[setupsIndex + 1] : ""
-    if (!gameSegment || gameSegment !== game) {
-      return { car: "", track: "" }
-    }
-    return {
-      car: safeDecode(segments[setupsIndex + 2] ?? ""),
-      track: safeDecode(segments[setupsIndex + 3] ?? ""),
-    }
-  }, [game, pathname])
-  const [urlFilters, setUrlFilters] = useState<UrlFiltersState>({
-    class: "",
-    car: "",
-    track: "",
-    variation: "",
-    variationId: "",
-    season: "",
-    week: "",
-    series: "",
-    year: "",
-    version: "",
-  })
-  const [filtersLoading, setFiltersLoading] = useState(true)
-  const [filterOptions, setFilterOptions] = useState<FiltersState>({
-    classes: [],
-    cars: [],
-    tracks: [],
-    seasons: [],
-    weeks: [],
-    variations: [],
-    series: [],
-    years: [],
-    versions: [],
-  })
-  const [selectedClass, setSelectedClass] = useState("")
-  const [selectedCar, setSelectedCar] = useState("")
-  const [selectedTrack, setSelectedTrack] = useState("")
-  const [selectedSeason, setSelectedSeason] = useState("")
-  const [selectedWeek, setSelectedWeek] = useState("")
-  const [selectedVariation, setSelectedVariation] = useState("")
-  const [selectedSeries, setSelectedSeries] = useState("")
-  const [selectedYear, setSelectedYear] = useState("")
-  const [selectedVersion, setSelectedVersion] = useState("")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [showMoreFilters, setShowMoreFilters] = useState(false)
-  const clearOptionValue = "__all__"
-  const skipNextFiltersFetchRef = useRef(false)
-  const removalTriggeredRef = useRef(false)
-  const [filtersRefreshTick, setFiltersRefreshTick] = useState(0)
-  const [selectedSetupId, setSelectedSetupId] = useState<string>("")
-  const selectionOrderRef = useRef<Array<
-    "class" | "car" | "track" | "season" | "week" | "variation" | "series" | "year" | "version"
-  >>([])
+  const searchParams = useSearchParams()
+  const hasUrlParamsRef = useRef(false)
+  const urlAppliedRef = useRef(false)
+  const fixedRankingActiveRef = useRef(false)
+  const fixedSelectedRef = useRef<Set<FilterKey>>(new Set())
+  const lockedKeysRef = useRef<Set<FilterKey>>(new Set())
+  const urlSelectedNamesRef = useRef<Partial<Record<FilterKey, string>>>({})
+  const didUrlSearchRef = useRef(false)
+  const skipUrlApplyRef = useRef(false)
 
-  const mapOptions = useCallback((arr: unknown): FilterOption[] => {
-    if (!Array.isArray(arr)) {
-      return []
+  const setSelectedByKey = (key: FilterKey, value: string) => {
+    switch (key) {
+      case "class":
+        setSelectedClass(value)
+        break
+      case "car":
+        setSelectedCar(value)
+        break
+      case "track":
+        setSelectedTrack(value)
+        break
+      case "season":
+        setSelectedSeason(value)
+        break
+      case "week":
+        setSelectedWeek(value)
+        break
+      case "variation":
+        setSelectedTrackVariation(value)
+        break
+      case "series":
+        setSelectedSeries(value)
+        break
+      case "year":
+        setSelectedYear(value)
+        break
+      case "version":
+        setSelectedVersion(value)
+        break
     }
-    const result = arr
-      .map((item, index) => {
-        // Handle primitive values (strings, numbers)
-        if (typeof item === "string" || typeof item === "number") {
-          const value = String(item)
-          return { value, label: value }
-        }
-        
-        // Skip null/undefined
-        if (!item || typeof item !== "object") return null
-        
-        const entry = item as Record<string, unknown>
-        
-        // Try different property combinations
-        // 1. value + label (both present)
-        if (typeof entry.value === "string" && typeof entry.label === "string") {
-          return { value: entry.value, label: entry.label }
-        }
-        
-        // 2. value only (use as both value and label)
-        if (typeof entry.value === "string") {
-          return { value: entry.value, label: entry.value }
-        }
-        
-        // 3. label only (use as both value and label)
-        if (typeof entry.label === "string") {
-          return { value: entry.label, label: entry.label }
-        }
-        
-        // 4. id + name
-        if (typeof entry.id !== "undefined" && typeof entry.name === "string") {
-          return { value: String(entry.id), label: entry.name }
-        }
-        
-        // 5. id + label
-        if (typeof entry.id !== "undefined" && typeof entry.label === "string") {
-          return { value: String(entry.id), label: entry.label }
-        }
-        
-        // 6. id + variation (for variations field)
-        if (typeof entry.id !== "undefined" && typeof entry.variation === "string") {
-          return { value: String(entry.id), label: entry.variation }
-        }
-        
-        // 7. id + series/serie (for series field)
-        if (typeof entry.id !== "undefined" && typeof entry.series === "string") {
-          return { value: String(entry.id), label: entry.series }
-        }
-        if (typeof entry.id !== "undefined" && typeof entry.serie === "string") {
-          return { value: String(entry.id), label: entry.serie }
-        }
+  }
 
-        if (typeof entry.id !== "undefined" && typeof entry.version === "string") {
-          return { value: String(entry.id), label: entry.version }
-        }
-        
-        // 8. name only
-        if (typeof entry.name === "string") {
-          return { value: entry.name, label: entry.name }
-        }
-        
-        // 9. variation only
-        if (typeof entry.variation === "string") {
-          return { value: entry.variation, label: entry.variation }
-        }
-        
-        // 10. title only
-        if (typeof entry.title === "string") {
-          return { value: entry.title, label: entry.title }
-        }
-
-        if (typeof entry.version === "string") {
-          return { value: entry.version, label: entry.version }
-        }
-        
-        // Log unhandled cases
-        console.warn(`mapOptions: Could not map item at index ${index}`, item);
-        return null
-      })
-      .filter((item): item is FilterOption => item !== null)
-    
-    return result
-  }, [])
-
-  useEffect(() => {
-    const getParam = (key: keyof UrlFiltersState) => searchParams.get(key) ?? ""
-    setUrlFilters({
-      class: getParam("class"),
-      car: pathFilters.car || getParam("car"),
-      track: pathFilters.track || getParam("track"),
-      variation: getParam("variation"),
-      variationId: searchParams.get("variation_id") ?? "",
-      season: getParam("season"),
-      week: getParam("week"),
-      series: getParam("series"),
-      year: getParam("year"),
-      version: getParam("version"),
+  const clearSelections = (keys: FilterKey[]) => {
+    keys.forEach((key) => {
+      lockedKeysRef.current.delete(key)
+      setSelectedByKey(key, "")
     })
-    hasHydratedUrlRef.current = true
-  }, [pathFilters.car, pathFilters.track, searchParams])
+  }
 
-  const slugify = useCallback((value: string) => {
-    return value
+  const applyFixedRanking = (nextFixed: Set<FilterKey>, nextExtra: FilterKey[]) => {
+    const base = FIXED_ORDER.filter((key) => nextFixed.has(key))
+    const extras = nextExtra.filter((key) => !nextFixed.has(key))
+    setExtraSelectionOrder(extras)
+    setSelectionOrder([...base, ...extras])
+  }
+
+  const setOptionsByKey = (key: FilterKey, options: FilterOption[]) => {
+    switch (key) {
+      case "class":
+        setClasses(options)
+        break
+      case "car":
+        setCars(options)
+        break
+      case "track":
+        setTracks(options)
+        break
+      case "season":
+        setSeasons(options)
+        break
+      case "week":
+        setWeeks(options)
+        break
+      case "variation":
+        setTrackVariations(options)
+        break
+      case "series":
+        setSeries(options)
+        break
+      case "year":
+        setYears(options)
+        break
+      case "version":
+        setVersions(options)
+        break
+    }
+  }
+
+  const slugify = (value: string) =>
+    value
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
-  }, [])
 
-  const getWeekNumber = useCallback((value: string) => {
-    const match = value.match(/(\d+)/)
-    return match ? match[1] : ""
-  }, [])
-
-  const resolveSelectionValue = useCallback((options: FilterOption[], urlValue: string): string => {
-    if (!urlValue) return ""
-    const directMatch = options.find((option) => option.value === urlValue)
-    if (directMatch) {
-      console.log("resolveSelectionValue: direct match", { urlValue, resolvedId: directMatch.value })
-      return directMatch.value
-    }
-    const labelMatch = options.find(
-      (option) => option.label.toLowerCase() === urlValue.toLowerCase()
-    )
-    if (labelMatch) {
-      console.log("resolveSelectionValue: label match", { urlValue, resolvedId: labelMatch.value })
-      return labelMatch.value
-    }
-    const slugMatch = options.find((option) => {
-      const labelSlug = slugify(option.label)
-      const valueSlug = slugify(option.value)
-      return labelSlug === urlValue || valueSlug === urlValue
-    })
-    if (slugMatch) {
-      console.log("resolveSelectionValue: slug match", { urlValue, resolvedId: slugMatch.value })
-      return slugMatch.value
-    }
-    return ""
-  }, [slugify])
-
-  const resolveWeekSelectionValue = useCallback(
-    (options: FilterOption[], urlValue: string): string => {
-      if (!urlValue) return ""
-      const direct = resolveSelectionValue(options, urlValue)
-      if (direct) return direct
-      const urlWeek = getWeekNumber(urlValue) || urlValue
-      if (!urlWeek) return ""
-      const weekMatch = options.find((option) => {
-        const optionWeek = getWeekNumber(option.value) || getWeekNumber(option.label)
-        return optionWeek === urlWeek
-      })
-      return weekMatch?.value ?? ""
-    },
-    [getWeekNumber, resolveSelectionValue]
-  )
-
-  const normalizeSelectValue = useCallback((value: string) => {
-    return value === clearOptionValue ? "" : value
-  }, [clearOptionValue])
-
-  const hasUrlFilters = useMemo(() => {
-    return Object.values(urlFilters).some((value) => Boolean(value))
-  }, [urlFilters])
-
-  const getLabelFromOptions = useCallback((options: FilterOption[], value: string): string => {
-    if (!value) return ""
-    const match = options.find((option) => option.value === value)
-    return match?.label ?? value
-  }, [])
-
-  const getSlugFromOptions = useCallback(
-    (options: FilterOption[], value: string): string => {
-      if (!value) return ""
-      const label = getLabelFromOptions(options, value)
-      return slugify(label)
-    },
-    [getLabelFromOptions, slugify]
-  )
-
-  const getWeekSlugFromOptions = useCallback(
-    (options: FilterOption[], value: string): string => {
-      if (!value) return ""
-      const valueWeek = getWeekNumber(value)
-      if (valueWeek) return valueWeek
-      const label = getLabelFromOptions(options, value)
-      const labelWeek = getWeekNumber(label)
-      if (labelWeek) return labelWeek
-      return slugify(label)
-    },
-    [getLabelFromOptions, getWeekNumber, slugify]
-  )
-
-  const formatWeekLabel = useCallback((label: string) => {
-    const trimmed = label.trim()
-    if (/^week\s*\d+$/i.test(trimmed)) {
-      const weekNum = trimmed.match(/(\d+)/)?.[1]
-      return weekNum ? `Week ${weekNum}` : trimmed
-    }
-    if (/^\d+$/.test(trimmed)) {
-      return `Week ${trimmed}`
-    }
-    return trimmed
-  }, [])
-
-  const getLatestSeasonOption = useCallback((options: FilterOption[]) => {
-    if (options.length === 0) return null
-    const scored = options
-      .map((option) => {
-        const raw = `${option.label} ${option.value}`
-        const seasonMatch = raw.match(/(\d{4})\s*S(\d+)/i)
-        if (seasonMatch) {
-          const year = Number(seasonMatch[1])
-          const seasonNum = Number(seasonMatch[2])
-          return { option, score: year * 10 + seasonNum }
-        }
-        const yearMatch = raw.match(/(\d{4})/)
-        if (yearMatch) {
-          return { option, score: Number(yearMatch[1]) * 10 }
-        }
-        return { option, score: 0 }
-      })
-      .sort((a, b) => b.score - a.score)
-    return scored[0]?.option ?? null
-  }, [])
-
-  const handleSelectChange = useCallback(
-    (
-      field: "class" | "car" | "track" | "season" | "week" | "variation" | "series" | "year" | "version",
-      value: string,
-      options?: { skipFetch?: boolean }
-    ) => {
-      const normalized = normalizeSelectValue(value)
-      if (!normalized) {
-        removalTriggeredRef.current = true
-      }
-      if (options?.skipFetch) {
-        skipNextFiltersFetchRef.current = true
-      }
-
-      const fieldSetters = {
-        class: setSelectedClass,
-        car: setSelectedCar,
-        track: setSelectedTrack,
-        season: setSelectedSeason,
-        week: setSelectedWeek,
-        variation: setSelectedVariation,
-        series: setSelectedSeries,
-        year: setSelectedYear,
-        version: setSelectedVersion,
-      }
-
-      const fieldToOptionsKey: Record<keyof typeof fieldSetters, keyof FiltersState> = {
-        class: "classes",
-        car: "cars",
-        track: "tracks",
-        season: "seasons",
-        week: "weeks",
-        variation: "variations",
-        series: "series",
-        year: "years",
-        version: "versions",
-      }
-
-      const prevOrder = selectionOrderRef.current
-      const prevIndex = prevOrder.indexOf(field)
-      const fieldsToClear =
-        normalized === ""
-          ? prevIndex === -1
-            ? []
-            : prevOrder.slice(prevIndex)
-          : prevIndex === -1
-            ? []
-            : prevOrder.slice(prevIndex + 1)
-
-      if (fieldsToClear.length > 0) {
-        setFilterOptions((prev) => {
-          const next = { ...prev }
-          fieldsToClear.forEach((fieldKey) => {
-            const key = fieldToOptionsKey[fieldKey]
-            next[key] = []
-          })
-          return next
-        })
-        fieldsToClear.forEach((fieldKey) => {
-          fieldSetters[fieldKey]("")
-        })
-      }
-
-      fieldSetters[field](normalized)
-
-      const nextOrder = prevOrder.filter(
-        (fieldKey) => !fieldsToClear.includes(fieldKey) && fieldKey !== field
-      )
-      if (normalized) {
-        nextOrder.push(field)
-      }
-      selectionOrderRef.current = nextOrder
-    },
-    [normalizeSelectValue]
-  )
-
-  const toRequestValue = useCallback((value: string): string | number => {
-    const num = Number(value)
-    return Number.isFinite(num) ? num : value
-  }, [])
-
-  const buildRequestBody = useCallback(() => {
-    const body: Record<string, string | number> = {
-      category_id: categoryId,
-    }
-    if (selectedClass) body.class_id = toRequestValue(selectedClass)
-    if (selectedCar) body.car_id = toRequestValue(selectedCar)
-    if (selectedTrack) body.track_id = toRequestValue(selectedTrack)
-    if (selectedVariation) body.variation_id = toRequestValue(selectedVariation)
-    if (selectedSeason) body.season_id = toRequestValue(selectedSeason)
-    if (selectedWeek) {
-      const weekNum = selectedWeek.match(/(\d+)/)?.[1]
-      body.week = weekNum ? toRequestValue(weekNum) : toRequestValue(selectedWeek)
-    }
-    if (selectedSeries) body.series_id = toRequestValue(selectedSeries)
-    if (selectedYear) body.year = toRequestValue(selectedYear)
-    if (selectedVersion) body.version_id = toRequestValue(selectedVersion)
-    return body
-  }, [
-    categoryId,
-    selectedClass,
-    selectedCar,
-    selectedTrack,
-    selectedVariation,
-    selectedSeason,
-    selectedWeek,
-    selectedSeries,
-    selectedYear,
-    selectedVersion,
-    toRequestValue,
-  ])
-
-  const displayFilterOptions = useMemo(() => {
-    const limitToUrlSelection = (
-      options: FilterOption[],
-      selectedValue: string,
-      urlValue: string,
-      resolver: (options: FilterOption[], urlValue: string) => string
-    ) => {
-      if (!urlValue) return options
-      const resolved = resolver(options, urlValue)
-      const matchValue = resolved || selectedValue
-      if (!matchValue) return []
-      return options.filter((option) => option.value === matchValue)
-    }
-    const withUrlLabelFallback = (
-      options: FilterOption[],
-      value: string,
-      label: string
-    ): FilterOption[] => {
-      if (!value || !label) return options
-      if (options.some((option) => option.value === value)) return options
-      return [{ value, label }, ...options]
-    }
-
-    const variationOptions = limitToUrlSelection(
-      filterOptions.variations,
-      selectedVariation,
-      urlFilters.variation || urlFilters.variationId,
-      resolveSelectionValue
-    )
-    const variationValue = selectedVariation || urlFilters.variationId
-
-    return {
-      classes: limitToUrlSelection(filterOptions.classes, selectedClass, urlFilters.class, resolveSelectionValue),
-      cars: limitToUrlSelection(filterOptions.cars, selectedCar, urlFilters.car, resolveSelectionValue),
-      tracks: limitToUrlSelection(filterOptions.tracks, selectedTrack, urlFilters.track, resolveSelectionValue),
-      seasons: limitToUrlSelection(filterOptions.seasons, selectedSeason, urlFilters.season, resolveSelectionValue),
-      weeks: limitToUrlSelection(filterOptions.weeks, selectedWeek, urlFilters.week, resolveWeekSelectionValue),
-      variations: withUrlLabelFallback(
-        variationOptions,
-        variationValue,
-        urlFilters.variation
-      ),
-      series: limitToUrlSelection(filterOptions.series, selectedSeries, urlFilters.series, resolveSelectionValue),
-      years: limitToUrlSelection(filterOptions.years, selectedYear, urlFilters.year, resolveSelectionValue),
-      versions: limitToUrlSelection(filterOptions.versions, selectedVersion, urlFilters.version, resolveSelectionValue),
-    }
-  }, [
-    filterOptions,
-    resolveSelectionValue,
-    resolveWeekSelectionValue,
-    selectedCar,
-    selectedClass,
-    selectedSeason,
-    selectedSeries,
-    selectedTrack,
-    selectedVariation,
-    selectedWeek,
-    selectedYear,
-    selectedVersion,
-    urlFilters,
-  ])
-
-  const urlFiltersRefreshTriggeredRef = useRef(false)
-  const lastAutoSearchQueryRef = useRef("")
-  const urlSelectionsReady = useMemo(() => {
-    const needsVariation = Boolean(urlFilters.variation || urlFilters.variationId)
-    return (
-      (!urlFilters.class || selectedClass) &&
-      (!urlFilters.car || selectedCar) &&
-      (!urlFilters.track || selectedTrack) &&
-      (!needsVariation || selectedVariation) &&
-      (!urlFilters.season || selectedSeason) &&
-      (!urlFilters.week || selectedWeek) &&
-      (!urlFilters.series || selectedSeries) &&
-      (!urlFilters.year || selectedYear) &&
-      (!urlFilters.version || selectedVersion)
-    )
-  }, [
-    urlFilters.variation,
-    urlFilters.variationId,
-    selectedCar,
-    selectedClass,
-    selectedSeason,
-    selectedSeries,
-    selectedTrack,
-    selectedVariation,
-    selectedWeek,
-    selectedYear,
-    selectedVersion,
-    urlFilters,
-  ])
-
-  useEffect(() => {
-    setTableSetups(setups)
-  }, [setups])
-
-  useEffect(() => {
-    if (game !== "iracing") {
-      setSelectedSeason("")
-      setSelectedWeek("")
-      setSelectedVariation("")
-      setSelectedSeries("")
-      setSelectedYear("")
-    } else {
-      setSelectedVersion("")
-    }
-    selectionOrderRef.current = []
-  }, [game])
-
-  useEffect(() => {
-    if (game !== "iracing") return
-    if (!selectedCar || !selectedTrack) return
-    if (urlFilters.season || urlFilters.week) return
-
-    if (!selectedSeason && filterOptions.seasons.length > 0) {
-      const latestSeason = getLatestSeasonOption(filterOptions.seasons)
-      if (latestSeason) {
-        handleSelectChange("season", latestSeason.value)
-      }
-    }
-    if (!selectedWeek && filterOptions.weeks.length === 1) {
-      const onlyWeek = filterOptions.weeks[0]
-      if (onlyWeek) {
-        handleSelectChange("week", onlyWeek.value)
-      }
-    }
-  }, [
-    filterOptions.seasons,
-    filterOptions.weeks,
-    game,
-    getLatestSeasonOption,
-    handleSelectChange,
-    selectedCar,
-    selectedSeason,
-    selectedTrack,
-    selectedWeek,
-    urlFilters.season,
-    urlFilters.week,
-  ])
-
-  useEffect(() => {
-    if (!filterOptions.classes.length && !filterOptions.cars.length && !filterOptions.tracks.length) {
-      return
-    }
-    console.log("URL filters snapshot", urlFilters)
-    console.log("Filter options snapshot", filterOptions)
-    const autoSelect = (field: "class" | "car" | "track" | "season" | "week" | "variation" | "series" | "year" | "version", value: string) => {
-      if (!value) return
-      handleSelectChange(field, value, { skipFetch: true })
-    }
-    if (!selectedClass && !urlFilters.class && filterOptions.classes.length === 1) {
-      autoSelect("class", filterOptions.classes[0].value)
-    }
-    if (!selectedCar && !urlFilters.car && filterOptions.cars.length === 1) {
-      autoSelect("car", filterOptions.cars[0].value)
-    }
-    if (!selectedTrack && !urlFilters.track && filterOptions.tracks.length === 1) {
-      autoSelect("track", filterOptions.tracks[0].value)
-    }
-    if (!selectedClass && urlFilters.class) {
-      const resolved = resolveSelectionValue(filterOptions.classes, urlFilters.class)
-      console.log("URL -> id resolved", { field: "class", urlValue: urlFilters.class, resolvedId: resolved })
-      if (resolved) handleSelectChange("class", resolved)
-    }
-    if (!selectedCar && urlFilters.car) {
-      const resolved = resolveSelectionValue(filterOptions.cars, urlFilters.car)
-      console.log("URL -> id resolved", { field: "car", urlValue: urlFilters.car, resolvedId: resolved })
-      if (resolved) handleSelectChange("car", resolved)
-    }
-    if (!selectedTrack && urlFilters.track) {
-      const resolved = resolveSelectionValue(filterOptions.tracks, urlFilters.track)
-      console.log("URL -> id resolved", { field: "track", urlValue: urlFilters.track, resolvedId: resolved })
-      if (resolved) handleSelectChange("track", resolved)
-    }
-    if (game === "iracing") {
-      if (!selectedSeason && !urlFilters.season && filterOptions.seasons.length === 1) {
-        autoSelect("season", filterOptions.seasons[0].value)
-      }
-      if (!selectedWeek && !urlFilters.week && filterOptions.weeks.length === 1) {
-        autoSelect("week", filterOptions.weeks[0].value)
-      }
-      if (!selectedVariation && !urlFilters.variation && filterOptions.variations.length === 1) {
-        autoSelect("variation", filterOptions.variations[0].value)
-      }
-      if (!selectedSeries && !urlFilters.series && filterOptions.series.length === 1) {
-        autoSelect("series", filterOptions.series[0].value)
-      }
-      if (!selectedYear && !urlFilters.year && filterOptions.years.length === 1) {
-        autoSelect("year", filterOptions.years[0].value)
-      }
-    if (!selectedVariation && urlFilters.variationId) {
-      handleSelectChange("variation", urlFilters.variationId, { skipFetch: true })
-    } else if (!selectedVariation && urlFilters.variation) {
-      const resolved = resolveSelectionValue(filterOptions.variations, urlFilters.variation)
-      console.log("URL -> id resolved", { field: "variation", urlValue: urlFilters.variation, resolvedId: resolved })
-      if (resolved) {
-        handleSelectChange("variation", resolved, { skipFetch: true })
-      }
-    }
-      if (!selectedSeason && urlFilters.season) {
-        const resolved = resolveSelectionValue(filterOptions.seasons, urlFilters.season)
-        console.log("URL -> id resolved", { field: "season", urlValue: urlFilters.season, resolvedId: resolved })
-        if (resolved) handleSelectChange("season", resolved, { skipFetch: true })
-      }
-      if (!selectedWeek && urlFilters.week) {
-        const resolved = resolveWeekSelectionValue(filterOptions.weeks, urlFilters.week)
-        console.log("URL -> id resolved", { field: "week", urlValue: urlFilters.week, resolvedId: resolved })
-        if (resolved) handleSelectChange("week", resolved, { skipFetch: true })
-      }
-      if (!selectedSeries && urlFilters.series) {
-        const resolved = resolveSelectionValue(filterOptions.series, urlFilters.series)
-        console.log("URL -> id resolved", { field: "series", urlValue: urlFilters.series, resolvedId: resolved })
-        if (resolved) handleSelectChange("series", resolved, { skipFetch: true })
-      }
-      if (!selectedYear && urlFilters.year) {
-        const resolved = resolveSelectionValue(filterOptions.years, urlFilters.year)
-        console.log("URL -> id resolved", { field: "year", urlValue: urlFilters.year, resolvedId: resolved })
-        if (resolved) handleSelectChange("year", resolved, { skipFetch: true })
-      }
-    } else if (!selectedVersion && urlFilters.version) {
-      const resolved = resolveSelectionValue(filterOptions.versions, urlFilters.version)
-      console.log("URL -> id resolved", { field: "version", urlValue: urlFilters.version, resolvedId: resolved })
-      if (resolved) handleSelectChange("version", resolved, { skipFetch: true })
-    } else if (!selectedVersion && filterOptions.versions.length === 1) {
-      autoSelect("version", filterOptions.versions[0].value)
-    }
-  }, [
-    filterOptions,
-    game,
-    handleSelectChange,
-    resolveSelectionValue,
-    resolveWeekSelectionValue,
-    selectedCar,
-    selectedClass,
-    selectedSeason,
-    selectedSeries,
-    selectedTrack,
-    selectedVariation,
-    selectedWeek,
-    selectedYear,
-    selectedVersion,
-    urlFilters,
-  ])
-
-  const fetchSetups = useCallback(async () => {
-    const requestBody = buildRequestBody()
-    setSearchLoading(true)
-    console.log("=== SEARCH REQUEST BODY ===", requestBody)
+  const getStoredIdByName = (key: FilterKey, name: string) => {
+    if (!name) return ""
     try {
-      const response = await fetch(apiUrl("/api/v1/setups/search"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      })
-      if (!response.ok) {
-        throw new Error(`Search API responded with ${response.status}`)
-      }
-      const data = await response.json()
-      console.log("=== SEARCH API RESPONSE ===", data)
-      const payload =
-        data && typeof data === "object" && "data" in (data as Record<string, unknown>)
-          ? (data as Record<string, unknown>).data
-          : data
-      if (Array.isArray(payload)) {
-        const normalized = payload.map((item) => {
-          const entry = item as Record<string, unknown>
-          const getName = (value: unknown) => {
-            if (!value) return ""
-            if (typeof value === "string") return value
-            if (typeof value === "object") {
-              const record = value as Record<string, unknown>
-              if (typeof record.name === "string") return record.name
-              if (typeof record.label === "string") return record.label
-            }
-            return ""
-          }
-          return {
-            id: String(entry.id ?? ""),
-            game: getName(entry.category) || String(entry.game ?? game),
-            car: getName(entry.car),
-            track: getName(entry.track),
-            season: getName(entry.season),
-            week: entry.week ? String(entry.week) : undefined,
-            series: getName(entry.series),
-            lapTime: typeof entry.lap_time === "string" ? entry.lap_time : undefined,
-            version: getName(entry.version) || undefined,
-            year: entry.year ? String(entry.year) : undefined,
-            videoUrl: typeof entry.video_url === "string" ? entry.video_url : undefined,
-            trackGuideUrl: typeof entry.track_guide_url === "string" ? entry.track_guide_url : undefined,
-            weather: normalizeWeather(entry.weather),
-          }
-        })
-        setTableSetups(normalized as SetupPageProps["setups"])
-      } else {
-        console.warn("Search API payload is not an array", payload)
-        setTableSetups([])
-      }
-    } catch (error) {
-      console.error("Failed to fetch setups", error)
-      setTableSetups([])
-    } finally {
-      setSearchLoading(false)
+      const raw = localStorage.getItem(`setupFilters:${key}`)
+      if (!raw) return ""
+      const map = JSON.parse(raw) as Record<string, number>
+      const decoded = decodeURIComponent(name)
+      const id =
+        map[name.toLowerCase()] ??
+        map[decoded.toLowerCase()] ??
+        map[slugify(decoded)]
+      return typeof id === "number" ? String(id) : ""
+    } catch {
+      return ""
     }
-  }, [buildRequestBody])
+  }
 
-  // Removed auto search on selection; use Find Setup button only.
+  const storeOptionsByName = (key: FilterKey, options: FilterOption[]) => {
+    try {
+      const map: Record<string, number> = {}
+      options.forEach((opt) => {
+        const lower = opt.name.toLowerCase()
+        map[lower] = opt.id
+        const slug = slugify(opt.name)
+        if (slug) map[slug] = opt.id
+      })
+      localStorage.setItem(`setupFilters:${key}`, JSON.stringify(map))
+    } catch {
+      // ignore storage errors
+    }
+  }
 
-  useEffect(() => {
-    let cancelled = false
-    const requestBody = buildRequestBody()
-    setFiltersLoading(true)
-    if (skipNextFiltersFetchRef.current) {
-      skipNextFiltersFetchRef.current = false
-      setFiltersLoading(false)
+  const updateOrderForAuto = (key: FilterKey, value: string) => {
+    if (fixedRankingActiveRef.current) {
+      const nextFixed = new Set(fixedSelectedRef.current)
+      let nextExtra = extraSelectionOrder
+      if (value) {
+        if (!nextFixed.has(key)) {
+          if (!nextExtra.includes(key)) nextExtra = [...nextExtra, key]
+        }
+      } else {
+        nextFixed.delete(key)
+        nextExtra = nextExtra.filter((k) => k !== key)
+      }
+      fixedSelectedRef.current = nextFixed
+      applyFixedRanking(nextFixed, nextExtra)
       return
     }
-    console.log("=== FILTERS REQUEST BODY ===", requestBody)
-    console.log("=== FILTERS SELECTIONS ===", {
-      class: selectedClass,
-      car: selectedCar,
-      track: selectedTrack,
-      season: selectedSeason,
-      week: selectedWeek,
-      variation: selectedVariation,
-      series: selectedSeries,
-      year: selectedYear,
-      version: selectedVersion,
-      game,
+    setSelectionOrder((prev) => {
+      const exists = prev.includes(key)
+      if (value) {
+        return exists ? prev : [...prev, key]
+      }
+      return exists ? prev.filter((k) => k !== key) : prev
     })
-    fetch(apiUrl("/api/v1/setups/filters"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        console.log("=== FILTERS RESPONSE ===", data)
-        if (cancelled) return
-        const payload =
-          data && typeof data === "object" && "data" in (data as Record<string, unknown>)
-            ? (data as Record<string, unknown>).data
-            : data
-        const source = (payload ?? {}) as Record<string, unknown>
-        console.log("=== FILTERS RESPONSE KEYS ===", Object.keys(source))
-        
-        const hasClasses = "classes" in source || "class" in source
-        const hasCars = "cars" in source || "car" in source
-        const hasTracks = "tracks" in source || "track" in source
-        const hasSeasons = "seasons" in source || "season" in source || "conditions" in source
-        const hasWeeks = "weeks" in source || "week" in source
-        const hasVariations =
-          "variations" in source ||
-          "variation" in source ||
-          "varation" in source
-        const hasSeries =
-          "serieses" in source || "series" in source || "type" in source || "types" in source || "serie" in source
-        const hasYears = "years" in source || "year" in source
-        const hasVersions = "versions" in source || "version" in source
+  }
 
-        setFilterOptions((prev) => ({
-          classes: hasClasses ? mapOptions(source.classes ?? source.class) : prev.classes,
-          cars: hasCars ? mapOptions(source.cars ?? source.car) : prev.cars,
-          tracks: hasTracks ? mapOptions(source.tracks ?? source.track) : prev.tracks,
-          seasons: hasSeasons ? mapOptions(source.seasons ?? source.season ?? source.conditions) : prev.seasons,
-          weeks: hasWeeks
-            ? mapOptions(source.weeks ?? source.week)
-                .map((option) => ({
-                  ...option,
-                  label: formatWeekLabel(option.label),
-                }))
-                .sort((a, b) => {
-                  const aNum = Number(a.value.match(/(\d+)/)?.[1] ?? a.label.match(/(\d+)/)?.[1] ?? 0)
-                  const bNum = Number(b.value.match(/(\d+)/)?.[1] ?? b.label.match(/(\d+)/)?.[1] ?? 0)
-                  return bNum - aNum
-                })
-            : prev.weeks,
-          variations: hasVariations
-            ? mapOptions(source.variations ?? source.variation)
-            : prev.variations,
-          series: hasSeries ? mapOptions(source.serieses ?? source.series ?? source.type ?? source.types ?? source.serie) : prev.series,
-          years: hasYears ? mapOptions(source.years ?? source.year) : prev.years,
-          versions: hasVersions ? mapOptions(source.versions ?? source.version) : prev.versions,
-        }))
+  const handleUserChange = (key: FilterKey, value: string) => {
+    const nextValue = value === "__clear__" ? "" : value
+    const prevOrder = selectionOrder
+    const prevIndex = prevOrder.indexOf(key)
+    const anchorIndex = prevIndex === -1 ? prevOrder.length : prevIndex
+
+    requestAnchorIndexRef.current = anchorIndex
+    lockedKeysRef.current.delete(key)
+
+    if (fixedRankingActiveRef.current && key === "class" && !nextValue) {
+      const toClear = prevOrder.filter((k) => k !== "class")
+      if (toClear.length) clearSelections(toClear)
+      fixedSelectedRef.current = new Set()
+      applyFixedRanking(fixedSelectedRef.current, [])
+    }
+
+    if (fixedRankingActiveRef.current) {
+      const nextFixed = new Set(fixedSelectedRef.current)
+      let nextExtra = extraSelectionOrder
+      if (nextValue) {
+        if (!nextFixed.has(key)) {
+          if (!nextExtra.includes(key)) nextExtra = [...nextExtra, key]
+        }
+      } else {
+        nextFixed.delete(key)
+        nextExtra = nextExtra.filter((k) => k !== key)
+      }
+      fixedSelectedRef.current = nextFixed
+      applyFixedRanking(nextFixed, nextExtra)
+    }
+
+    if (nextValue) {
+      const baseOrder = prevIndex === -1 ? [...prevOrder, key] : prevOrder
+      const removedKeys = baseOrder.slice(anchorIndex + 1)
+      if (removedKeys.length) clearSelections(removedKeys)
+      setSelectionOrder(baseOrder.slice(0, anchorIndex + 1))
+    } else {
+      const removedKeys = prevIndex === -1 ? [] : prevOrder.slice(prevIndex)
+      if (removedKeys.length) clearSelections(removedKeys)
+      setSelectionOrder(prevOrder.slice(0, anchorIndex))
+    }
+
+    setSelectedByKey(key, nextValue)
+    setCurrentPage(1)
+  }
+
+  useEffect(() => {
+    if (skipUrlApplyRef.current) {
+      skipUrlApplyRef.current = false
+      return
+    }
+    const entries = Array.from(searchParams.entries())
+    const segments = pathname.split("/").filter(Boolean)
+    const carFromPath = segments[2] ? decodeURIComponent(segments[2]) : ""
+    const trackFromPath = segments[3] ? decodeURIComponent(segments[3]) : ""
+    if (!entries.length && !carFromPath && !trackFromPath) {
+      hasUrlParamsRef.current = false
+      fixedRankingActiveRef.current = false
+      fixedSelectedRef.current = new Set()
+      urlAppliedRef.current = true
+      return
+    }
+
+    const desiredByKey: Partial<Record<FilterKey, string>> = {}
+    const order: FilterKey[] = []
+    if (carFromPath) {
+      desiredByKey.car = carFromPath
+      order.push("car")
+    }
+    if (trackFromPath) {
+      desiredByKey.track = trackFromPath
+      if (!order.includes("track")) order.push("track")
+    }
+    entries.forEach(([key, value]) => {
+      const normalized = key.toLowerCase()
+      const mapKey =
+        normalized === "class"
+          ? "class"
+          : normalized === "car"
+            ? "car"
+            : normalized === "track"
+              ? "track"
+              : normalized === "season"
+                ? "season"
+                : normalized === "week"
+                  ? "week"
+                  : normalized === "variation"
+                    ? "variation"
+                    : normalized === "series"
+                      ? "series"
+                      : normalized === "year"
+                        ? "year"
+                        : normalized === "version"
+                          ? "version"
+                          : null
+      if (!mapKey) return
+      if (isAccOrLmu && !FIXED_ORDER_ACC_LMU.includes(mapKey)) return
+      if (!isAccOrLmu && mapKey === "version") return
+      desiredByKey[mapKey] = value
+      if (!order.includes(mapKey)) order.push(mapKey)
+    })
+
+    if (!order.length) {
+      hasUrlParamsRef.current = false
+      urlAppliedRef.current = true
+      return
+    }
+
+    const sortedOrder = [...order].sort(
+      (a, b) => FIXED_ORDER.indexOf(a) - FIXED_ORDER.indexOf(b)
+    )
+
+    hasUrlParamsRef.current = true
+    fixedRankingActiveRef.current = true
+    urlSelectedNamesRef.current = desiredByKey
+
+    const resolvedOrder: FilterKey[] = []
+    sortedOrder.forEach((key) => {
+      const name = desiredByKey[key]
+      if (!name) return
+      const id = getStoredIdByName(key, name)
+      if (!id) return
+      setSelectedByKey(key, id)
+      setOptionsByKey(key, [{ id: parseInt(id, 10), name }])
+      resolvedOrder.push(key)
+    })
+
+    if (resolvedOrder.length) {
+      const fixedSelected = new Set(resolvedOrder)
+      fixedSelectedRef.current = fixedSelected
+      applyFixedRanking(fixedSelected, [])
+      lockedKeysRef.current = new Set(resolvedOrder)
+    }
+    urlAppliedRef.current = true
+  }, [searchParams, pathname])
+
+  useEffect(() => {
+    if (categoryId == null) return
+    if (hasUrlParamsRef.current && !urlAppliedRef.current) return
+    if (skipNextFetchRef.current) {
+      skipNextFetchRef.current = false
+      return
+    }
+    let cancelled = false
+    setFiltersLoading(true)
+    const body: Record<string, number> = { category_id: categoryId }
+    const anchorIndex = requestAnchorIndexRef.current
+    const limitIndex = anchorIndex == null ? selectionOrder.length - 1 : anchorIndex
+    const orderedKeys = selectionOrder
+      .filter((k) => FIXED_ORDER.includes(k))
+      .slice(0, Math.max(0, limitIndex + 1))
+    const addIfSelected = (value: string, field: string) => {
+      if (value) body[field] = parseInt(value, 10)
+    }
+    orderedKeys.forEach((key) => {
+      switch (key) {
+        case "class":
+          addIfSelected(selectedClass, "class_id")
+          break
+        case "car":
+          addIfSelected(selectedCar, "car_id")
+          break
+        case "track":
+          addIfSelected(selectedTrack, "track_id")
+          break
+        case "season":
+          addIfSelected(selectedSeason, "season_id")
+          break
+        case "week":
+          addIfSelected(selectedWeek, "week")
+          break
+        case "variation":
+          addIfSelected(selectedTrackVariation, "variation_id")
+          break
+        case "series":
+          addIfSelected(selectedSeries, "series_id")
+          break
+        case "year":
+          addIfSelected(selectedYear, "year")
+          break
+        case "version":
+          addIfSelected(selectedVersion, "version_id")
+          break
+      }
+    })
+
+    const syncSelection = (
+      key: FilterKey,
+      options: FilterOption[],
+      selected: string,
+      setSelected: (value: string) => void
+    ) => {
+      if (lockedKeysRef.current.has(key) && selected) {
+        const match = options.find((opt) => String(opt.id) === selected)
+        if (match) {
+          setOptionsByKey(key, [match])
+          return
+        }
+        const fallbackName = urlSelectedNamesRef.current[key]
+        if (fallbackName) {
+          setOptionsByKey(key, [{ id: parseInt(selected, 10), name: fallbackName }])
+          return
+        }
+      }
+      if (options.length === 1) {
+        const only = String(options[0].id)
+        if (selected !== only) {
+          skipNextFetchRef.current = true
+          setSelected(only)
+          updateOrderForAuto(key, only)
+        }
+        return
+      }
+      if (selected && !options.some((opt) => String(opt.id) === selected)) {
+        skipNextFetchRef.current = true
+        setSelected("")
+        updateOrderForAuto(key, "")
+      }
+    }
+
+    fetch(apiUrl("/api/v1/products/cascading-filters"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(body),
+    })
+      .then(async (res) => {
+        const json = await res.json()
+        return { res, json }
+      })
+      .then(({ res, json }) => {
+        if (cancelled) return
+        const ok = res.ok && (json.success === true || json.status === true)
+        const data = (json.data ?? json) as Record<string, unknown>
+        if (ok) {
+          if ("classes" in data || "class" in data) {
+            const next = normalizeFilterOptions(data.classes ?? data.class)
+            if (!lockedKeysRef.current.has("class")) setClasses(next)
+            storeOptionsByName("class", next)
+            syncSelection("class", next, selectedClass, setSelectedClass)
+          }
+          if ("cars" in data || "car" in data) {
+            const next = normalizeFilterOptions(data.cars ?? data.car)
+            if (!lockedKeysRef.current.has("car")) setCars(next)
+            storeOptionsByName("car", next)
+            syncSelection("car", next, selectedCar, setSelectedCar)
+          }
+          if ("tracks" in data || "track" in data) {
+            const next = normalizeFilterOptions(data.tracks ?? data.track)
+            if (!lockedKeysRef.current.has("track")) setTracks(next)
+            storeOptionsByName("track", next)
+            syncSelection("track", next, selectedTrack, setSelectedTrack)
+          }
+          if (!isAccOrLmu) {
+            if ("seasons" in data || "season" in data) {
+              const next = normalizeFilterOptions(data.seasons ?? data.season)
+              if (!lockedKeysRef.current.has("season")) setSeasons(next)
+              storeOptionsByName("season", next)
+              syncSelection("season", next, selectedSeason, setSelectedSeason)
+            }
+            if ("weeks" in data || "week" in data) {
+              const next = normalizeWeeks(data.weeks ?? data.week)
+              if (!lockedKeysRef.current.has("week")) setWeeks(next)
+              storeOptionsByName("week", next)
+              syncSelection("week", next, selectedWeek, setSelectedWeek)
+            }
+            if ("variations" in data || "track_variations" in data || "track_variation" in data) {
+              const next = normalizeFilterOptions(data.variations ?? data.track_variations ?? data.track_variation)
+              if (!lockedKeysRef.current.has("variation")) setTrackVariations(next)
+              storeOptionsByName("variation", next)
+              syncSelection("variation", next, selectedTrackVariation, setSelectedTrackVariation)
+            }
+            if ("serieses" in data || "series" in data) {
+              const next = normalizeFilterOptions(data.serieses ?? data.series)
+              if (!lockedKeysRef.current.has("series")) setSeries(next)
+              storeOptionsByName("series", next)
+              syncSelection("series", next, selectedSeries, setSelectedSeries)
+            }
+            if ("years" in data || "year" in data) {
+              const next = normalizeYears(data.years ?? data.year)
+              if (!lockedKeysRef.current.has("year")) setYears(next)
+              storeOptionsByName("year", next)
+              syncSelection("year", next, selectedYear, setSelectedYear)
+            }
+          }
+          if (isAccOrLmu && ("versions" in data || "version" in data)) {
+            const next = normalizeFilterOptions(data.versions ?? data.version)
+            if (!lockedKeysRef.current.has("version")) setVersions(next)
+            storeOptionsByName("version", next)
+            syncSelection("version", next, selectedVersion, setSelectedVersion)
+          }
+        }
       })
       .catch(() => {
         if (!cancelled) {
-          setFilterOptions({
-            classes: [],
-            cars: [],
-            tracks: [],
-            seasons: [],
-            weeks: [],
-            variations: [],
-            series: [],
-            years: [],
-            versions: [],
-          })
+          setClasses([])
+          setCars([])
+          setTracks([])
+          setSeasons([])
+          setWeeks([])
+          setTrackVariations([])
+          setSeries([])
+          setYears([])
+          setVersions([])
         }
       })
       .finally(() => {
         if (!cancelled) setFiltersLoading(false)
       })
     return () => { cancelled = true }
-  }, [buildRequestBody, filtersRefreshTick])
-
-  const buildUrlSelections = useCallback(() => {
-    const variationLabel =
-      filterOptions.variations.find((option) => option.value === selectedVariation)?.label ?? ""
-    return {
-      category: String(categoryId),
-      class: getSlugFromOptions(filterOptions.classes, selectedClass),
-      car: getSlugFromOptions(filterOptions.cars, selectedCar),
-      track: getSlugFromOptions(filterOptions.tracks, selectedTrack),
-      variation: variationLabel,
-      variationId: selectedVariation,
-      season: getSlugFromOptions(filterOptions.seasons, selectedSeason),
-      week: getWeekSlugFromOptions(filterOptions.weeks, selectedWeek),
-      series: getSlugFromOptions(filterOptions.series, selectedSeries),
-      year: getSlugFromOptions(filterOptions.years, selectedYear),
-      version: getSlugFromOptions(filterOptions.versions, selectedVersion),
-    }
   }, [
     categoryId,
-    filterOptions,
-    getWeekSlugFromOptions,
-    getSlugFromOptions,
-    selectedCar,
     selectedClass,
-    selectedSeason,
-    selectedSeries,
+    selectedCar,
     selectedTrack,
-    selectedVariation,
+    selectedSeason,
     selectedWeek,
+    selectedTrackVariation,
+    selectedSeries,
     selectedYear,
     selectedVersion,
   ])
 
-  const buildPathFromSelections = useCallback(() => {
-    const basePath = `/setups/${game}`
-    if (!selectedCar) return basePath
-    const carSlug = getSlugFromOptions(filterOptions.cars, selectedCar) || pathFilters.car
-    if (!carSlug) return basePath
-    const trackSlug = selectedTrack
-      ? getSlugFromOptions(filterOptions.tracks, selectedTrack) || pathFilters.track
-      : pathFilters.track
-    if (!trackSlug) return `${basePath}/${carSlug}`
-    return `${basePath}/${carSlug}/${trackSlug}`
-  }, [
-    filterOptions.cars,
-    filterOptions.tracks,
-    game,
-    getSlugFromOptions,
-    pathFilters.car,
-    pathFilters.track,
-    selectedCar,
-    selectedTrack,
-  ])
+  const parseLapTimeMs = (setup: Record<string, unknown>) => {
+    const ms = setup.lap_time_ms
+    if (typeof ms === "number") return ms
+    const str = getDisplayValue(setup.lap_time ?? setup.lapTime)
+    if (!str || str === "-") return Infinity
+    const m1 = str.match(/^(\d+):(\d+)\.(\d+)$/)
+    if (m1) return parseInt(m1[1], 10) * 60000 + parseInt(m1[2], 10) * 1000 + parseInt(m1[3], 10)
+    const m2 = str.match(/^(\d+):(\d+)$/)
+    if (m2) return parseInt(m2[1], 10) * 60000 + parseInt(m2[2], 10) * 1000
+    return Infinity
+  }
 
-  const buildUrlQueryFromSelections = useCallback(() => {
-    const params = new URLSearchParams(searchParams.toString())
-    const setOrDelete = (key: string, value: string) => {
-      if (value) {
-        params.set(key, value)
-      } else {
-        params.delete(key)
-      }
+  const displaySetups = hasSearched
+    ? [...searchResults].sort((a, b) => parseLapTimeMs(a as Record<string, unknown>) - parseLapTimeMs(b as Record<string, unknown>))
+    : []
+  const totalItems = displaySetups.length
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE))
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const paginatedSetups = displaySetups.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+
+  useEffect(() => {
+    if (!hasSearched || searchResults.length === 0) {
+      setSelectedSetup(null)
+      return
     }
-
-    const selections = buildUrlSelections()
-    const usePathForCar = Boolean(selectedCar || pathFilters.car)
-    const resolvedCar = selections.car || urlFilters.car
-    const resolvedTrack = selections.track || urlFilters.track
-    const resolvedVariation = selections.variation || urlFilters.variation
-    const resolvedVariationId = selections.variationId || urlFilters.variationId
-    setOrDelete("category", selections.category)
-    setOrDelete("class", selections.class)
-    setOrDelete("car", usePathForCar ? "" : resolvedCar)
-    setOrDelete("track", usePathForCar ? "" : resolvedTrack)
-    setOrDelete("variation", resolvedVariation)
-    setOrDelete("variation_id", resolvedVariationId)
-    setOrDelete("season", selections.season)
-    setOrDelete("week", selections.week)
-    setOrDelete("series", selections.series)
-    setOrDelete("year", selections.year)
-    setOrDelete("version", selections.version)
-    return params.toString()
-  }, [
-    buildUrlSelections,
-    pathFilters.car,
-    searchParams,
-    selectedCar,
-    urlFilters.car,
-    urlFilters.track,
-    urlFilters.variation,
-    urlFilters.variationId,
-  ])
-
-  const buildUrlKeyFromSelections = useCallback(() => {
-    const nextQuery = buildUrlQueryFromSelections()
-    const nextPath = buildPathFromSelections()
-    return `${nextPath}?${nextQuery}`
-  }, [buildPathFromSelections, buildUrlQueryFromSelections])
-
-  const updateUrlFromSelections = useCallback(() => {
-    if (!hasHydratedUrlRef.current) return ""
-    const nextQuery = buildUrlQueryFromSelections()
-    const nextPath = buildPathFromSelections()
-    const currentQuery = searchParams.toString()
-    const currentPath = pathname
-    if (nextQuery !== currentQuery || nextPath !== currentPath) {
-      router.replace(`${nextPath}${nextQuery ? `?${nextQuery}` : ""}`, { scroll: false })
-    }
-    return `${nextPath}${nextQuery ? `?${nextQuery}` : ""}`
-  }, [buildPathFromSelections, buildUrlQueryFromSelections, pathname, router, searchParams])
-
-  useEffect(() => {
-    if (!hasUrlFilters) return
-    const needsMoreFilters =
-      Boolean(
-        urlFilters.variation ||
-          urlFilters.variationId ||
-          urlFilters.series ||
-          urlFilters.year ||
-          urlFilters.version
-      )
-  }, [hasUrlFilters, urlFilters])
-
-  useEffect(() => {
-    if (!hasUrlFilters) return
-    if (!urlSelectionsReady) return
-    const nextKey = buildUrlKeyFromSelections()
-    if (lastAutoSearchQueryRef.current === nextKey) return
-    lastAutoSearchQueryRef.current = nextKey
-    updateUrlFromSelections()
-    fetchSetups()
-  }, [
-    buildUrlKeyFromSelections,
-    fetchSetups,
-    hasUrlFilters,
-    updateUrlFromSelections,
-    urlSelectionsReady,
-  ])
-
-  useEffect(() => {
-    if (!hasUrlFilters) return
-    if (!urlSelectionsReady) return
-    if (urlFiltersRefreshTriggeredRef.current) return
-    urlFiltersRefreshTriggeredRef.current = true
-    skipNextFiltersFetchRef.current = false
-    setFiltersRefreshTick((prev) => prev + 1)
-  }, [hasUrlFilters, urlSelectionsReady])
-
-  useEffect(() => {
-    if (filterOptions.tracks.length === 1 && !selectedTrack) {
-      const onlyTrack = filterOptions.tracks[0].value
-      console.log("Auto-selecting single track:", onlyTrack)
-      setSelectedTrack(onlyTrack)
-    }
-  }, [filterOptions.tracks, selectedTrack])
-
-  useEffect(() => {
-    const ensureValidSelection = (
-      value: string,
-      options: FilterOption[],
-      setter: React.Dispatch<React.SetStateAction<string>>,
-      allowMissing = false
-    ) => {
-      if (!value) return
-      if (allowMissing) return
-      if (options.length > 0 && !options.some((option) => option.value === value)) {
-        setter("")
-      }
-    }
-
-    ensureValidSelection(selectedClass, filterOptions.classes, setSelectedClass)
-    ensureValidSelection(selectedCar, filterOptions.cars, setSelectedCar)
-    ensureValidSelection(selectedTrack, filterOptions.tracks, setSelectedTrack)
-    ensureValidSelection(
-      selectedVariation,
-      filterOptions.variations,
-      setSelectedVariation,
-      Boolean(
-        (urlFilters.variation && selectedVariation === urlFilters.variation) ||
-          (urlFilters.variationId && selectedVariation === urlFilters.variationId)
-      )
+    const sorted = [...searchResults].sort(
+      (a, b) => parseLapTimeMs(a as Record<string, unknown>) - parseLapTimeMs(b as Record<string, unknown>)
     )
-    ensureValidSelection(selectedSeason, filterOptions.seasons, setSelectedSeason)
-    ensureValidSelection(selectedWeek, filterOptions.weeks, setSelectedWeek)
-    ensureValidSelection(selectedSeries, filterOptions.series, setSelectedSeries)
-    ensureValidSelection(selectedYear, filterOptions.years, setSelectedYear)
-    ensureValidSelection(selectedVersion, filterOptions.versions, setSelectedVersion)
-  }, [
-    filterOptions,
-    selectedClass,
-    selectedCar,
-    selectedTrack,
-    selectedVariation,
-    selectedSeason,
-    selectedWeek,
-    selectedSeries,
-    selectedYear,
-    selectedVersion,
-    urlFilters.variation,
-    urlFilters.variationId,
-  ])
+    setSelectedSetup(sorted[0] as Record<string, unknown>)
+  }, [hasSearched, searchResults])
 
-  const clearAllFilters = useCallback(() => {
+  const clearFilters = () => {
     setSelectedClass("")
     setSelectedCar("")
     setSelectedTrack("")
     setSelectedSeason("")
     setSelectedWeek("")
-    setSelectedVariation("")
+    setSelectedTrackVariation("")
     setSelectedSeries("")
     setSelectedYear("")
     setSelectedVersion("")
-    setSearchQuery("")
-    selectionOrderRef.current = []
-    if (typeof window !== "undefined") {
-      window.location.href = `/setups/${game}`
-    }
-  }, [game])
+    setSelectionOrder([])
+    setExtraSelectionOrder([])
+    requestAnchorIndexRef.current = null
+    hasUrlParamsRef.current = false
+    fixedRankingActiveRef.current = false
+    fixedSelectedRef.current = new Set()
+    lockedKeysRef.current = new Set()
+    setCurrentPage(1)
+  }
 
-  // Helper function to format season display (combines season and week for iRacing)
-  const formatSeasonDisplay = useCallback((setup: { season: string; week?: string; game: string }) => {
-    const seasonText = String(setup.season ?? "")
-    if (game === "iracing" && setup.week) {
-      // Format: "iRacing Season 1 Week 1 2026"
-      const seasonMatch = seasonText.match(/(\d{4})\s*S(\d+)/i)
-      const weekValue = String(setup.week ?? "")
-      const weekMatch = weekValue.match(/week\s*(\d+)/i) ?? weekValue.match(/(\d+)/)
-      if (seasonMatch && weekMatch) {
-        const year = seasonMatch[1]
-        const seasonNum = seasonMatch[2]
-        const weekNum = weekMatch[1]
-        return `${setup.game} Season ${seasonNum} Week ${weekNum} ${year}`
+  const getSelectedName = (options: FilterOption[], selected: string) => {
+    if (!selected) return ""
+    return options.find((opt) => String(opt.id) === selected)?.name ?? selected
+  }
+
+  const buildSearchBody = () => {
+    const body: Record<string, number> = { category_id: categoryId }
+    const orderedKeys = selectionOrder.filter((k) => FIXED_ORDER.includes(k))
+    const addIfSelected = (value: string, field: string) => {
+      if (value) body[field] = parseInt(value, 10)
+    }
+    orderedKeys.forEach((key) => {
+      switch (key) {
+        case "class":
+          addIfSelected(selectedClass, "class_id")
+          break
+        case "car":
+          addIfSelected(selectedCar, "car_id")
+          break
+        case "track":
+          addIfSelected(selectedTrack, "track_id")
+          break
+        case "season":
+          addIfSelected(selectedSeason, "season_id")
+          break
+        case "week":
+          addIfSelected(selectedWeek, "week")
+          break
+        case "variation":
+          addIfSelected(selectedTrackVariation, "variation_id")
+          break
+        case "series":
+          addIfSelected(selectedSeries, "series_id")
+          break
+        case "year":
+          addIfSelected(selectedYear, "year")
+          break
+        case "version":
+          addIfSelected(selectedVersion, "version_id")
+          break
       }
-      // Fallback format
-      return `${seasonText} ${weekValue}`
-    }
-    return seasonText
-  }, [game])
-
-  const filteredSetups = useMemo(() => {
-    return tableSetups.filter((setup) => {
-      const carText = String(setup.car ?? "")
-      const trackText = String(setup.track ?? "")
-      const seriesText = String(setup.series ?? "")
-
-      const matchesSearch =
-        searchQuery === "" ||
-        carText.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        trackText.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        seriesText.toLowerCase().includes(searchQuery.toLowerCase())
-
-      return matchesSearch
     })
-  }, [tableSetups, searchQuery])
+    return body
+  }
 
-  const [currentPage, setCurrentPage] = useState(0)
-  const rowLimit = 10 // Fixed to 10 items per page
-  const tableContainerRef = useRef<HTMLDivElement>(null)
+  const buildSearchQuery = () => {
+    const params = new URLSearchParams()
+    if (selectedClass) params.set("class", getSelectedName(classes, selectedClass))
+    if (!isAccOrLmu) {
+      if (selectedSeason) params.set("season", getSelectedName(seasons, selectedSeason))
+      if (selectedWeek) params.set("week", getSelectedName(weeks, selectedWeek))
+      if (selectedTrackVariation) {
+        params.set("variation", getSelectedName(trackVariations, selectedTrackVariation))
+      }
+      if (selectedSeries) params.set("series", getSelectedName(series, selectedSeries))
+      if (selectedYear) params.set("year", getSelectedName(years, selectedYear))
+    }
+    if (isAccOrLmu && selectedVersion) {
+      params.set("version", getSelectedName(versions, selectedVersion))
+    }
+    if (!selectedCar && selectedTrack) {
+      params.set("track", getSelectedName(tracks, selectedTrack))
+    }
+    return params
+  }
 
-  const prevLengthRef = useRef(filteredSetups.length)
+  const buildSearchPath = () => {
+    const segments = pathname.split("/").filter(Boolean)
+    const basePath =
+      segments[0] === "setups" && segments[1] ? `/setups/${segments[1]}` : pathname
+    if (selectedCar) {
+      const carName = getSelectedName(cars, selectedCar)
+      const carSlug = slugify(carName)
+      if (selectedTrack) {
+        const trackName = getSelectedName(tracks, selectedTrack)
+        const trackSlug = slugify(trackName)
+        return `${basePath}/${carSlug}/${trackSlug}`
+      }
+      return `${basePath}/${carSlug}`
+    }
+    return basePath
+  }
+
+  const executeSearch = async (updateUrl: boolean) => {
+    if (updateUrl) {
+      const params = buildSearchQuery()
+      const queryString = params.toString()
+      const nextPath = buildSearchPath()
+      skipUrlApplyRef.current = true
+      const nextUrl = queryString ? `${nextPath}?${queryString}` : nextPath
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", nextUrl)
+      } else {
+        router.replace(nextUrl)
+      }
+    }
+
+    setHasSearched(true)
+    setSearchLoading(true)
+    try {
+      const res = await fetch(apiUrl("/api/v1/products/search"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(buildSearchBody()),
+      })
+      const json = await res.json()
+      const ok = res.ok && (json.success === true || json.status === true)
+      const data = (json.data ?? json) as unknown
+      setSearchResults(ok && Array.isArray(data) ? data : [])
+      setCurrentPage(1)
+    } catch {
+      setSearchResults([])
+    } finally {
+      setSearchLoading(false)
+    }
+  }
+
+  const handleSearch = async () => {
+    didUrlSearchRef.current = true
+    await executeSearch(true)
+  }
+
   useEffect(() => {
-    const pages = Math.max(1, Math.ceil(filteredSetups.length / rowLimit))
-    const lengthChanged = prevLengthRef.current !== filteredSetups.length
-    prevLengthRef.current = filteredSetups.length
+    if (!hasUrlParamsRef.current || !urlAppliedRef.current) return
+    if (didUrlSearchRef.current || hasSearched) return
+    if (selectionOrder.length === 0) return
+    didUrlSearchRef.current = true
+    void executeSearch(false)
+  }, [
+    selectionOrder,
+    selectedClass,
+    selectedCar,
+    selectedTrack,
+    selectedSeason,
+    selectedWeek,
+    selectedTrackVariation,
+    selectedSeries,
+    selectedYear,
+    selectedVersion,
+  ])
 
-    if (lengthChanged) {
-      setCurrentPage(0)
-    } else if (currentPage >= pages) {
-      setCurrentPage(pages - 1)
+  const getDisplayValue = (value: unknown, fallback = "-") => {
+    if (typeof value === "string" || typeof value === "number") return String(value)
+    if (value && typeof value === "object") {
+      const v = value as Record<string, unknown>
+      const label = [v.name, v.title, v.label, v.slug].find(
+        (item) => typeof item === "string" || typeof item === "number"
+      )
+      if (label != null) return String(label)
     }
-  }, [filteredSetups.length, rowLimit])
+    return fallback
+  }
 
-  const parseLapTime = useCallback((value?: string) => {
-    if (!value) return Number.POSITIVE_INFINITY
-    const trimmed = value.trim()
-    if (trimmed === "—") return Number.POSITIVE_INFINITY
-    const parts = trimmed.split(":")
-    if (parts.length === 2) {
-      const minutes = Number(parts[0])
-      const seconds = Number(parts[1])
-      if (Number.isFinite(minutes) && Number.isFinite(seconds)) {
-        return minutes * 60 + seconds
-      }
-    }
-    const seconds = Number(trimmed)
-    return Number.isFinite(seconds) ? seconds : Number.POSITIVE_INFINITY
-  }, [])
-
-  const bestLapSetupId = useMemo(() => {
-    let bestId = ""
-    let bestTime = Number.POSITIVE_INFINITY
-    filteredSetups.forEach((setup) => {
-      const current = parseLapTime(setup.lapTime)
-      if (current < bestTime) {
-        bestTime = current
-        bestId = setup.id
-      }
-    })
-    return bestId
-  }, [filteredSetups, parseLapTime])
-
-  const sortedSetups = useMemo(() => {
-    if (!bestLapSetupId) return filteredSetups
-    const bestSetup = filteredSetups.find((setup) => setup.id === bestLapSetupId)
-    if (!bestSetup) return filteredSetups
-    return [bestSetup, ...filteredSetups.filter((setup) => setup.id !== bestLapSetupId)]
-  }, [bestLapSetupId, filteredSetups])
-
-  const totalPages = Math.max(1, Math.ceil(sortedSetups.length / rowLimit))
-  const paginatedSetups = sortedSetups.slice(
-    currentPage * rowLimit,
-    (currentPage + 1) * rowLimit
-  )
-
-  const activeSetupId = selectedSetupId || bestLapSetupId
-  const activeSetup = useMemo(() => {
-    return filteredSetups.find((setup) => setup.id === activeSetupId) ?? filteredSetups[0]
-  }, [activeSetupId, filteredSetups])
-
-  const weatherSummary = useMemo(() => {
-    if (!activeSetup) return { cards: [], hasWeather: false }
-    const weather = activeSetup.weather ?? {}
-    const { timeLabel, dateLabel } = formatWeatherDateTime(weather.time ?? "")
-    const timeValue = timeLabel || weather.date || ""
-    const timeSubValue = timeLabel ? dateLabel || weather.date || "" : ""
-    const cards: Array<{
-      id: string
-      title: string
-      value: string
-      subValue?: string
-      icon: LucideIcon
-      iconClass: string
-      iconBgClass: string
-    }> = [
-      {
-        id: "air-temp",
-        title: "Air Temp",
-        value: formatTemperature(weather.airTemp),
-        icon: ThermometerSun,
-        iconClass: "text-amber-400",
-        iconBgClass: "border-amber-400/40 bg-amber-400/10",
-      },
-      {
-        id: "humidity",
-        title: "Humidity",
-        value: formatHumidity(weather.humidity),
-        icon: Droplet,
-        iconClass: "text-sky-400",
-        iconBgClass: "border-sky-400/40 bg-sky-400/10",
-      },
-      {
-        id: "wind",
-        title: "Wind",
-        value: formatWind(weather.windSpeed, weather.windDirection),
-        icon: Wind,
-        iconClass: "text-emerald-400",
-        iconBgClass: "border-emerald-400/40 bg-emerald-400/10",
-      },
-      {
-        id: "track-temp",
-        title: "Track Temp",
-        value: formatTemperature(weather.trackTemp),
-        icon: Thermometer,
-        iconClass: "text-rose-400",
-        iconBgClass: "border-rose-400/40 bg-rose-400/10",
-      },
-      {
-        id: "sky",
-        title: "Sky",
-        value: weather.sky ?? "",
-        icon: Cloud,
-        iconClass: "text-slate-300",
-        iconBgClass: "border-white/15 bg-white/5",
-      },
-      {
-        id: "time",
-        title: "Time",
-        value: timeValue,
-        subValue: timeSubValue,
-        icon: Clock,
-        iconClass: "text-amber-300",
-        iconBgClass: "border-amber-300/40 bg-amber-300/10",
-      },
-    ]
-    console.log("weatherSummary", cards)
-    return { cards, hasWeather: true }
-  }, [activeSetup])
-
-  const getPaginationTransform = useCallback((pageIndex: number, total: number): number => {
-    const BTN_WIDTH = 4
-    if (total <= 5) return 0
-    if (pageIndex <= 1) return 0
-    if (pageIndex >= total - 2) return (-total + 5) * BTN_WIDTH
-    return (2 - pageIndex) * BTN_WIDTH
-  }, [])
-
-  const switchPage = useCallback((index: number) => {
-    setCurrentPage(Math.max(0, Math.min(index, totalPages - 1)))
-  }, [totalPages])
-
-  const displayFrom = filteredSetups.length === 0 ? 0 : currentPage * rowLimit + 1
-  const displayTo = Math.min((currentPage + 1) * rowLimit, filteredSetups.length)
-  const showIracingColumns = game === "iracing"
-  const tableColumnCount = showIracingColumns ? 8 : 7
+  const getSetupField = (setup: Record<string, unknown>, key: string, fallback = "-") => {
+    if (key in setup) return getDisplayValue(setup[key], fallback)
+    return fallback
+  }
 
   return (
-    <div className="min-h-screen pt-16 z-10">
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-24 py-8">
-        {/* Header with Logo and Title - Centered */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 text-center sm:text-left">
-          <Image src={logo as string} alt={title} width={100} height={100} className="shrink-0" />
-          <h1 className="text-4xl md:text-5xl font-bold italic font-display text-white">{title}</h1>
+    <main className="min-h-screen bg-[#151515] pt-24 pb-16">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_5%,rgba(228,0,188,0.12)_0%,rgba(31,19,41,0.2)_30%,rgba(21,21,21,0)_100%)]" />
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-white mb-2">
+            Find the Right Setup for <span className="text-brand-gradient">Your</span> Race
+          </h1>
+          <p className="text-white/70 text-base sm:text-lg max-w-2xl mx-auto">
+            Filter by car, track, season, and week to quickly find race-ready setups built for competitive iRacing sessions.
+          </p>
         </div>
 
-        {/* Filters Row - Centered */}
-        <div className="flex flex-col items-center gap-4 mb-8 relative z-20">
-          {/* Main Filter Group - Centered */}
-          <div className="flex flex-wrap items-center justify-center gap-3 w-full">
-            <Select
-              value={selectedClass}
-              onValueChange={(value) => handleSelectChange("class", value)}
-              disabled={filtersLoading}
-            >
-              <SelectTrigger className="w-[140px] bg-secondary border-border">
-                <SelectValue placeholder="Classes" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={clearOptionValue}>Classes</SelectItem>
-                {displayFilterOptions.classes.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={selectedCar}
-              onValueChange={(value) => handleSelectChange("car", value)}
-              disabled={filtersLoading}
-            >
-              <SelectTrigger className="w-[140px] bg-secondary border-border">
-                <SelectValue placeholder="Cars" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={clearOptionValue}>Cars</SelectItem>
-                {displayFilterOptions.cars.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={selectedTrack}
-              onValueChange={(value) => handleSelectChange("track", value)}
-              disabled={filtersLoading}
-            >
-              <SelectTrigger className="w-[140px] bg-secondary border-border">
-                <SelectValue placeholder="Tracks" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={clearOptionValue}>Tracks</SelectItem>
-                {displayFilterOptions.tracks.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Season filter (and Week for iRacing) */}
-            {game === "iracing" && (
-              <Select
-                value={selectedSeason}
-                onValueChange={(value) => handleSelectChange("season", value)}
-                disabled={filtersLoading}
-              >
-                <SelectTrigger className="w-[160px] bg-secondary border-border">
-                  <SelectValue placeholder="Season" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={clearOptionValue}>Season</SelectItem>
-                  {displayFilterOptions.seasons.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {/* Filter Bar */}
+        <div className="flex flex-wrap items-center gap-3 mb-8 justify-center">
+          <Select value={selectedClass} onValueChange={(v) => handleUserChange("class", v)} disabled={filtersLoading}>
+            <SelectTrigger className="w-[140px] sm:w-[160px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
+              <SelectValue placeholder={filtersLoading ? "Loading..." : "Select Class"} />
+            </SelectTrigger>
+            <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
+              <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
+                Class
+              </SelectItem>
+              {classes.map((opt) => (
+                <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
+                  {opt.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selectedCar} onValueChange={(v) => handleUserChange("car", v)} disabled={filtersLoading}>
+            <SelectTrigger className="w-[140px] sm:w-[160px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
+              <SelectValue placeholder={filtersLoading ? "Loading..." : "Select Car"} />
+            </SelectTrigger>
+            <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
+              <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
+                Car
+              </SelectItem>
+              {cars.map((opt) => (
+                <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
+                  {opt.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selectedTrack} onValueChange={(v) => handleUserChange("track", v)} disabled={filtersLoading}>
+            <SelectTrigger className="w-[140px] sm:w-[160px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
+              <SelectValue placeholder={filtersLoading ? "Loading..." : "Select Track"} />
+            </SelectTrigger>
+            <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
+              <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
+                Track
+              </SelectItem>
+              {tracks.map((opt) => (
+                <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
+                  {opt.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {!isAccOrLmu && (
+          <Select value={selectedSeason} onValueChange={(v) => handleUserChange("season", v)} disabled={filtersLoading}>
+            <SelectTrigger className="w-[140px] sm:w-[160px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
+              <SelectValue placeholder={filtersLoading ? "Loading..." : "Select Season"} />
+            </SelectTrigger>
+            <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
+              <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
+                Season
+              </SelectItem>
+              {seasons.map((opt) => (
+                <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
+                  {opt.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          )}
+          {!isAccOrLmu && (
+          <Select value={selectedWeek} onValueChange={(v) => handleUserChange("week", v)} disabled={filtersLoading}>
+            <SelectTrigger className="w-[140px] sm:w-[160px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
+              <SelectValue placeholder={filtersLoading ? "Loading..." : "Select Week"} />
+            </SelectTrigger>
+            <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
+              <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
+                Week
+              </SelectItem>
+              {weeks.map((opt) => (
+                <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
+                  {opt.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          )}
+          <button
+            onClick={clearFilters}
+            className="p-2.5 rounded-md bg-[#1a1a1a] border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label="Clear filters"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setShowMoreFilters(!showMoreFilters)}
+            className={cn(
+              "p-2.5 rounded-full transition-colors",
+              showMoreFilters
+                ? "border-2 border-primary bg-primary/10 text-primary"
+                : "border border-white/10 text-white/70 hover:text-white hover:bg-white/10"
             )}
+            aria-label="Show more filter options"
+            aria-expanded={showMoreFilters}
+          >
+            <Filter className="h-4 w-4" />
+          </button>
+          <Button
+            className="bg-brand-gradient rounded-full hover:opacity-90 text-white border-0 px-6 h-10"
+            onClick={handleSearch}
+            disabled={filtersLoading || searchLoading}
+          >
+            {searchLoading ? "Searching..." : "Search"}
+          </Button>
+        </div>
 
-            {/* Week filter: only for iRacing, to the right of Season */}
-            {game === "iracing" && (
-              <Select
-                value={selectedWeek}
-                onValueChange={(value) => handleSelectChange("week", value)}
-                disabled={filtersLoading}
-              >
-                <SelectTrigger className="w-[140px] bg-secondary border-border">
-                  <SelectValue placeholder="Week" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={clearOptionValue}>Week</SelectItem>
-                  {displayFilterOptions.weeks.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
-            {/* filter5 (e.g. Type/Series) for ACC/LMU – not used for iRacing where filter5 is Week */}
-
-            <Button
-              onClick={() => {
-                console.log("Find Setup slugs", buildUrlSelections())
-                lastAutoSearchQueryRef.current = buildUrlKeyFromSelections()
-                updateUrlFromSelections()
-                fetchSetups()
-              }}
-              disabled={filtersLoading || searchLoading}
-              className="transition-all duration-200 hover:scale-105 shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)]"
-            >
-              {searchLoading ? "Finding..." : "Find Setup"}
-            </Button>
-
-            <Button 
-              variant="outline" 
-              onClick={clearAllFilters}
-              className="border border-white/30 text-white hover:bg-white/10 transition-colors duration-200"
-            >
-              Clear All
-            </Button>
-
-            {/* More Filters Button */}
-            <div className="relative">
-              <Button
-                variant="outline"
-                onClick={() => setShowMoreFilters(!showMoreFilters)}
-                className={`border border-white/15 bg-[#1d1b23] text-white hover:bg-[#24222b] transition-all duration-200 shadow-[0_12px_30px_rgba(0,0,0,0.35)] ${
-                  showMoreFilters ? "border-primary/40" : ""
-                }`}
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                MORE FILTERS
-              </Button>
-            </div>
-          </div>
-
-          {showMoreFilters && (
-            <div className="flex flex-wrap items-center justify-center gap-3 w-full">
-              {game === "iracing" ? (
-                <>
-                  <Select
-                    value={selectedVariation}
-                    onValueChange={(value) => handleSelectChange("variation", value)}
-                    disabled={filtersLoading}
-                  >
-                    <SelectTrigger className="w-[140px] bg-secondary border-border">
-                      <SelectValue placeholder="Track Variation" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={clearOptionValue}>Track Variation</SelectItem>
-                      {displayFilterOptions.variations.length === 0 ? (
-                        <SelectItem value="_none" disabled>No variations available</SelectItem>
-                      ) : (
-                        displayFilterOptions.variations.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={selectedSeries}
-                    onValueChange={(value) => handleSelectChange("series", value)}
-                    disabled={filtersLoading}
-                  >
-                    <SelectTrigger className="w-[140px] bg-secondary border-border">
-                      <SelectValue placeholder="Series" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={clearOptionValue}>Series</SelectItem>
-                      {displayFilterOptions.series.length === 0 ? (
-                        <SelectItem value="_none" disabled>No series available</SelectItem>
-                      ) : (
-                        displayFilterOptions.series.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={selectedYear}
-                    onValueChange={(value) => handleSelectChange("year", value)}
-                    disabled={filtersLoading}
-                  >
-                    <SelectTrigger className="w-[140px] bg-secondary border-border">
-                      <SelectValue placeholder="Year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={clearOptionValue}>Year</SelectItem>
-                      {displayFilterOptions.years.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </>
-              ) : (
-                <Select
-                  value={selectedVersion}
-                  onValueChange={(value) => handleSelectChange("version", value)}
-                  disabled={filtersLoading}
-                >
-                  <SelectTrigger className="w-[140px] bg-secondary border-border">
-                    <SelectValue placeholder="Version" />
+        {/* More selection fields - shown when filter button is active */}
+        {showMoreFilters && (
+          <div className="flex flex-wrap items-center gap-3 mb-8 justify-center">
+            {!isAccOrLmu && (
+              <>
+                <Select value={selectedTrackVariation} onValueChange={(v) => handleUserChange("variation", v)} disabled={filtersLoading}>
+                  <SelectTrigger className="w-[140px] sm:w-[180px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
+                    <SelectValue placeholder="Select Track Variation" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={clearOptionValue}>Version</SelectItem>
-                    {displayFilterOptions.versions.length === 0 ? (
-                      <SelectItem value="_none" disabled>No versions available</SelectItem>
-                    ) : (
-                      displayFilterOptions.versions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))
-                    )}
+                  <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
+                    <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
+                      Track Variation
+                    </SelectItem>
+                    {trackVariations.map((opt) => (
+                      <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
+                        {opt.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-              )}
-            </div>
-          )}
-        </div>
+                <Select value={selectedSeries} onValueChange={(v) => handleUserChange("series", v)} disabled={filtersLoading}>
+                  <SelectTrigger className="w-[140px] sm:w-[180px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
+                    <SelectValue placeholder="Select Series" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
+                    <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
+                      Series
+                    </SelectItem>
+                    {series.map((opt) => (
+                      <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
+                        {opt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedYear} onValueChange={(v) => handleUserChange("year", v)} disabled={filtersLoading}>
+                  <SelectTrigger className="w-[140px] sm:w-[180px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
+                    <SelectValue placeholder="Select Year" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
+                    <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
+                      Year
+                    </SelectItem>
+                    {years.map((opt) => (
+                      <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
+                        {opt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </>
+            )}
+            {isAccOrLmu && (
+              <Select value={selectedVersion} onValueChange={(v) => handleUserChange("version", v)} disabled={filtersLoading}>
+                <SelectTrigger className="w-[140px] sm:w-[180px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
+                  <SelectValue placeholder="Select Version" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
+                  <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
+                    Version
+                  </SelectItem>
+                  {versions.map((opt) => (
+                    <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
+                      {opt.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        )}
 
-        {/* Hero Image */}
-        <div className="relative w-full h-[300px] md:h-[450px] mb-8 rounded-lg overflow-hidden">
-          <Image
-            src={heroImage || "/placeholder.svg"}
-            alt={`${title} Setup`}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
-            className="object-contain"
-            priority={false}
-          />
-        </div>
-
-        {/* Search Box and Table */}
-        <div className="flex justify-center mb-4">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden />
-            <Input
-              type="search"
-              placeholder="Search car, track, series..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 bg-secondary border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary/20"
+        {!hasSearched && (
+          <div className="flex justify-center items-center py-16">
+            <img
+              src="/images/setup.png"
+              alt="Setup"
+              className="max-w-full h-auto object-contain"
             />
           </div>
-        </div>
+        )}
 
-        <div
-          ref={tableContainerRef}
-          className="relative w-full border border-primary/30 rounded-lg bg-card/50 backdrop-blur-sm overflow-hidden shadow-lg"
-        >
-          <div className="overflow-x-auto">
-          <table className="w-full border-collapse bg-transparent">
-            {showIracingColumns ? (
-              <colgroup>
-                <col style={{ width: "4rem" }} />
-                <col style={{ width: "12%" }} />
-                <col style={{ width: "22%" }} />
-                <col style={{ width: "20%" }} />
-                <col style={{ width: "12%" }} />
-                <col style={{ width: "16%" }} />
-                <col style={{ width: "10%" }} />
-                <col style={{ width: "8%" }} />
-              </colgroup>
-            ) : (
-              <colgroup>
-                <col style={{ width: "4rem" }} />
-                <col style={{ width: "12%" }} />
-                <col style={{ width: "24%" }} />
-                <col style={{ width: "24%" }} />
-                <col style={{ width: "16%" }} />
-                <col style={{ width: "12%" }} />
-                <col style={{ width: "8%" }} />
-              </colgroup>
-            )}
-            <thead>
-              <tr className="border-b border-border/50">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">#</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Game</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Car</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Track</th>
-                {showIracingColumns ? (
-                  <>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Season</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Series</th>
-                  </>
-                ) : (
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Version</th>
-                )}
-                <th className="px-4 py-3 text-left text-xs font-semibold text-primary uppercase tracking-wider">Lap Time</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-primary uppercase tracking-wider">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSetups.length === 0 ? (
-                <tr>
-                  <td colSpan={tableColumnCount} className="px-4 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <p className="text-muted-foreground text-lg font-medium">No setups found</p>
-                      <p className="text-muted-foreground/70 text-sm">Try adjusting your filters</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                paginatedSetups.map((setup, i) => (
-                  <tr 
-                    key={setup.id} 
-                    onClick={() => setSelectedSetupId(setup.id)}
-                    className={`border-b border-border/30 hover:bg-muted/30 transition-colors cursor-pointer ${
-                      selectedSetupId
-                        ? setup.id === selectedSetupId
-                          ? "bg-primary/15 ring-1 ring-primary/40"
-                          : ""
-                        : bestLapSetupId && setup.id === bestLapSetupId
-                          ? "bg-primary/10 ring-1 ring-primary/30"
-                          : ""
-                    }`}
-                  >
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
-                      {currentPage * rowLimit + i + 1}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-foreground font-medium">
-                      {setup.game}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-foreground" title={setup.car}>
-                      {setup.car}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-foreground" title={setup.track}>
-                      {setup.track}
-                    </td>
-                    {showIracingColumns ? (
-                      <>
-                        <td className="px-4 py-3 text-sm text-muted-foreground">
-                          {formatSeasonDisplay(setup)}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground" title={setup.series}>
-                          {setup.series}
-                        </td>
-                      </>
-                    ) : (
-                      <td className="px-4 py-3 text-sm text-muted-foreground" title={setup.version}>
-                        {setup.version || "—"}
-                      </td>
-                    )}
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
-                      {setup.lapTime || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <Button 
-                        size="sm" 
-                        className="px-3 py-1.5 h-auto cursor-pointer transition-all duration-200 hover:scale-105 shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:shadow-[0_0_25px_rgba(168,85,247,0.5)]" 
-                        aria-label="Download setup"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </td>
-                  </tr> 
-                ))
-              )}
-            </tbody>
-          </table>
-          </div>
-        </div>
-
-        {filteredSetups.length > 0 && (
-          <div className="flex flex-col items-center gap-4 py-6">
-            {/* Simplified pagination info */}
-            <div className="text-sm text-muted-foreground">
-              Showing <span className="text-primary font-semibold">{displayFrom}-{displayTo}</span> of <span className="text-primary font-semibold">{filteredSetups.length}</span> setups
-            </div>
-            
-            {/* Simplified pagination controls */}
-            <div className="flex items-center gap-2">
+        {hasSearched && (
+          <>
+            {/* Results Header + Pagination */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div className="flex items-center gap-2">
+                <h2 className="text-3xl font-display text-white">
+                  Find your setup
+                </h2>
+              </div>
+              <div className="flex items-center justify-end gap-1">
+              <span className="text-sm text-white/60 mr-4">
+                {totalItems} AVAILABLE
+              </span>
               <button
-                type="button"
-                onClick={() => switchPage(0)}
-                disabled={currentPage === 0}
-                className="p-2 rounded-md border border-border bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="p-2 rounded-md bg-[#1a1a1a] border border-white/10 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
                 aria-label="First page"
               >
                 <ChevronsLeft className="h-4 w-4" />
               </button>
               <button
-                type="button"
-                onClick={() => switchPage(currentPage - 1)}
-                disabled={currentPage === 0}
-                className="p-2 rounded-md border border-border bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-md bg-[#1a1a1a] border border-white/10 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
                 aria-label="Previous page"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              
-              <div className="flex items-center gap-1">
-                {(() => {
-                  const maxVisible = 7
-                  const pages: number[] = []
-                  
-                  if (totalPages <= maxVisible) {
-                    // Show all pages if total is less than max
-                    for (let i = 0; i < totalPages; i++) {
-                      pages.push(i)
-                    }
+              <div className="flex items-center gap-1 px-2">
+                {Array.from({ length: Math.min(6, totalPages) }, (_, i) => {
+                  let pageNum: number
+                  if (totalPages <= 6) {
+                    pageNum = i + 1
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 5 + i
                   } else {
-                    // Show pages around current page
-                    let start = Math.max(0, currentPage - Math.floor(maxVisible / 2))
-                    let end = Math.min(totalPages, start + maxVisible)
-                    
-                    if (end - start < maxVisible) {
-                      start = Math.max(0, end - maxVisible)
-                    }
-                    
-                    for (let i = start; i < end; i++) {
-                      pages.push(i)
-                    }
+                    pageNum = currentPage - 2 + i
                   }
-                  
-                  return pages.map((pageNum) => (
+                  const isActive = pageNum === currentPage
+                  return (
                     <button
                       key={pageNum}
-                      type="button"
-                      onClick={() => switchPage(pageNum)}
-                      className={`min-w-[2.5rem] h-10 px-3 rounded-md border transition-all ${
-                        currentPage === pageNum
-                          ? "bg-primary border-primary text-primary-foreground font-semibold"
-                          : "border-border bg-secondary hover:bg-secondary/80 text-foreground"
-                      }`}
-                      aria-label={`Page ${pageNum + 1}`}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={cn(
+                        "min-w-[32px] h-8 rounded-full text-sm font-medium transition-colors",
+                        isActive
+                          ? "bg-primary text-white"
+                          : "text-white/80 hover:text-white hover:bg-white/10"
+                      )}
                     >
-                      {pageNum + 1}
+                      {pageNum}
                     </button>
-                  ))
-                })()}
+                  )
+                })}
+                {totalPages > 6 && (
+                  <>
+                    <span className="text-white/50 px-1">...</span>
+                    <button
+                      onClick={() => setCurrentPage(totalPages)}
+                      className={cn(
+                        "min-w-[32px] h-8 rounded-full text-sm font-medium text-white/80 hover:text-white",
+                        currentPage === totalPages && "bg-primary text-white"
+                      )}
+                    >
+                      {totalPages}
+                    </button>
+                  </>
+                )}
               </div>
-              
               <button
-                type="button"
-                onClick={() => switchPage(currentPage + 1)}
-                disabled={currentPage >= totalPages - 1}
-                className="p-2 rounded-md border border-border bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-md bg-[#1a1a1a] border border-white/10 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
                 aria-label="Next page"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
               <button
-                type="button"
-                onClick={() => switchPage(totalPages - 1)}
-                disabled={currentPage >= totalPages - 1}
-                className="p-2 rounded-md border border-border bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-md bg-[#1a1a1a] border border-white/10 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
                 aria-label="Last page"
               >
                 <ChevronsRight className="h-4 w-4" />
               </button>
-            </div>
-          </div>
-        )}
-
-        {/* Description Section */}
-        {(() => {
-          // Get game name
-          const gameName = game === "iracing" ? "iRacing" : game === "acc" ? "Assetto Corsa Competizione" : "Le Mans Ultimate"
-          
-          // Get values from first filtered setup or use defaults
-          let seasonText = ""
-          let year = ""
-          let weekText = ""
-          let carText = "your car"
-          let trackText = "the track"
-          
-          if (activeSetup) {
-            const firstSetup = activeSetup
-            
-            // Extract season, year, week from first setup
-            if (game === "iracing" && firstSetup.week) {
-              const seasonTextValue = String(firstSetup.season ?? "")
-              const weekTextValue = String(firstSetup.week ?? "")
-              const seasonMatch =
-                seasonTextValue.match(/(\d{4})\s*S(\d+)/i) ??
-                seasonTextValue.match(/Season\s*(\d+)\s*(\d{4})/i) ??
-                seasonTextValue.match(/(\d{4}).*Season\s*(\d+)/i)
-              const weekMatch = weekTextValue.match(/week\s*(\d+)/i) ?? weekTextValue.match(/(\d+)/)
-              if (seasonMatch) {
-                const maybeYear = seasonMatch[1].length === 4 ? seasonMatch[1] : seasonMatch[2]
-                const maybeSeason = seasonMatch[1].length === 4 ? seasonMatch[2] : seasonMatch[1]
-                year = maybeYear
-                seasonText = `Season ${maybeSeason}`
-              }
-              if (weekMatch) {
-                weekText = weekMatch[1]
-              }
-              if (!year && firstSetup.year) {
-                year = String(firstSetup.year)
-              }
-            } else if (firstSetup.season) {
-              // For non-iRacing games, try to extract year from season
-              const seasonTextValue = String(firstSetup.season ?? "")
-              const yearMatch = seasonTextValue.match(/(\d{4})/i)
-              if (yearMatch) {
-                year = yearMatch[1]
-              } else if (firstSetup.year) {
-                year = String(firstSetup.year)
-              }
-              seasonText = seasonTextValue
-            }
-            
-            carText = firstSetup.car || carText
-            trackText = firstSetup.track || trackText
-          }
-          
-          // Build description with dynamic values
-          const seasonPart = seasonText && year ? ` – ${seasonText} ${year}` : seasonText ? ` – ${seasonText}` : ""
-          const weekPart = weekText ? `, Week ${weekText}` : ""
-          
-          // Split description into paragraphs for better readability
-          const descriptionParts = [
-            `Experience the ultimate in-game performance with professional car setups developed by elite E-Sports drivers.`,
-            <>
-              This setup pack is specifically engineered for <strong>{gameName}{seasonPart}{weekPart}</strong>, optimised for the <strong>{carText}</strong> at <strong>{trackText}</strong> combination to deliver maximum performance in competitive conditions.
-            </>,
-            <>
-              The package includes <strong>Consistent</strong>, <strong>E-Sports</strong>, and <strong>Wet</strong> setup variants, fully optimised for both Qualifying and Race sessions. Consistent setups focus on stability, control, and long-run confidence, E-Sports setups are designed to extract ultimate lap time, while Wet setups are tuned to provide maximum grip, predictability, and confidence in low-traction conditions.
-            </>,
-            `Whether you are racing in official events or pushing for personal bests, these professionally developed setups help you achieve faster lap times, improved tyre management, and greater overall race consistency across all conditions.`
-          ]
-          
-          return (
-            <div className="mt-12 mb-8 max-w-5xl mx-auto">
-              {/* Section Header */}
-              <div className="mb-6 text-center">
-                <h2 className="text-2xl md:text-3xl font-bold font-display text-white mb-2">
-                  About This Setup Pack
-                </h2>
-                <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-primary/60 to-transparent mx-auto"></div>
               </div>
-              
-              {/* Description Card */}
-              <div className="relative group bg-[#16151a] border border-white/[0.08] rounded-xl p-8 md:p-10 shadow-xl shadow-black/20 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] hover:shadow-primary/10">
-                {/* Top gradient accent */}
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-60"></div>
-                
-                {/* Content */}
-                <div className="space-y-5">
-                  {descriptionParts.map((paragraph, index) => (
-                    <p 
-                      key={index}
-                      className="text-muted-foreground/90 leading-relaxed font-sans text-base md:text-lg"
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[#151515]">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
+                      Game
+                    </th>
+                    <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
+                      Car
+                    </th>
+                    <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
+                      Track
+                    </th>
+                    {!isAccOrLmu && (
+                      <>
+                        <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
+                          Season
+                        </th>
+                        <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
+                          Series
+                        </th>
+                      </>
+                    )}
+                    {isAccOrLmu && (
+                      <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
+                        Version
+                      </th>
+                    )}
+                    <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
+                      Lap Time
+                    </th>
+                    <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedSetups.map((setup, index) => {
+                    const isSmallest = displaySetups[0] && (setup as { id?: number }).id === (displaySetups[0] as { id?: number }).id
+                    const isSelected = (selectedSetup as { id?: number })?.id === (setup as { id?: number }).id
+                    return (
+                    <tr
+                      key={(setup as { id?: number }).id ?? index}
+                      onClick={() => setSelectedSetup(setup as Record<string, unknown>)}
+                      className={cn(
+                        "border-t border-white/10 transition-colors cursor-pointer hover:bg-white/5",
+                        isSmallest && "bg-primary/30",
+                        isSelected && "ring-2 ring-primary"
+                      )}
                     >
-                      {paragraph}
-                    </p>
-                  ))}
+                      <td className="py-4 px-4 text-white text-sm">
+                        {getDisplayValue(
+                          (setup as Record<string, unknown>).category ??
+                            (setup as Record<string, unknown>).game,
+                          "iRacing"
+                        )}
+                      </td>
+                      <td className="py-4 px-4 text-white text-sm">
+                        {getSetupField(setup as Record<string, unknown>, "car")}
+                      </td>
+                      <td className="py-4 px-4 text-white text-sm">
+                        {getSetupField(setup as Record<string, unknown>, "track")}
+                      </td>
+                      {!isAccOrLmu && (
+                        <>
+                          <td className="py-4 px-4 text-white text-sm">
+                            {getSetupField(setup as Record<string, unknown>, "season")}
+                          </td>
+                          <td className="py-4 px-4 text-white text-sm">
+                            {getSetupField(setup as Record<string, unknown>, "series")}
+                          </td>
+                        </>
+                      )}
+                      {isAccOrLmu && (
+                        <td className="py-4 px-4 text-white text-sm">
+                          {getSetupField(setup as Record<string, unknown>, "version")}
+                        </td>
+                      )}
+                      <td className="py-4 px-4 text-white text-sm font-mono font-digital">
+                        {getDisplayValue(
+                          (setup as Record<string, unknown>).lap_time ??
+                            (setup as Record<string, unknown>).lapTime
+                        )}
+                      </td>
+                      <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          size="sm"
+                          className="bg-brand-gradient hover:opacity-90 hover:ring-2 hover:ring-white text-white border-0 transition-all"
+                        >
+                          <Download className="h-4 w-4 mr-1.5" />
+                          Download
+                        </Button>
+                      </td>
+                    </tr>
+                  )})}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Setup Details - shown for selected row (default: smallest lap time) */}
+            {selectedSetup && (
+              <div className="mt-12 mb-12 p-6 rounded-2xl overflow-hidden bg-gradient-to-b from-[#131112] to-[#161118]">
+                {/* Setup Image */}
+                <div className="flex justify-center items-center mb-6 p-6 rounded-2xl bg-[#181818]">
+                  <img
+                    src="/images/setup.png"
+                    alt="Setup"
+                    className="max-w-full h-auto object-contain max-h-100"
+                  />
                 </div>
-                
-                {/* Bottom accent line */}
-                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent mt-6"></div>
-              </div>
-            </div>
-          )
-        })()}
-
-        {weatherSummary.hasWeather ? (
-          <div className="mt-8 max-w-5xl mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-1">
-              {weatherSummary.cards.map((card) => {
-                const Icon = card.icon
-                return (
-                  <div
-                    key={card.id}
-                    className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#141219]/90 px-4 py-3 shadow-[0_10px_35px_rgba(0,0,0,0.35)] backdrop-blur-md game-card"
-                  >
-                    <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-70" />
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-8 w-8 items-center justify-center rounded-full border ${card.iconBgClass}`}>
-                        <Icon className={`h-4 w-4 ${card.iconClass}`} aria-hidden />
-                      </div>
-                      <div className="text-[10px] font-bold tracking-[0.25em] uppercase text-white/70">
-                        {card.title}
-                      </div>
+                {/* Setup Details */}
+                <div className="p-10 rounded-2xl bg-[#181818] mb-6">
+                  <h3 className="text-2xl font-display text-[#7000BF] mb-2">Setup Details</h3>
+                  <div className="h-px bg-white/10 mb-6" />
+                  <div className="space-y-4 text-white/90 text-[14px] leading-relaxed">
+                    <p>
+                      Experience the ultimate in-game performance with professional car setups developed by elite E-Sports drivers.
+                    </p>
+                    <p>
+                      This setup pack is specifically engineered for <span className="font-bold text-[16px]">{getDisplayValue(selectedSetup.category, "iRacing")} - {getSetupField(selectedSetup, "season")}</span>, optimised for the <span className="font-bold text-[16px]">{getSetupField(selectedSetup, "car")}</span> at <span className="font-bold text-[16px]">{getSetupField(selectedSetup, "track")}</span> combination to deliver maximum performance in competitive conditions.
+                    </p>
+                    <p>
+                      The package includes <span className="font-bold text-[16px]">Consistent, E-Sports</span>, and <span className="font-bold text-[16px]">Wet</span> setup variants, fully optimised for both Qualifying and Race sessions. Consistent setups focus on stability, control, and long-run confidence, E-Sports setups are designed to extract ultimate lap time, while Wet setups are tuned to provide maximum grip, predictability, and confidence in low-traction conditions.
+                    </p>
+                    <p>
+                      Whether you are racing in official events or pushing for personal bests, these professionally developed setups help you achieve faster lap times, improved tyre management, and greater overall race consistency across all conditions.
+                    </p>
+                    <div className="h-px bg-white/10 mb-6" />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                      {(() => {
+                        const w = (selectedSetup.weather as Record<string, unknown>) ?? {}
+                        const temp = typeof w.temp === "number" ? w.temp : 20
+                        const hume = typeof w.hume === "number" ? w.hume : 40
+                        const mph = typeof w.mph === "number" ? w.mph : 2
+                        const trac = typeof w.trac === "number" ? w.trac : 24
+                        const sky = (typeof w.weather === "string" ? w.weather : w.sky) ?? "Mostly Cloudy"
+                        const wdatetime = typeof w.wdatetime === "string" ? w.wdatetime : "2026-02-01 17:55:00"
+                        const [datePart, timePart] = wdatetime.split(" ")
+                        const timeStr = timePart ? timePart.slice(0, 5) + (parseInt(timePart.slice(0, 2), 10) >= 12 ? "pm" : "am") : "17:55pm"
+                        const dateStr = datePart ? new Date(datePart).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "1st Feb 2026"
+                        return (
+                          <>
+                            <div className="rounded-lg bg-[#1a1a1a] border border-[#131112] p-4">
+                              <Thermometer className="h-5 w-5 text-primary mb-2" />
+                              <div className="text-xs text-white/60 uppercase tracking-wider">Air Temp</div>
+                              <div className="text-white font-medium">{temp}°C</div>
+                            </div>
+                            <div className="rounded-lg bg-[#1a1a1a] border border-[#131112] p-4">
+                              <Droplets className="h-5 w-5 text-primary mb-2" />
+                              <div className="text-xs text-white/60 uppercase tracking-wider">Humidity</div>
+                              <div className="text-white font-medium">{hume}% RH</div>
+                            </div>
+                            <div className="rounded-lg bg-[#1a1a1a] border border-[#131112] p-4">
+                              <Wind className="h-5 w-5 text-primary mb-2" />
+                              <div className="text-xs text-white/60 uppercase tracking-wider">Wind</div>
+                              <div className="text-white font-medium">{mph} MPH</div>
+                            </div>
+                            <div className="rounded-lg bg-[#1a1a1a] border border-[#131112] p-4">
+                              <Thermometer className="h-5 w-5 text-primary mb-2" />
+                              <div className="text-xs text-white/60 uppercase tracking-wider">Track Temp</div>
+                              <div className="text-white font-medium">{trac}°C</div>
+                            </div>
+                            <div className="rounded-lg bg-[#1a1a1a] border border-[#131112] p-4">
+                              <Cloud className="h-5 w-5 text-primary mb-2" />
+                              <div className="text-xs text-white/60 uppercase tracking-wider">Sky</div>
+                              <div className="text-white font-medium">{String(sky)}</div>
+                            </div>
+                            <div className="rounded-lg bg-[#1a1a1a] border border-[#131112] p-4">
+                              <Clock className="h-5 w-5 text-primary mb-2" />
+                              <div className="text-xs text-white/60 uppercase tracking-wider">Time</div>
+                              <div className="text-white font-medium">{timeStr}</div>
+                              <div className="text-white/70 text-xs">{dateStr}</div>
+                            </div>
+                          </>
+                        )
+                      })()}
                     </div>
-                    <div className="mt-4 text-2xl font-semibold text-white text-center font-sans">
-                      {card.value}
-                    </div>
-                    {card.subValue ? (
-                      <div className="mt-1 text-xs text-white/60">{card.subValue}</div>
-                    ) : null}
                   </div>
-                )
-              })}
-            </div>
-          </div>
-        ) : null}
-
-        {/* YouTube Video Players Section */}
-        <div className="mt-8 space-y-8">
-          {/* Hotlap Video */}
-          <div className="w-full max-w-4xl mx-auto">
-            <div className="text-center mb-4">
-              <h3 className="text-xl md:text-2xl font-display font-bold text-foreground inline-block relative">
-                Hotlap
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent"></span>
-              </h3>
-            </div>
-            <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg border border-primary/30 bg-card/50 backdrop-blur-sm">
-              <iframe
-                className="w-full h-full"
-                src={activeSetup?.videoUrl}
-                title={`Racing Hotlap | ${activeSetup?.car || "Car"} @ ${activeSetup?.track || "Track"}`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                style={{ border: 0 }}
-              ></iframe>
-            </div>
-          </div>
-
-        {activeSetup?.trackGuideUrl?.trim() ? (
-          <div className="w-full max-w-4xl mx-auto">
-            <div className="text-center mb-4">
-              <h3 className="text-xl md:text-2xl font-display font-bold text-foreground inline-block relative">
-                Track Guide
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent"></span>
-              </h3>
-            </div>
-            <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg border border-primary/30 bg-card/50 backdrop-blur-sm">
-              <iframe
-                className="w-full h-full"
-                src={activeSetup?.trackGuideUrl}
-                title={`Track Guide | ${activeSetup?.track || "Track"}`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                style={{ border: 0 }}
-              ></iframe>
-            </div>
-          </div>
-        ) : null}
-        </div>
-      </div>
+                </div>
+                {/* Setup Videos */}
+                <div className="p-10 rounded-2xl bg-[#181818]">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-10 mb-6">
+                    <a
+                      href={typeof selectedSetup.video_url === "string" ? selectedSetup.video_url : "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-col justify-between h-full block col-span-2 lg:col-span-1 rounded-xl bg-[#161118] border border-white/10 p-6 hover:border-primary/50 transition-colors group"
+                    >
+                      <div>
+                        <Play className="h-10 w-10 text-white mb-4" />
+                        <h4 className="text-2xl font-display text-white mb-4">Race-Ready <br /> Hotlap!</h4>
+                        <p className="text-white/70 text-sm tracking-wider">
+                          Learn how setups work and how to extract consistent performance.
+                        </p>
+                      </div>
+                      <div className="flex justify-center items-center mt-8">
+                        <Button className="bg-brand-gradient hover:opacity-90 text-white border-0 text-[16px] font-display rounded-full py-6 px-10">
+                          Youtube
+                        </Button>
+                      </div>
+                    </a>
+                    <div className="rounded-xl col-span-2 lg:col-span-3 overflow-hidden border border-[#131112] bg-[#1a1a1a] relative min-h-[400px]">
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        className="absolute inset-0 w-full h-full"
+                        src={typeof selectedSetup.video_url === "string" ? selectedSetup.video_url : "#"}
+                        title="Rick Astley - Never Gonna Give You Up (Official Video)"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-transparent" />
+                    </div>
+                  </div>
+                  {/* Setup Videos */}
+                  <div className="rounded-xl overflow-hidden border border-[#131112] bg-[#1a1a1a] relative min-h-[500px]">
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      className="absolute inset-0 w-full h-full"
+                      src={typeof selectedSetup.track_guide_url === "string" ? selectedSetup.track_guide_url : "#"}
+                      title="Rick Astley - Never Gonna Give You Up (Official Video)"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-transparent" />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )
+      }
     </div>
-  )
+  </main>
+)
 }

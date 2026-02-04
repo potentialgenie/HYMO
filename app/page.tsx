@@ -1,9 +1,7 @@
-import { Navbar } from "@/components/navbar"
 import { Hero } from "@/components/hero"
 import { Setups } from "@/components/setups"
 import { Pricing } from "@/components/pricing"
 import { Contact } from "@/components/contact"
-import { Footer } from "@/components/footer"
 import { BrandingMarquee } from "@/components/branding-marquee"
 import { TrustedPerformance } from "@/components/trusted-performance"
 import { SetupDifference } from "@/components/setup-difference"
@@ -15,7 +13,6 @@ export default function Home() {
     <main className="min-h-screen relative bg-[#151515]">
       {/* <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(228,0,188,0.18)_0%,rgba(31,19,41,0.25)_35%,rgba(21,21,21,0)_70%)] [mask-image:linear-gradient(180deg,transparent_0%,#000_20%,#000_80%,transparent_100%)]" /> */}
       <div className="relative z-10">
-        <Navbar />
         <Hero />
         {/* <BrandingMarquee /> */}
         <div className="px-16 sm:px-30 lg:px-46 w-full">
@@ -26,7 +23,6 @@ export default function Home() {
           <Pricing />
           <Contact />
         </div>
-        <Footer />
         <BackToTop />
       </div>
     </main>

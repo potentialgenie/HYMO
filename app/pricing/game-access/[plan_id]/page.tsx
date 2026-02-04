@@ -12,8 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
 import { apiUrl } from "@/lib/api"
 import { isAuthenticated, apiFetch } from "@/lib/auth"
 import { hasActivePlanExceptPlan5 } from "@/lib/subscriptions"
@@ -234,21 +232,18 @@ export default function GameAccessPage() {
   if (!planId) {
     return (
       <div className="min-h-screen bg-[#151515]">
-        <Navbar />
         <main className="pt-24 pb-20 px-4 sm:px-6 lg:px-24">
           <p className="text-white/80">Invalid plan.</p>
           <Link href="/pricing" className="text-primary hover:underline mt-4 inline-block">
             Back to Pricing
           </Link>
         </main>
-        <Footer />
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-[#151515]">
-      <Navbar />
 
       <main className="relative pt-24 pb-20 px-4 sm:px-6 lg:px-24">
         <div className="max-w-lg mx-auto">
@@ -435,7 +430,6 @@ export default function GameAccessPage() {
         </>
       )}
 
-      <Footer />
     </div>
   )
 }

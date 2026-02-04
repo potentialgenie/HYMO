@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Navbar } from "@/components/navbar"
 import { useLanguage } from "@/lib/language-context"
 import { apiUrl } from "@/lib/api"
 import { storeAuthData, type LoginResponse } from "@/lib/auth"
@@ -90,8 +89,6 @@ export default function LoginPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#151515]/10 via-[#151515]/40 to-[#151515]" />
       </div>
-
-      <Navbar />
 
       <section className="relative z-10 flex-1 flex items-center">
         <div className="w-full px-6 sm:px-10 lg:px-24 py-16 pt-28">

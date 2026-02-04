@@ -6,8 +6,6 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
 import { Pricing } from "@/components/pricing"
 import { Contact } from "@/components/contact"
 
@@ -25,7 +23,6 @@ export default function PricingPage() {
   return (
     <main className="min-h-screen bg-[#151515] relative overflow-hidden pt-20">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_5%,rgba(228,0,188,0.32)_0%,rgba(31,19,41,0.3)_30%,rgba(21,21,21,0)_100%)]"/>
-      <Navbar/>
 
       {/* Main Content */}
       <section className="relative px-16 sm:px-30 lg:px-46 overflow-hidden">
@@ -140,7 +137,6 @@ export default function PricingPage() {
         <Contact />
       </section>
 
-      <Footer/>
     </main>
   )
 }
