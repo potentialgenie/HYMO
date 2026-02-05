@@ -1,9 +1,15 @@
+import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { SetupPage, type CategoryFromApi } from "@/components/setup-page"
 import { apiUrl } from "@/lib/api"
 
-export const dynamic = "force-dynamic"
-export const runtime = "nodejs"
+function SetupPageLoading() {
+  return (
+    <div className="min-h-screen bg-[#151515] pt-24 pb-16 flex items-center justify-center">
+      <div className="animate-pulse text-white/50">Loading...</div>
+    </div>
+  )
+}
 
 export default async function SetupsCategorySlugPage({
   params,
@@ -40,7 +46,7 @@ export default async function SetupsCategorySlugPage({
   }
 
   return (
-    <div className="bg-[#151515]">
+    <Suspense fallback={<SetupPageLoading />}>
       <SetupPage
         categoryId={currentCategory.id}
         categorySlug={currentCategory.slug}
@@ -48,6 +54,6 @@ export default async function SetupsCategorySlugPage({
         categoryName={currentCategory.name}
         setups={[]}
       />
-    </div>
+    </Suspense>
   )
 }

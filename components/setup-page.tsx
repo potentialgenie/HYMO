@@ -1329,8 +1329,8 @@ export function SetupPage({
               }
 
               // Helper for bolding numerical values and different font styles
-              const valueClass = "text-white text-2xl"
-              const labelClass = "text-[10px] text-white/80 uppercase tracking-wider"
+              const valueClass = "text-white text-[20px] mt-6"
+              const labelClass = "text-[16px] text-white/80 uppercase tracking-wider"
               const cardClass =
                 "rounded-xl bg-[#140e15] border border-[#232027] shadow-[0_1px_8px_rgba(0,0,0,0.18)] py-8 px-5 flex flex-col justify-between min-h-[92px]"
 
@@ -1365,7 +1365,7 @@ export function SetupPage({
                     <div className={valueClass}>
                       {mph !== "-" ? (
                         <span>
-                          <span className="text-primary">{mph}</span> MPH
+                          {mph} MPH
                         </span>
                       ) : (
                         "-"
