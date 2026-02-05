@@ -86,10 +86,14 @@ const ACC_LMU_SLUGS = ["assetto-corsa-competizione", "le-mans-ultimate"]
 export function SetupPage({
   categoryId,
   categorySlug = "",
+  categoryImageUrl,
+  categoryName,
   setups = [],
 }: {
   categoryId: number
   categorySlug?: string
+  categoryImageUrl?: string
+  categoryName?: string
   categories?: CategoryFromApi[]
   setups?: Array<Record<string, unknown>>
 }) {
@@ -255,6 +259,32 @@ export function SetupPage({
     }
   }
 
+  // Store variation options by ID for reverse lookup (ID -> name)
+  const storeVariationById = (options: FilterOption[]) => {
+    try {
+      const map: Record<string, string> = {}
+      options.forEach((opt) => {
+        map[String(opt.id)] = opt.name
+      })
+      localStorage.setItem("setupFilters:variationById", JSON.stringify(map))
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  // Get variation name by ID from localStorage
+  const getVariationNameById = (id: string): string => {
+    if (!id) return ""
+    try {
+      const raw = localStorage.getItem("setupFilters:variationById")
+      if (!raw) return ""
+      const map = JSON.parse(raw) as Record<string, string>
+      return map[id] || ""
+    } catch {
+      return ""
+    }
+  }
+
   const updateOrderForAuto = (key: FilterKey, value: string) => {
     if (fixedRankingActiveRef.current) {
       const nextFixed = new Set(fixedSelectedRef.current)
@@ -398,12 +428,25 @@ export function SetupPage({
 
     const resolvedOrder: FilterKey[] = []
     sortedOrder.forEach((key) => {
-      const name = desiredByKey[key]
-      if (!name) return
-      const id = getStoredIdByName(key, name)
+      const value = desiredByKey[key]
+      if (!value) return
+      
+      // For variation, the URL contains the ID directly
+      if (key === "variation") {
+        const variationId = value
+        const variationName = getVariationNameById(variationId)
+        // If name not found in cache, it will be updated when cascading filter loads
+        const displayName = variationName || `Variation ${variationId}`
+        setSelectedByKey(key, variationId)
+        setOptionsByKey(key, [{ id: parseInt(variationId, 10), name: displayName }])
+        resolvedOrder.push(key)
+        return
+      }
+      
+      const id = getStoredIdByName(key, value)
       if (!id) return
       setSelectedByKey(key, id)
-      setOptionsByKey(key, [{ id: parseInt(id, 10), name }])
+      setOptionsByKey(key, [{ id: parseInt(id, 10), name: value }])
       resolvedOrder.push(key)
     })
 
@@ -547,8 +590,11 @@ export function SetupPage({
             }
             if ("variations" in data || "track_variations" in data || "track_variation" in data) {
               const next = normalizeFilterOptions(data.variations ?? data.track_variations ?? data.track_variation)
-              if (!lockedKeysRef.current.has("variation")) setTrackVariations(next)
+              // Always update track variations to get proper names (even when locked from URL)
+              // The selection is maintained via syncSelection
+              setTrackVariations(next)
               storeOptionsByName("variation", next)
+              storeVariationById(next)
               syncSelection("variation", next, selectedTrackVariation, setSelectedTrackVariation)
             }
             if ("serieses" in data || "series" in data) {
@@ -705,7 +751,8 @@ export function SetupPage({
       if (selectedSeason) params.set("season", getSelectedName(seasons, selectedSeason))
       if (selectedWeek) params.set("week", getSelectedName(weeks, selectedWeek))
       if (selectedTrackVariation) {
-        params.set("variation", getSelectedName(trackVariations, selectedTrackVariation))
+        // Use ID for variation instead of name
+        params.set("variation", selectedTrackVariation)
       }
       if (selectedSeries) params.set("series", getSelectedName(series, selectedSeries))
       if (selectedYear) params.set("year", getSelectedName(years, selectedYear))
@@ -813,27 +860,34 @@ export function SetupPage({
 
   return (
     <main className="min-h-screen bg-[#151515] pt-24 pb-16">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_5%,rgba(228,0,188,0.12)_0%,rgba(31,19,41,0.2)_30%,rgba(21,21,21,0)_100%)]" />
+      {/* <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_5%,rgba(228,0,188,0.12)_0%,rgba(31,19,41,0.2)_30%,rgba(21,21,21,0)_100%)]" /> */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-white mb-2">
-            Find the Right Setup for <span className="text-brand-gradient">Your</span> Race
-          </h1>
-          <p className="text-white/70 text-base sm:text-lg max-w-2xl mx-auto">
-            Filter by car, track, season, and week to quickly find race-ready setups built for competitive iRacing sessions.
-          </p>
-        </div>
+        {/* Category Image */}
+        {categoryImageUrl && (
+          <div className="flex justify-center items-center mb-12">
+            <img
+              src={categoryImageUrl}
+              alt={categorySlug || "Category"}
+              className="max-h-24 w-auto object-contain"
+            />
+            {categoryName && (
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-white ml-6">
+                {categoryName}
+              </h1>
+            )}
+          </div>
+        )}
 
         {/* Filter Bar */}
-        <div className="flex flex-wrap items-center gap-3 mb-8 justify-center">
+        <div className="min-h-[90px] mb-6">
+        <div className="flex flex-wrap items-center gap-3 mb-4 justify-center">
           <Select value={selectedClass} onValueChange={(v) => handleUserChange("class", v)} disabled={filtersLoading}>
-            <SelectTrigger className="w-[140px] sm:w-[160px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
-              <SelectValue placeholder={filtersLoading ? "Loading..." : "Select Class"} />
+            <SelectTrigger className="w-[120px] sm:w-[140px] bg-[#1e1e1e] border-[#333] text-white h-11">
+              <SelectValue placeholder={filtersLoading ? "Loading..." : "Classes"} />
             </SelectTrigger>
-            <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
+            <SelectContent className="bg-[#1e1e1e] border-[#333] rounded-xl">
               <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
-                Class
+                Classes
               </SelectItem>
               {classes.map((opt) => (
                 <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
@@ -843,12 +897,12 @@ export function SetupPage({
             </SelectContent>
           </Select>
           <Select value={selectedCar} onValueChange={(v) => handleUserChange("car", v)} disabled={filtersLoading}>
-            <SelectTrigger className="w-[140px] sm:w-[160px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
-              <SelectValue placeholder={filtersLoading ? "Loading..." : "Select Car"} />
+            <SelectTrigger className="w-[120px] sm:w-[140px] bg-[#1e1e1e] border-[#333] text-white h-11">
+              <SelectValue placeholder={filtersLoading ? "Loading..." : "Cars"} />
             </SelectTrigger>
-            <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
+            <SelectContent className="bg-[#1e1e1e] border-[#333] rounded-xl">
               <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
-                Car
+                Cars
               </SelectItem>
               {cars.map((opt) => (
                 <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
@@ -858,12 +912,12 @@ export function SetupPage({
             </SelectContent>
           </Select>
           <Select value={selectedTrack} onValueChange={(v) => handleUserChange("track", v)} disabled={filtersLoading}>
-            <SelectTrigger className="w-[140px] sm:w-[160px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
-              <SelectValue placeholder={filtersLoading ? "Loading..." : "Select Track"} />
+            <SelectTrigger className="w-[120px] sm:w-[140px] bg-[#1e1e1e] border-[#333] text-white h-11">
+              <SelectValue placeholder={filtersLoading ? "Loading..." : "Tracks"} />
             </SelectTrigger>
-            <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
+            <SelectContent className="bg-[#1e1e1e] border-[#333] rounded-xl">
               <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
-                Track
+                Tracks
               </SelectItem>
               {tracks.map((opt) => (
                 <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
@@ -874,10 +928,10 @@ export function SetupPage({
           </Select>
           {!isAccOrLmu && (
           <Select value={selectedSeason} onValueChange={(v) => handleUserChange("season", v)} disabled={filtersLoading}>
-            <SelectTrigger className="w-[140px] sm:w-[160px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
-              <SelectValue placeholder={filtersLoading ? "Loading..." : "Select Season"} />
+            <SelectTrigger className="w-[120px] sm:w-[140px] bg-[#1e1e1e] border-[#333] text-white h-11">
+              <SelectValue placeholder={filtersLoading ? "Loading..." : "Season"} />
             </SelectTrigger>
-            <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
+            <SelectContent className="bg-[#1e1e1e] border-[#333] rounded-xl">
               <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
                 Season
               </SelectItem>
@@ -891,10 +945,10 @@ export function SetupPage({
           )}
           {!isAccOrLmu && (
           <Select value={selectedWeek} onValueChange={(v) => handleUserChange("week", v)} disabled={filtersLoading}>
-            <SelectTrigger className="w-[140px] sm:w-[160px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
-              <SelectValue placeholder={filtersLoading ? "Loading..." : "Select Week"} />
+            <SelectTrigger className="w-[120px] sm:w-[140px] bg-[#1e1e1e] border-[#333] text-white h-11">
+              <SelectValue placeholder={filtersLoading ? "Loading..." : "Week"} />
             </SelectTrigger>
-            <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
+            <SelectContent className="bg-[#1e1e1e] border-[#333] rounded-xl">
               <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
                 Week
               </SelectItem>
@@ -906,444 +960,495 @@ export function SetupPage({
             </SelectContent>
           </Select>
           )}
-          <button
-            onClick={clearFilters}
-            className="p-2.5 rounded-md bg-[#1a1a1a] border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-            aria-label="Clear filters"
+          <Button
+            type="button"
+            className="bg-brand-gradient hover:opacity-90 text-white border-0 px-6 font-medium"
+            onClick={handleSearch}
+            disabled={filtersLoading || searchLoading}
           >
-            <Trash2 className="h-4 w-4" />
-          </button>
-          <button
+            {searchLoading ? "Searching..." : "Find Setup"}
+          </Button>
+          <Button
+            type="button"
+            onClick={clearFilters}
+            className="px-6 bg-[#0d0d0d] border border-white/20 text-white font-medium hover:bg-[#1a1a1a] transition-colors"
+            aria-label="Clear all filters"
+          >
+            Clear All
+          </Button>
+          <Button
+            type="button"
             onClick={() => setShowMoreFilters(!showMoreFilters)}
-            className={cn(
-              "p-2.5 rounded-full transition-colors",
-              showMoreFilters
-                ? "border-2 border-primary bg-primary/10 text-primary"
-                : "border border-white/10 text-white/70 hover:text-white hover:bg-white/10"
-            )}
+            className="px-5 bg-[#0d0d0d] border border-white/20 text-white font-medium hover:bg-[#1a1a1a] transition-colors flex items-center gap-2"
             aria-label="Show more filter options"
             aria-expanded={showMoreFilters}
           >
             <Filter className="h-4 w-4" />
-          </button>
-          <Button
-            className="bg-brand-gradient rounded-full hover:opacity-90 text-white border-0 px-6 h-10"
-            onClick={handleSearch}
-            disabled={filtersLoading || searchLoading}
-          >
-            {searchLoading ? "Searching..." : "Search"}
+            <span>MORE FILTERS</span>
           </Button>
         </div>
 
         {/* More selection fields - shown when filter button is active */}
-        {showMoreFilters && (
-          <div className="flex flex-wrap items-center gap-3 mb-8 justify-center">
-            {!isAccOrLmu && (
-              <>
-                <Select value={selectedTrackVariation} onValueChange={(v) => handleUserChange("variation", v)} disabled={filtersLoading}>
-                  <SelectTrigger className="w-[140px] sm:w-[180px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
-                    <SelectValue placeholder="Select Track Variation" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
-                    <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
-                      Track Variation
-                    </SelectItem>
-                    {trackVariations.map((opt) => (
-                      <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
-                        {opt.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={selectedSeries} onValueChange={(v) => handleUserChange("series", v)} disabled={filtersLoading}>
-                  <SelectTrigger className="w-[140px] sm:w-[180px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
-                    <SelectValue placeholder="Select Series" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
-                    <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
-                      Series
-                    </SelectItem>
-                    {series.map((opt) => (
-                      <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
-                        {opt.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={selectedYear} onValueChange={(v) => handleUserChange("year", v)} disabled={filtersLoading}>
-                  <SelectTrigger className="w-[140px] sm:w-[180px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
-                    <SelectValue placeholder="Select Year" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
-                    <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
-                      Year
-                    </SelectItem>
-                    {years.map((opt) => (
-                      <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
-                        {opt.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </>
-            )}
-            {isAccOrLmu && (
-              <Select value={selectedVersion} onValueChange={(v) => handleUserChange("version", v)} disabled={filtersLoading}>
-                <SelectTrigger className="w-[140px] sm:w-[180px] bg-[#1a1a1a] border-white/10 text-white h-10 rounded-2xl">
-                  <SelectValue placeholder="Select Version" />
+      {showMoreFilters && (
+        <div className="flex flex-wrap items-center gap-3 justify-center">
+          {!isAccOrLmu && (
+            <>
+              <Select value={selectedTrackVariation} onValueChange={(v) => handleUserChange("variation", v)} disabled={filtersLoading}>
+                <SelectTrigger className="w-[140px] sm:w-[160px] bg-[#1e1e1e] border-[#333] text-white h-11">
+                  <SelectValue placeholder="Track Variation" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1a1a1a] border-white/10 rounded-2xl">
+                <SelectContent className="bg-[#1e1e1e] border-[#333] rounded-xl">
                   <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
-                    Version
+                    Track Variation
                   </SelectItem>
-                  {versions.map((opt) => (
+                  {trackVariations.map((opt) => (
                     <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
                       {opt.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            )}
-          </div>
-        )}
+              <Select value={selectedSeries} onValueChange={(v) => handleUserChange("series", v)} disabled={filtersLoading}>
+                <SelectTrigger className="w-[120px] sm:w-[140px] bg-[#1e1e1e] border-[#333] text-white h-11">
+                  <SelectValue placeholder="Series" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1e1e1e] border-[#333] rounded-xl">
+                  <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
+                    Series
+                  </SelectItem>
+                  {series.map((opt) => (
+                    <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
+                      {opt.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedYear} onValueChange={(v) => handleUserChange("year", v)} disabled={filtersLoading}>
+                <SelectTrigger className="w-[100px] sm:w-[120px] bg-[#1e1e1e] border-[#333] text-white h-11">
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1e1e1e] border-[#333] rounded-xl">
+                  <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
+                    Year
+                  </SelectItem>
+                  {years.map((opt) => (
+                    <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
+                      {opt.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
+          {isAccOrLmu && (
+            <Select value={selectedVersion} onValueChange={(v) => handleUserChange("version", v)} disabled={filtersLoading}>
+              <SelectTrigger className="w-[120px] sm:w-[140px] bg-[#1e1e1e] border-[#333] text-white h-11">
+                <SelectValue placeholder="Version" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1e1e1e] border-[#333] rounded-xl">
+                <SelectItem value="__clear__" className="text-white/70 focus:bg-primary/20 focus:text-white">
+                  Version
+                </SelectItem>
+                {versions.map((opt) => (
+                  <SelectItem key={opt.id} value={String(opt.id)} className="text-white focus:bg-primary/20 focus:text-white">
+                    {opt.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+      )}
+      </div>
 
-        {!hasSearched && (
-          <div className="flex justify-center items-center py-16">
-            <img
-              src="/images/setup.png"
-              alt="Setup"
-              className="max-w-full h-auto object-contain"
-            />
-          </div>
-        )}
+      <div className="flex justify-center items-center py-16">
+        <img
+          src="/images/setup.png"
+          alt="Setup"
+          className="max-w-full h-auto object-contain"
+        />
+      </div>
 
-        {hasSearched && (
-          <>
-            {/* Results Header + Pagination */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <div className="flex items-center gap-2">
-                <h2 className="text-3xl font-display text-white">
-                  Find your setup
-                </h2>
-              </div>
-              <div className="flex items-center justify-end gap-1">
-              <span className="text-sm text-white/60 mr-4">
-                {totalItems} AVAILABLE
-              </span>
+        
+          {/* Results Header + Pagination */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="flex items-center gap-2">
+          <h2 className="text-3xl font-display text-white">
+            Find your setup
+          </h2>
+        </div>
+        <div className="flex items-center justify-end gap-1">
+        <span className="text-sm text-white/60 mr-4">
+          {totalItems} AVAILABLE
+        </span>
+        <button
+          onClick={() => setCurrentPage(1)}
+          disabled={currentPage === 1}
+          className="p-2 rounded-md bg-[#1a1a1a] border border-white/10 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
+          aria-label="First page"
+        >
+          <ChevronsLeft className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          disabled={currentPage === 1}
+          className="p-2 rounded-md bg-[#1a1a1a] border border-white/10 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
+          aria-label="Previous page"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <div className="flex items-center gap-1 px-2">
+          {Array.from({ length: Math.min(6, totalPages) }, (_, i) => {
+            let pageNum: number
+            if (totalPages <= 6) {
+              pageNum = i + 1
+            } else if (currentPage <= 3) {
+              pageNum = i + 1
+            } else if (currentPage >= totalPages - 2) {
+              pageNum = totalPages - 5 + i
+            } else {
+              pageNum = currentPage - 2 + i
+            }
+            const isActive = pageNum === currentPage
+            return (
               <button
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                className="p-2 rounded-md bg-[#1a1a1a] border border-white/10 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
-                aria-label="First page"
-              >
-                <ChevronsLeft className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="p-2 rounded-md bg-[#1a1a1a] border border-white/10 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
-                aria-label="Previous page"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <div className="flex items-center gap-1 px-2">
-                {Array.from({ length: Math.min(6, totalPages) }, (_, i) => {
-                  let pageNum: number
-                  if (totalPages <= 6) {
-                    pageNum = i + 1
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 5 + i
-                  } else {
-                    pageNum = currentPage - 2 + i
-                  }
-                  const isActive = pageNum === currentPage
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={cn(
-                        "min-w-[32px] h-8 rounded-full text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-primary text-white"
-                          : "text-white/80 hover:text-white hover:bg-white/10"
-                      )}
-                    >
-                      {pageNum}
-                    </button>
-                  )
-                })}
-                {totalPages > 6 && (
-                  <>
-                    <span className="text-white/50 px-1">...</span>
-                    <button
-                      onClick={() => setCurrentPage(totalPages)}
-                      className={cn(
-                        "min-w-[32px] h-8 rounded-full text-sm font-medium text-white/80 hover:text-white",
-                        currentPage === totalPages && "bg-primary text-white"
-                      )}
-                    >
-                      {totalPages}
-                    </button>
-                  </>
+                key={pageNum}
+                onClick={() => setCurrentPage(pageNum)}
+                className={cn(
+                  "min-w-[32px] h-8 rounded-full text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-primary text-white"
+                    : "text-white/80 hover:text-white hover:bg-white/10"
                 )}
-              </div>
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="p-2 rounded-md bg-[#1a1a1a] border border-white/10 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
-                aria-label="Next page"
               >
-                <ChevronRight className="h-4 w-4" />
+                {pageNum}
               </button>
+            )
+          })}
+          {totalPages > 6 && (
+            <>
+              <span className="text-white/50 px-1">...</span>
               <button
                 onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-                className="p-2 rounded-md bg-[#1a1a1a] border border-white/10 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
-                aria-label="Last page"
+                className={cn(
+                  "min-w-[32px] h-8 rounded-full text-sm font-medium text-white/80 hover:text-white",
+                  currentPage === totalPages && "bg-primary text-white"
+                )}
               >
-                <ChevronsRight className="h-4 w-4" />
+                {totalPages}
               </button>
-              </div>
-            </div>
+            </>
+          )}
+        </div>
+        <button
+          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          disabled={currentPage === totalPages}
+          className="p-2 rounded-md bg-[#1a1a1a] border border-white/10 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
+          aria-label="Next page"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => setCurrentPage(totalPages)}
+          disabled={currentPage === totalPages}
+          className="p-2 rounded-md bg-[#1a1a1a] border border-white/10 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
+          aria-label="Last page"
+        >
+          <ChevronsRight className="h-4 w-4" />
+        </button>
+        </div>
+      </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[#151515]">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
-                      Game
-                    </th>
-                    <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
-                      Car
-                    </th>
-                    <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
-                      Track
-                    </th>
-                    {!isAccOrLmu && (
-                      <>
-                        <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
-                          Season
-                        </th>
-                        <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
-                          Series
-                        </th>
-                      </>
+          {/* Table */}
+      <div className="overflow-x-auto rounded-xl border border-[#2a2a2a] bg-[#18171c]">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-[#2a2a2a] bg-[#131313]">
+              <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-primary w-12">
+                #
+              </th>
+              <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-primary">
+                Game
+              </th>
+              <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-primary">
+                Car
+              </th>
+              <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-primary">
+                Track
+              </th>
+              {!isAccOrLmu && (
+                <>
+                  <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-primary">
+                    Season
+                  </th>
+                  <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-primary">
+                    Series
+                  </th>
+                </>
+              )}
+              {isAccOrLmu && (
+                <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-primary">
+                  Version
+                </th>
+              )}
+              <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-primary">
+                Lap Time
+              </th>
+              <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-primary">
+                Action
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedSetups.length === 0 ? (
+              <tr>
+                <td colSpan={isAccOrLmu ? 7 : 8} className="py-16 text-center">
+                  <div className="text-white text-lg font-medium mb-2">No setups found</div>
+                  <div className="text-white/60 text-sm">Try adjusting your filters</div>
+                </td>
+              </tr>
+            ) : (
+              paginatedSetups.map((setup, index) => {
+                const isSmallest = displaySetups[0] && (setup as { id?: number }).id === (displaySetups[0] as { id?: number }).id
+                const isSelected = (selectedSetup as { id?: number })?.id === (setup as { id?: number }).id
+                const rowNumber = (currentPage - 1) * ITEMS_PER_PAGE + index + 1
+                return (
+                <tr
+                  key={(setup as { id?: number }).id ?? index}
+                  onClick={() => setSelectedSetup(setup as Record<string, unknown>)}
+                  className={cn(
+                    "border-t border-[#2a2a2a] cursor-pointer",
+                    isSmallest && "bg-primary/30",
+                    isSelected && "ring-2 ring-primary"
+                  )}
+                >
+                  <td className="py-4 px-4 text-white/60 text-sm">
+                    {rowNumber}
+                  </td>
+                  <td className="py-4 px-4 text-white text-sm">
+                    {getDisplayValue(
+                      (setup as Record<string, unknown>).category ??
+                        (setup as Record<string, unknown>).game,
+                      "iRacing"
                     )}
-                    {isAccOrLmu && (
-                      <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
-                        Version
-                      </th>
+                  </td>
+                  <td className="py-4 px-4 text-white text-sm">
+                    {getSetupField(setup as Record<string, unknown>, "car")}
+                  </td>
+                  <td className="py-4 px-4 text-white text-sm">
+                    {getSetupField(setup as Record<string, unknown>, "track")}
+                  </td>
+                  {!isAccOrLmu && (
+                    <>
+                      <td className="py-4 px-4 text-white text-sm">
+                        {getSetupField(setup as Record<string, unknown>, "season")}
+                      </td>
+                      <td className="py-4 px-4 text-white text-sm">
+                        {getSetupField(setup as Record<string, unknown>, "series")}
+                      </td>
+                    </>
+                  )}
+                  {isAccOrLmu && (
+                    <td className="py-4 px-4 text-white text-sm">
+                      {getSetupField(setup as Record<string, unknown>, "version")}
+                    </td>
+                  )}
+                  <td className="py-4 px-4 text-white text-sm font-mono font-digital">
+                    {getDisplayValue(
+                      (setup as Record<string, unknown>).lap_time ??
+                        (setup as Record<string, unknown>).lapTime
                     )}
-                    <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
-                      Lap Time
-                    </th>
-                    <th className="text-left py-4 px-4 text-xs font-semibold uppercase tracking-wider text-white/80">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedSetups.map((setup, index) => {
-                    const isSmallest = displaySetups[0] && (setup as { id?: number }).id === (displaySetups[0] as { id?: number }).id
-                    const isSelected = (selectedSetup as { id?: number })?.id === (setup as { id?: number }).id
-                    return (
-                    <tr
-                      key={(setup as { id?: number }).id ?? index}
-                      onClick={() => setSelectedSetup(setup as Record<string, unknown>)}
-                      className={cn(
-                        "border-t border-white/10 transition-colors cursor-pointer hover:bg-white/5",
-                        isSmallest && "bg-primary/30",
-                        isSelected && "ring-2 ring-primary"
-                      )}
+                  </td>
+                  <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
+                    <Button 
+                      size="sm" 
+                      className="px-3 py-1.5 h-auto cursor-pointer transition-all duration-200 hover:scale-105 shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:shadow-[0_0_25px_rgba(168,85,247,0.5)]" 
+                      aria-label="Download setup"
                     >
-                      <td className="py-4 px-4 text-white text-sm">
-                        {getDisplayValue(
-                          (setup as Record<string, unknown>).category ??
-                            (setup as Record<string, unknown>).game,
-                          "iRacing"
-                        )}
-                      </td>
-                      <td className="py-4 px-4 text-white text-sm">
-                        {getSetupField(setup as Record<string, unknown>, "car")}
-                      </td>
-                      <td className="py-4 px-4 text-white text-sm">
-                        {getSetupField(setup as Record<string, unknown>, "track")}
-                      </td>
-                      {!isAccOrLmu && (
-                        <>
-                          <td className="py-4 px-4 text-white text-sm">
-                            {getSetupField(setup as Record<string, unknown>, "season")}
-                          </td>
-                          <td className="py-4 px-4 text-white text-sm">
-                            {getSetupField(setup as Record<string, unknown>, "series")}
-                          </td>
-                        </>
-                      )}
-                      {isAccOrLmu && (
-                        <td className="py-4 px-4 text-white text-sm">
-                          {getSetupField(setup as Record<string, unknown>, "version")}
-                        </td>
-                      )}
-                      <td className="py-4 px-4 text-white text-sm font-mono font-digital">
-                        {getDisplayValue(
-                          (setup as Record<string, unknown>).lap_time ??
-                            (setup as Record<string, unknown>).lapTime
-                        )}
-                      </td>
-                      <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          size="sm"
-                          className="bg-brand-gradient hover:opacity-90 hover:ring-2 hover:ring-white text-white border-0 transition-all"
-                        >
-                          <Download className="h-4 w-4 mr-1.5" />
-                          Download
-                        </Button>
-                      </td>
-                    </tr>
-                  )})}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Setup Details - shown for selected row (default: smallest lap time) */}
-            {selectedSetup && (
-              <div className="mt-12 mb-12 p-6 rounded-2xl overflow-hidden bg-gradient-to-b from-[#131112] to-[#161118]">
-                {/* Setup Image */}
-                <div className="flex justify-center items-center mb-6 p-6 rounded-2xl bg-[#181818]">
-                  <img
-                    src="/images/setup.png"
-                    alt="Setup"
-                    className="max-w-full h-auto object-contain max-h-100"
-                  />
-                </div>
-                {/* Setup Details */}
-                <div className="p-10 rounded-2xl bg-[#181818] mb-6">
-                  <h3 className="text-2xl font-display text-[#7000BF] mb-2">Setup Details</h3>
-                  <div className="h-px bg-white/10 mb-6" />
-                  <div className="space-y-4 text-white/90 text-[14px] leading-relaxed">
-                    <p>
-                      Experience the ultimate in-game performance with professional car setups developed by elite E-Sports drivers.
-                    </p>
-                    <p>
-                      This setup pack is specifically engineered for <span className="font-bold text-[16px]">{getDisplayValue(selectedSetup.category, "iRacing")} - {getSetupField(selectedSetup, "season")}</span>, optimised for the <span className="font-bold text-[16px]">{getSetupField(selectedSetup, "car")}</span> at <span className="font-bold text-[16px]">{getSetupField(selectedSetup, "track")}</span> combination to deliver maximum performance in competitive conditions.
-                    </p>
-                    <p>
-                      The package includes <span className="font-bold text-[16px]">Consistent, E-Sports</span>, and <span className="font-bold text-[16px]">Wet</span> setup variants, fully optimised for both Qualifying and Race sessions. Consistent setups focus on stability, control, and long-run confidence, E-Sports setups are designed to extract ultimate lap time, while Wet setups are tuned to provide maximum grip, predictability, and confidence in low-traction conditions.
-                    </p>
-                    <p>
-                      Whether you are racing in official events or pushing for personal bests, these professionally developed setups help you achieve faster lap times, improved tyre management, and greater overall race consistency across all conditions.
-                    </p>
-                    <div className="h-px bg-white/10 mb-6" />
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                      {(() => {
-                        const w = (selectedSetup.weather as Record<string, unknown>) ?? {}
-                        const temp = typeof w.temp === "number" ? w.temp : 20
-                        const hume = typeof w.hume === "number" ? w.hume : 40
-                        const mph = typeof w.mph === "number" ? w.mph : 2
-                        const trac = typeof w.trac === "number" ? w.trac : 24
-                        const sky = (typeof w.weather === "string" ? w.weather : w.sky) ?? "Mostly Cloudy"
-                        const wdatetime = typeof w.wdatetime === "string" ? w.wdatetime : "2026-02-01 17:55:00"
-                        const [datePart, timePart] = wdatetime.split(" ")
-                        const timeStr = timePart ? timePart.slice(0, 5) + (parseInt(timePart.slice(0, 2), 10) >= 12 ? "pm" : "am") : "17:55pm"
-                        const dateStr = datePart ? new Date(datePart).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "1st Feb 2026"
-                        return (
-                          <>
-                            <div className="rounded-lg bg-[#1a1a1a] border border-[#131112] p-4">
-                              <Thermometer className="h-5 w-5 text-primary mb-2" />
-                              <div className="text-xs text-white/60 uppercase tracking-wider">Air Temp</div>
-                              <div className="text-white font-medium">{temp}°C</div>
-                            </div>
-                            <div className="rounded-lg bg-[#1a1a1a] border border-[#131112] p-4">
-                              <Droplets className="h-5 w-5 text-primary mb-2" />
-                              <div className="text-xs text-white/60 uppercase tracking-wider">Humidity</div>
-                              <div className="text-white font-medium">{hume}% RH</div>
-                            </div>
-                            <div className="rounded-lg bg-[#1a1a1a] border border-[#131112] p-4">
-                              <Wind className="h-5 w-5 text-primary mb-2" />
-                              <div className="text-xs text-white/60 uppercase tracking-wider">Wind</div>
-                              <div className="text-white font-medium">{mph} MPH</div>
-                            </div>
-                            <div className="rounded-lg bg-[#1a1a1a] border border-[#131112] p-4">
-                              <Thermometer className="h-5 w-5 text-primary mb-2" />
-                              <div className="text-xs text-white/60 uppercase tracking-wider">Track Temp</div>
-                              <div className="text-white font-medium">{trac}°C</div>
-                            </div>
-                            <div className="rounded-lg bg-[#1a1a1a] border border-[#131112] p-4">
-                              <Cloud className="h-5 w-5 text-primary mb-2" />
-                              <div className="text-xs text-white/60 uppercase tracking-wider">Sky</div>
-                              <div className="text-white font-medium">{String(sky)}</div>
-                            </div>
-                            <div className="rounded-lg bg-[#1a1a1a] border border-[#131112] p-4">
-                              <Clock className="h-5 w-5 text-primary mb-2" />
-                              <div className="text-xs text-white/60 uppercase tracking-wider">Time</div>
-                              <div className="text-white font-medium">{timeStr}</div>
-                              <div className="text-white/70 text-xs">{dateStr}</div>
-                            </div>
-                          </>
-                        )
-                      })()}
-                    </div>
-                  </div>
-                </div>
-                {/* Setup Videos */}
-                <div className="p-10 rounded-2xl bg-[#181818]">
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-10 mb-6">
-                    <a
-                      href={typeof selectedSetup.video_url === "string" ? selectedSetup.video_url : "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex flex-col justify-between h-full block col-span-2 lg:col-span-1 rounded-xl bg-[#161118] border border-white/10 p-6 hover:border-primary/50 transition-colors group"
-                    >
-                      <div>
-                        <Play className="h-10 w-10 text-white mb-4" />
-                        <h4 className="text-2xl font-display text-white mb-4">Race-Ready <br /> Hotlap!</h4>
-                        <p className="text-white/70 text-sm tracking-wider">
-                          Learn how setups work and how to extract consistent performance.
-                        </p>
-                      </div>
-                      <div className="flex justify-center items-center mt-8">
-                        <Button className="bg-brand-gradient hover:opacity-90 text-white border-0 text-[16px] font-display rounded-full py-6 px-10">
-                          Youtube
-                        </Button>
-                      </div>
-                    </a>
-                    <div className="rounded-xl col-span-2 lg:col-span-3 overflow-hidden border border-[#131112] bg-[#1a1a1a] relative min-h-[400px]">
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        className="absolute inset-0 w-full h-full"
-                        src={typeof selectedSetup.video_url === "string" ? selectedSetup.video_url : "#"}
-                        title="Rick Astley - Never Gonna Give You Up (Official Video)"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      ></iframe>
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-transparent" />
-                    </div>
-                  </div>
-                  {/* Setup Videos */}
-                  <div className="rounded-xl overflow-hidden border border-[#131112] bg-[#1a1a1a] relative min-h-[500px]">
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      className="absolute inset-0 w-full h-full"
-                      src={typeof selectedSetup.track_guide_url === "string" ? selectedSetup.track_guide_url : "#"}
-                      title="Rick Astley - Never Gonna Give You Up (Official Video)"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-transparent" />
-                  </div>
-                </div>
-              </div>
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </td>
+                </tr>
+              )})
             )}
-          </>
-        )
-      }
+          </tbody>
+        </table>
+      </div>
+
+      {/* Setup Details - shown for selected row (default: smallest lap time) */}
+        {/* About This Setup Pack */}
+        <div className="mt-20">
+          <h3 className="text-4xl font-display text-white text-center mb-2">About This Setup Pack</h3>
+          <div className="flex justify-center mb-8">
+            <div className="w-16 h-1 bg-primary rounded-full" />
+          </div>
+          
+          <div className="rounded-2xl border border-[#2a2a2a] bg-[#16151a] p-8">
+            <div className="space-y-6 text-white/80 text-[18px] leading-relaxed">
+              <p>
+                Experience the ultimate in-game performance with professional car setups developed by elite E-Sports drivers.
+              </p>
+              <p>
+                This setup pack is specifically engineered for <span className="font-bold text-white">{getDisplayValue(selectedSetup?.category, "iRacing")}</span>, optimised for the <span className="font-bold text-white">{getDisplayValue(selectedSetup?.car, "your car")}</span> at <span className="font-bold text-white">{getDisplayValue(selectedSetup?.track, "the track")}</span> combination to deliver maximum performance in competitive conditions.
+              </p>
+              <p>
+                The package includes <span className="font-bold text-white">Consistent</span>, <span className="font-bold text-white">E-Sports</span>, and <span className="font-bold text-white">Wet</span> setup variants, fully optimised for both Qualifying and Race sessions. Consistent setups focus on stability, control, and long-run confidence, E-Sports setups are designed to extract ultimate lap time, while Wet setups are tuned to provide maximum grip, predictability, and confidence in low-traction conditions.
+              </p>
+              <p>
+                Whether you are racing in official events or pushing for personal bests, these professionally developed setups help you achieve faster lap times, improved tyre management, and greater overall race consistency across all conditions.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Weather Conditions */}
+        <div className="mt-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {(() => {
+              const w = (selectedSetup?.weather as Record<string, unknown>) ?? {}
+              const temp = typeof w.temp === "number" ? w.temp : (typeof w.air_temp === "number" ? w.air_temp : "-")
+              const hume = typeof w.hume === "number" ? w.hume : "-"
+              const mph = typeof w.mph === "number" ? w.mph : "-"
+              const trac = typeof w.trac === "number" ? w.trac : (typeof w.trac_temp === "number" ? w.trac_temp : "-")
+              const sky = (typeof w.weather === "string" ? w.weather : (typeof w.sky === "string" ? w.sky : "-"))
+              const wdatetime = typeof w.wdatetime === "string" ? w.wdatetime : null
+              let timeStr = "-"
+              let dateStr = "-"
+              if (wdatetime) {
+                const [datePart, timePart] = wdatetime.split(" ")
+                // e.g. "17:55"
+                if (timePart) {
+                  let [hour, minute] = timePart.split(":")
+                  if (hour && minute) {
+                    timeStr = `${hour}:${minute}pm`
+                  } else {
+                    timeStr = "-"
+                  }
+                }
+                dateStr = datePart ? new Date(datePart).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-"
+              }
+
+              // Helper for bolding numerical values and different font styles
+              const valueClass = "text-white text-2xl"
+              const labelClass = "text-[10px] text-white/80 uppercase tracking-wider"
+              const cardClass =
+                "rounded-xl bg-[#140e15] border border-[#232027] shadow-[0_1px_8px_rgba(0,0,0,0.18)] py-8 px-5 flex flex-col justify-between min-h-[92px]"
+
+              return (
+                <>
+                  {/* Air Temp */}
+                  <div className={cardClass}>
+                    <div className="flex items-center gap-2">
+                      <Thermometer className="h-6 w-6 text-amber-300" />
+                      <span className={labelClass}>Air Temp</span>
+                    </div>
+                    <div className={valueClass}>
+                      {temp !== "-" ? `${temp}°F` : "-"}
+                    </div>
+                  </div>
+                  {/* Humidity */}
+                  <div className={cardClass}>
+                    <div className="flex items-center gap-2">
+                      <Droplets className="h-6 w-6 text-sky-300" />
+                      <span className={labelClass}>Humidity</span>
+                    </div>
+                    <div className={valueClass}>
+                      {hume !== "-" ? `${hume}% RH` : "-"}
+                    </div>
+                  </div>
+                  {/* Wind */}
+                  <div className={cardClass}>
+                    <div className="flex items-center gap-2">
+                      <Wind className="h-6 w-6 text-emerald-300" />
+                      <span className={labelClass}>Wind</span>
+                    </div>
+                    <div className={valueClass}>
+                      {mph !== "-" ? (
+                        <span>
+                          <span className="text-primary">{mph}</span> MPH
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </div>
+                  </div>
+                  {/* Track Temp */}
+                  <div className={cardClass}>
+                    <div className="flex items-center gap-2">
+                      <Thermometer className="h-6 w-6 text-pink-400" />
+                      <span className={labelClass}>Track Temp</span>
+                    </div>
+                    <div className={valueClass}>
+                      {trac !== "-" ? `${trac}°F` : "-"}
+                    </div>
+                  </div>
+                  {/* Sky */}
+                  <div className={cardClass}>
+                    <div className="flex items-center gap-2">
+                      <Cloud className="h-6 w-6 text-gray-100" />
+                      <span className={labelClass}>Sky</span>
+                    </div>
+                    <div className={valueClass}>{String(sky)}</div>
+                  </div>
+                  {/* Time */}
+                  <div className={cardClass}>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-6 w-6 text-yellow-400" />
+                      <span className={labelClass}>Time</span>
+                    </div>
+                    <div className={`${valueClass} mb-0 leading-tight`}>{timeStr}</div>
+                    {dateStr !== "-" && (
+                      <div className="text-white/40 text-xs leading-tight mt-0">{dateStr}</div>
+                    )}
+                  </div>
+                </>
+              )
+            })()}
+          </div>
+        </div>
+        
+        {/* Hotlap Video */}
+        <div className="mt-16">
+          <h3 className="text-4xl font-display text-white text-center mb-2">Hotlap</h3>
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-1 bg-primary rounded-full" />
+          </div>
+          
+          <div className="rounded-2xl overflow-hidden border border-[#2a2a2a] bg-[#0d0d0d] relative aspect-video">
+            <iframe
+              width="100%"
+              height="100%"
+              className="absolute inset-0 w-full h-full"
+              src={typeof selectedSetup?.video_url === "string" ? selectedSetup?.video_url : "https://www.youtube.com/embed/dQw4w9WgXcQ"}
+              title={`${getDisplayValue(selectedSetup?.car, "Setup")} Hotlap Video`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+        </div>
+        
+        {/* Track Guide Video */}
+        {typeof selectedSetup?.track_guide_url === "string" && selectedSetup?.track_guide_url && (
+        <div className="mt-8">
+          <h3 className="text-3xl font-display italic text-white text-center mb-2">Track Guide</h3>
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-1 bg-primary rounded-full" />
+          </div>
+          
+          <div className="rounded-2xl overflow-hidden border border-[#2a2a2a] border-b-4 border-b-primary bg-[#0d0d0d] relative aspect-video">
+            <iframe
+              width="100%"
+              height="100%"
+              className="absolute inset-0 w-full h-full"
+              src={selectedSetup.track_guide_url}
+              title={`${getDisplayValue(selectedSetup?.track, "Track")} Guide Video`}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+        </div>
+        )}
     </div>
   </main>
 )

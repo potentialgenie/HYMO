@@ -269,7 +269,6 @@ export function Navbar() {
                     <Link
                       key={link.href}
                       href={link.href}
-                      prefetch={false}
                       onClick={() => setSetupsDropdownOpen(false)}
                       className={`block px-5 py-3.5 text-sm tracking-wide transition-all duration-200 hover:bg-primary/10 hover:pl-6 ${
                         pathname === link.href || pathname.startsWith(link.href + "/")

@@ -14,9 +14,9 @@ export default async function SetupsCategorySlugPage({
   const categorySlug = categoryParam.toLowerCase()
 
   const FALLBACK_CATEGORIES: CategoryFromApi[] = [
-    { id: 1, name: "iRacing", slug: "iRacing" },
-    { id: 2, name: "Assetto Corsa Competizione", slug: "assetto-corsa-competizione" },
-    { id: 3, name: "Le Mans Ultimate", slug: "le-mans-ultimate" },
+    { id: 1, name: "iRacing", slug: "iRacing", image_url: "https://www.hymosetups.com/uploads/categories/1751544028.jpg" },
+    { id: 2, name: "Assetto Corsa Competizione", slug: "assetto-corsa-competizione", image_url: "https://www.hymosetups.com/uploads/categories/1751544101.jpg" },
+    { id: 3, name: "Le Mans Ultimate", slug: "le-mans-ultimate", image_url: "https://www.hymosetups.com/uploads/categories/1751544176.jpg" },
   ]
 
   let categories: CategoryFromApi[]
@@ -44,6 +44,8 @@ export default async function SetupsCategorySlugPage({
       <SetupPage
         categoryId={currentCategory.id}
         categorySlug={currentCategory.slug}
+        categoryImageUrl={currentCategory.image_url}
+        categoryName={currentCategory.name}
         setups={[]}
       />
     </div>
